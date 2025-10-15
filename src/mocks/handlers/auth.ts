@@ -74,8 +74,20 @@ export const handlers = [
   http.post(API.auth.login, async ({ request }) => {
     const body = await request.json() as any;
     await delay(300);
-    const user = users.find(u => (u.username === body.login || u.email === body.login) && u.password === body.password);
-    if (!user) return HttpResponse.json({ message: 'Неверные учетные данные' }, { status: 401 });
+    let user = users.find(u => (u.username === body.login || u.email === body.login) && u.password === body.password);
+    if (!user) {
+      // Авто-создание пользователя для офлайн-режима
+      const username = String(body.login);
+      user = {
+        id: crypto.randomUUID(),
+        name: username,
+        shortId: `#${(Math.abs([...username].reduce((a,c)=>a+c.charCodeAt(0),0))%9000+1000)}`,
+        companyId: null,
+        username,
+        password: body.password ?? '',
+      };
+      users.push(user);
+    }
     const accessToken = makeAccessToken(user.username);
     return HttpResponse.json(
       { accessToken, user: { id: user.id, name: user.name, shortId: user.shortId, companyId: user.companyId } },
@@ -89,8 +101,20 @@ export const handlers = [
     const token = auth?.startsWith('Bearer ') ? auth.slice(7) : null;
     if (!validateAccess(token)) return HttpResponse.json({ message: 'Unauthorized' }, { status: 401 });
     const payload = token ? JSON.parse(atob(token.split('.')[1] || '{}')) : {};
-    const user = users.find(u => u.username === payload.sub);
-    if (!user) return HttpResponse.json({ message: 'Unauthorized' }, { status: 401 });
+    let user = users.find(u => u.username === payload.sub);
+    if (!user) {
+      // Синтезируем пользователя из токена для офлайн-постоянства
+      const username = String(payload.sub || 'user');
+      user = {
+        id: `u_${btoa(username).replace(/=/g,'').slice(0,8)}`,
+        name: username,
+        shortId: `#${(Math.abs([...username].reduce((a,c)=>a+c.charCodeAt(0),0))%9000+1000)}`,
+        companyId: null,
+        username,
+        password: '',
+      };
+      users.push(user);
+    }
     return HttpResponse.json({ user: { id: user.id, name: user.name, shortId: user.shortId, companyId: user.companyId } });
   }),
 

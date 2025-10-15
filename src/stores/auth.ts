@@ -68,8 +68,17 @@ export const useAuthStore = defineStore('auth', {
             const me = await fetchJson<MeResponse>(API.auth.me);
             this.setUser(me.user);
           } catch {
-            this.setUser(null);
-            this.setAccessToken(null);
+            // В офлайн-режиме оставим локальное состояние, не сбрасываем сразу
+            // Попробуем рефреш и повторный me
+            try {
+              await this.refresh();
+              const me2 = await fetchJson<MeResponse>(API.auth.me);
+              this.setUser(me2.user);
+            } catch {
+              // Если и это не удалось — только тогда считаем сессию недействительной
+              this.setUser(null);
+              this.setAccessToken(null);
+            }
           }
         }
       } finally {
