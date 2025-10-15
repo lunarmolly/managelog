@@ -4,10 +4,12 @@
 
 @layer components {
   .tasks-page { @apply h-full flex flex-col; }
+  .dashboard-page { @apply h-full flex flex-col; }
   .tasks-header { @apply h-14 flex items-center justify-between px-4 border-b bg-white; }
   .tasks-sidebar { @apply w-64 border-r bg-gray-50 p-3; }
   .tasks-main { @apply flex-1 flex overflow-hidden; }
   .tasks-content { @apply flex-1 overflow-x-auto overflow-y-hidden; }
+  .dashboard-content { @apply flex-1 overflow-auto; }
   .columns-row { @apply h-full flex gap-4 px-4 py-4; }
   .column { @apply w-80 h-full flex-shrink-0 bg-white border rounded-md flex flex-col; }
   .column-header { @apply px-3 py-2 border-b flex items-center justify-between; }
