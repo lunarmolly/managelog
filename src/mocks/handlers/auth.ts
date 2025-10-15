@@ -31,7 +31,21 @@ function validateAccess(token?: string | null) {
   }
 }
 
-const SET_REFRESH_COOKIE = 'refreshToken=ok; Path=/; SameSite=Lax; HttpOnly';
+function parseCookies(header: string | null): Record<string, string> {
+  const out: Record<string, string> = {};
+  if (!header) return out;
+  header.split(';').forEach(part => {
+    const [k, v] = part.split('=').map(s => s.trim());
+    if (k) out[k] = v || '';
+  });
+  return out;
+}
+
+function makeRefreshCookie(username: string) {
+  return `refreshToken=rt_${encodeURIComponent(username)}; Path=/; SameSite=Lax; HttpOnly`;
+}
+
+const SET_REFRESH_COOKIE = makeRefreshCookie('anon'); // будет заменен конкретным при ответах
 const CLEAR_REFRESH_COOKIE = 'refreshToken=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax; HttpOnly';
 
 export const handlers = [
@@ -53,7 +67,7 @@ export const handlers = [
     const accessToken = makeAccessToken(user.username);
     return HttpResponse.json(
       { accessToken, user: { id: user.id, name: user.name, shortId: user.shortId, companyId: user.companyId } },
-      { headers: { 'Set-Cookie': SET_REFRESH_COOKIE } },
+      { headers: { 'Set-Cookie': makeRefreshCookie(user.username) } },
     );
   }),
 
@@ -65,7 +79,7 @@ export const handlers = [
     const accessToken = makeAccessToken(user.username);
     return HttpResponse.json(
       { accessToken, user: { id: user.id, name: user.name, shortId: user.shortId, companyId: user.companyId } },
-      { headers: { 'Set-Cookie': SET_REFRESH_COOKIE } },
+      { headers: { 'Set-Cookie': makeRefreshCookie(user.username) } },
     );
   }),
 
@@ -82,14 +96,17 @@ export const handlers = [
 
   http.post(API.auth.refresh, async ({ request }) => {
     await delay(250);
-    // Проверяем наличие refresh cookie в запросе
-    const hasRefresh = (request as any).cookies?.refreshToken === 'ok';
-    if (!hasRefresh) return HttpResponse.json({ message: 'No refresh' }, { status: 401 });
-    // Упрощенно: выдаем новый accessToken с фиктивным sub
-    const accessToken = makeAccessToken('user');
+    const cookieHeader = request.headers.get('cookie');
+    const cookies = parseCookies(cookieHeader);
+    const rt = cookies['refreshToken'];
+    if (!rt || !rt.startsWith('rt_')) {
+      return HttpResponse.json({ message: 'No refresh' }, { status: 401 });
+    }
+    const username = decodeURIComponent(rt.slice(3));
+    const accessToken = makeAccessToken(username);
     return HttpResponse.json(
       { accessToken },
-      { headers: { 'Set-Cookie': SET_REFRESH_COOKIE } },
+      { headers: { 'Set-Cookie': makeRefreshCookie(username) } },
     );
   }),
 
