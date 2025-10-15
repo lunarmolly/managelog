@@ -74,3 +74,25 @@ export async function reorderColumns(companyId: string, projectId: string, colum
     { method: 'POST', body: JSON.stringify({ columnIds }) }
   );
 }
+
+// Комментарии
+export async function createComment(companyId: string, projectId: string, taskId: string, data: { text: string }) {
+  return fetchJson<{ comment: any }>(
+    `${API_BASE}/${companyId}/projects/${projectId}/tasks/${taskId}/comments`,
+    { method: 'POST', body: JSON.stringify(data) }
+  );
+}
+
+export async function updateComment(companyId: string, projectId: string, taskId: string, commentId: string, data: { text: string }) {
+  return fetchJson<{ comment: any }>(
+    `${API_BASE}/${companyId}/projects/${projectId}/tasks/${taskId}/comments/${commentId}`,
+    { method: 'PATCH', body: JSON.stringify(data) }
+  );
+}
+
+export async function deleteComment(companyId: string, projectId: string, taskId: string, commentId: string) {
+  return fetchJson<void>(
+    `${API_BASE}/${companyId}/projects/${projectId}/tasks/${taskId}/comments/${commentId}`,
+    { method: 'DELETE' }
+  );
+}

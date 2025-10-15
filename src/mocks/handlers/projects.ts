@@ -151,4 +151,34 @@ export const projectHandlers = [
     
     return HttpResponse.json({ ok: true, seq: ++seq });
   }),
+
+  // Комментарии
+  http.post('/api/companies/:companyId/projects/:projectId/tasks/:taskId/comments', async ({ request }) => {
+    await delay(200);
+    const body = await request.json() as any;
+    const comment = {
+      id: `comment_${Date.now()}`,
+      text: body.text,
+      author: 'user1',
+      createdAt: new Date().toISOString(),
+    };
+    return HttpResponse.json({ comment });
+  }),
+
+  http.patch('/api/companies/:companyId/projects/:projectId/tasks/:taskId/comments/:commentId', async ({ request }) => {
+    await delay(200);
+    const body = await request.json() as any;
+    const comment = {
+      id: `comment_${Date.now()}`,
+      text: body.text,
+      author: 'user1',
+      createdAt: new Date().toISOString(),
+    };
+    return HttpResponse.json({ comment });
+  }),
+
+  http.delete('/api/companies/:companyId/projects/:projectId/tasks/:taskId/comments/:commentId', async () => {
+    await delay(200);
+    return new HttpResponse(null, { status: 204 });
+  }),
 ];
