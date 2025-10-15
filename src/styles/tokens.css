@@ -1,0 +1,14 @@
+:root {
+  --ml-bg: #ffffff;
+  --ml-fg: #0f172a;
+  --ml-accent: #5a84ff;
+  --ml-radius: 10px;
+}
+
+.dark {
+  --ml-bg: #0b1020;
+  --ml-fg: #e5e7eb;
+  --ml-accent: #7e9fff;
+}
+
+
