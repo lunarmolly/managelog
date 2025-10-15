@@ -6,6 +6,7 @@ const routes = [
   { path: '/', name: 'home', component: () => import('../views/HomeRedirect.vue') },
   { path: '/auth', name: 'auth', component: () => import('../views/AuthView.vue') },
   { path: '/dashboard', name: 'dashboard', component: () => import('../views/DashboardView.vue') },
+  { path: '/projects/:projectId/tasks', name: 'project-tasks', component: () => import('../views/projects/ProjectTasksView.vue') },
   { path: '/403', name: 'error-403', component: () => import('../views/errors/Error403.vue') },
   { path: '/404', name: 'error-404', component: () => import('../views/errors/Error404.vue') },
   { path: '/500', name: 'error-500', component: () => import('../views/errors/Error500.vue') },
