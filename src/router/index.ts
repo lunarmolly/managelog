@@ -6,6 +6,7 @@ const routes = [
   { path: '/', name: 'home', component: () => import('../views/HomeRedirect.vue') },
   { path: '/auth', name: 'auth', component: () => import('../views/AuthView.vue') },
   { path: '/dashboard', name: 'dashboard', component: () => import('../views/DashboardView.vue') },
+  { path: '/:pathMatch(.*)*', name: 'not-found', component: () => import('../views/NotFoundView.vue') },
 ];
 
 const router = createRouter({
