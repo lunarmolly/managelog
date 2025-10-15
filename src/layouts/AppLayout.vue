@@ -3,7 +3,7 @@
     <header class="tasks-header">
       <nav class="flex items-center gap-4">
         <RouterLink to="/dashboard" class="underline">Dashboard</RouterLink>
-        <RouterLink to="/projects/1/tasks" class="underline">Проекты</RouterLink>
+        <RouterLink to="/projects" class="underline">Проекты</RouterLink>
       </nav>
       <div class="flex items-center gap-3">
         <select class="border rounded px-2 py-1">
@@ -24,7 +24,7 @@
 </template>
 
 <script setup lang="ts">
-import '@/styles/tasks.css';
+// Стили подключены глобально в main.ts
 </script>
 
 
