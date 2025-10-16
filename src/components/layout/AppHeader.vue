@@ -41,8 +41,6 @@
       <!-- Profile -->
       <div class="header-profile">
         <div class="profile-avatar">
-          <div class="avatar-circle avatar-bg-1"></div>
-          <div class="avatar-circle avatar-bg-2"></div>
           <div class="avatar-photo">U</div>
         </div>
       </div>
