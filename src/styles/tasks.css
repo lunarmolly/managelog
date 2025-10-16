@@ -10,6 +10,93 @@
   .tasks-main { @apply flex-1 flex overflow-hidden; }
   .tasks-content { @apply flex-1 overflow-x-auto overflow-y-hidden; }
   .dashboard-content { @apply flex-1 overflow-auto; }
+  
+  /* Global Header */
+  .global-header {
+    @apply fixed z-50;
+    width: calc(100% - 20px);
+    height: 70px;
+    border-radius: 40px;
+    padding: 0 5px;
+    margin: 10px;
+    top: 0;
+    left: 0;
+  }
+  .header-container {
+    @apply h-full w-full flex items-center justify-between;
+    background: #912138;
+    opacity: 0.5;
+    backdrop-filter: blur(50px);
+    border-radius: 40px;
+    padding: 0 5px;
+  }
+  .header-logo {
+    @apply flex items-center;
+    height: 70px;
+  }
+  .logo-placeholder {
+    @apply text-2xl font-bold text-white;
+  }
+  .header-nav {
+    @apply flex items-center gap-0;
+    padding: 0 10px;
+  }
+  .nav-item {
+    @apply px-4 py-2 text-white font-medium;
+  }
+  .nav-item:hover {
+    @apply text-gray-200;
+  }
+  .nav-item.active {
+    @apply text-white font-semibold;
+  }
+  .header-profile {
+    @apply flex items-center;
+  }
+  .profile-avatar {
+    @apply w-16 h-16 relative;
+  }
+  .avatar-circle {
+    @apply absolute inset-0 rounded-full;
+    width: 62px;
+    height: 62px;
+  }
+  .avatar-bg-1 {
+    background: conic-gradient(from 0deg, #85AFE4 0deg, #85AFE4 216deg, transparent 216deg, transparent 360deg);
+  }
+  .avatar-bg-2 {
+    background: conic-gradient(from 0deg, transparent 0deg, transparent 330deg, #85AFE4 330deg, #85AFE4 360deg);
+  }
+  .avatar-photo {
+    @apply absolute inset-0 rounded-full;
+    width: 50px;
+    height: 50px;
+    top: 6px;
+    left: 6px;
+    background: #E1EAF8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #912138;
+    font-weight: bold;
+    font-size: 20px;
+  }
+  
+  /* App Layout */
+  .app-layout {
+    @apply min-h-screen;
+    background-image: url('/images/backgrounds/bg.jpg');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+  }
+  .main-content {
+    @apply min-h-screen;
+  }
+  .main-content.with-header {
+    padding-top: 90px;
+  }
   .columns-row { @apply h-full flex gap-4 px-4 py-4; }
   .column { @apply w-80 h-full flex-shrink-0 bg-white border rounded-md flex flex-col; }
   .column-header { @apply px-3 py-2 border-b flex items-center justify-between; }
