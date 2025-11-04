@@ -5,7 +5,7 @@
       <div class="w-auto h-[71px] m-0">
         <img src="/images/logos/logo.png" alt="logo" class="h-[71px] w-auto" />
       </div>
-      <p class="text-2xl font-bold text-white leading-6 text-center w-[440px] h-16 m-0">
+      <p class="text-2xl font-bold text-white leading-6 text-center w-[440px] h-16 m-0 select-none">
         Управляйте проектами, аналитикой и командой в одном пространстве
       </p>
     </div>
@@ -44,7 +44,7 @@
           <form @submit.prevent="handleLogin" novalidate>
             <div class="grid grid-cols-[249px_249px] gap-x-[10px] gap-y-6">
               <div class="col-span-2 flex flex-col">
-                <label class="block mb-2  text-[15px] font-medium text-white">никнейм</label>
+                <label class="block mb-2 text-[15px] font-medium text-white select-none">никнейм</label>
                 <input
                   v-model="loginForm.username"
                   type="text"
@@ -60,7 +60,7 @@
                 </span>
               </div>
               <div class="col-span-2 flex flex-col">
-                <label class="block mb-2  text-[15px] font-medium text-white">пароль</label>
+                <label class="block mb-2 text-[15px] font-medium text-white select-none">пароль</label>
                 <input
                   v-model="loginForm.password"
                   type="password"
@@ -93,7 +93,7 @@
             <div class="grid grid-cols-[249px_249px] gap-x-[10px] gap-y-6">
               <!-- Имя -->
               <div class="flex flex-col">
-                <label class="block mb-2  text-[15px] font-medium text-white">имя</label>
+                <label class="block mb-2 text-[15px] font-medium text-white select-none">имя</label>
                 <input
                   v-model="registerForm.firstName"
                   type="text"
@@ -112,7 +112,7 @@
               </div>
               <!-- Фамилия -->
               <div class="flex flex-col">
-                <label class="block mb-2  text-[15px] font-medium text-white">фамилия</label>
+                <label class="block mb-2 text-[15px] font-medium text-white select-none">фамилия</label>
                 <input
                   v-model="registerForm.lastName"
                   type="text"
@@ -131,7 +131,7 @@
               </div>
               <!-- Email -->
               <div class="col-span-2 flex flex-col">
-                <label class="block mb-2  text-[15px] font-medium text-white">email</label>
+                <label class="block mb-2 text-[15px] font-medium text-white select-none">email</label>
                 <input
                   v-model="registerForm.email"
                   type="email"
@@ -150,7 +150,7 @@
               </div>
               <!-- Никнейм -->
               <div class="col-span-2 flex flex-col">
-                <label class="block mb-2  text-[15px] font-medium text-white">никнейм</label>
+                <label class="block mb-2 text-[15px] font-medium text-white select-none">никнейм</label>
                 <input
                   v-model="registerForm.username"
                   type="text"
@@ -169,7 +169,7 @@
               </div>
               <!-- Пароль -->
               <div class="flex flex-col">
-                <label class="block mb-2  text-[15px] font-medium text-white">пароль</label>
+                <label class="block mb-2 text-[15px] font-medium text-white select-none">пароль</label>
                 <input
                   v-model="registerForm.password"
                   type="password"
@@ -189,7 +189,7 @@
               </div>
               <!-- Повторите пароль -->
               <div class="flex flex-col">
-                <label class="block mb-2  text-[15px] font-medium text-white">повторите пароль</label>
+                <label class="block mb-2 text-[15px] font-medium text-white select-none">повторите пароль</label>
                 <input
                   v-model="registerForm.confirmPassword"
                   type="password"
@@ -249,7 +249,7 @@
               </div>
               <!-- Название компании -->
               <div v-if="registerForm.createCompany" class="col-span-2 flex flex-col">
-                <label class="block mb-2  text-[15px] font-medium text-white">название компании</label>
+                <label class="block mb-2 text-[15px] font-medium text-white select-none">название компании</label>
                 <input
                   v-model="registerForm.companyName"
                   type="text"
