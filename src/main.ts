@@ -3,7 +3,7 @@ import { pinia } from './stores';
 import App from './App.vue';
 import router from './router';
 import './styles/index.css';
-import './styles/global.css';
+import './styles/app.css';
 import './styles/tasks.css';
 
 async function bootstrap() {

@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Layout Example</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    html {
+      margin: 0;
+      height: 100%;
+    }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: system-ui, sans-serif;
+      background-image: url('../public/images/backgrounds/bg.jpg');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+    }
+    .content {
+      display: flex;
+      height: 100vh;
+      width: 100%;
+    }
+    .overview {
+      width: 672px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding-left: 152px;
+      padding-top: 0;
+      padding-right: 0;
+      padding-bottom: 0;
+      gap: 36px;
+      box-sizing: border-box;
+    }
+    .logo {
+      width: auto;
+      height: 71px;
+      margin: 0;
+    }
+    .logo img {
+      height: 71px;
+      width: auto;
+    }
+    .overview-text {
+      font-family: 'Inter', sans-serif;
+      font-size: 24px;
+      font-weight: bold;
+      color: #ffffff;
+      line-height: 1.5;
+      text-align: center;
+      width: 440px;
+      height: 64px;
+      margin: 0;
+    }
+    .auth {
+      width: 556px;
+      flex-grow: 1;
+      
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .auth-form {
+      min-width: 556px;
+      width: fit-content;
+      height: fit-content;
+      padding: 40px;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      border-radius: 40px;
+      background: rgba(255, 255, 255, 0.5);
+    }
+    .auth-tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 32px;
+    }
+    .auth-tab {
+      height: 48px;
+      padding: 0 24px;
+      background: rgba(255, 255, 255, 0.3);
+      border: none;
+      color: #040910;
+      font-family: 'Inter', sans-serif;
+      font-size: 24px;
+      font-weight: 500;
+      cursor: pointer;
+      border-radius: 9999px;
+      transition: all 0.2s;
+      box-sizing: border-box;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: fit-content;
+      white-space: nowrap;
+    }
+    .auth-tab.active {
+      background-image: url('../public/images/backgrounds/bg.jpg');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      color: #ffffff;
+    }
+    .auth-tab:hover {
+      opacity: 0.9;
+    }
+    .form-container {
+      flex: 1;
+      overflow-y: auto;
+    }
+    .form-container form {
+      display: grid;
+      grid-template-columns: 249px 249px;
+      row-gap: 24px;
+      column-gap: 10px;
+    }
+    .form-row {
+      display: contents;
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+    }
+    .form-group.full-width {
+      grid-column: 1 / -1;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-family: 'Inter', sans-serif;
+      font-size: 15px;
+      font-weight: 500;
+      color: #ffffff;
+    }
+    .form-group input {
+      width: 100%;
+      height: 48px;
+      padding: 12px 16px;
+      background: transparent;
+      border: 1px solid #ffffff;
+      border-radius: 9999px;
+      color: #e5e7eb;
+      font-size: 14px;
+      box-sizing: border-box;
+    }
+    .form-group input:focus {
+      outline: none;
+      border-color: #ffffff;
+    }
+    .form-group input::placeholder {
+      color: #6b7280;
+    }
+    .form-group .error-message {
+      font-family: 'Inter', sans-serif;
+      font-size: 15px;
+      font-weight: 400;
+      color: #912138;
+      margin-top: 4px;
+      margin-bottom: 0;
+      display: none;
+    }
+    .form-group.has-error .error-message {
+      display: block;
+    }
+    .form-group.has-error input {
+      border-color: #912138;
+    }
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 0;
+      flex-wrap: nowrap;
+    }
+    .checkbox-wrapper.has-error .checkbox-group {
+      border: 1px solid #912138;
+      border-radius: 4px;
+      padding: 8px;
+      margin-top: -8px;
+      margin-bottom: 8px;
+    }
+    .checkbox-wrapper {
+      display: flex;
+      flex-direction: column;
+      grid-column: 1 / -1;
+    }
+    .checkbox-wrapper .error-message {
+      font-family: 'Inter', sans-serif;
+      font-size: 15px;
+      font-weight: 400;
+      color: #912138;
+      margin-top: 4px;
+      margin-bottom: 0;
+      display: none;
+    }
+    .checkbox-wrapper.has-error .error-message {
+      display: block;
+    }
+    .checkbox-group.full-width {
+      grid-column: 1 / -1;
+    }
+    .checkbox-group input[type="checkbox"] {
+      width: 24px;
+      height: 24px;
+      min-width: 24px;
+      min-height: 24px;
+      flex-shrink: 0;
+      cursor: pointer;
+      appearance: none;
+      -webkit-appearance: none;
+      border: 1px solid #ffffff;
+      border-radius: 4px;
+      background: transparent;
+      box-sizing: border-box;
+      position: relative;
+      margin: 0;
+    }
+    .checkbox-group input[type="checkbox"]:checked {
+      background: #85AFE4;
+      border-color: #85AFE4;
+    }
+    .checkbox-group input[type="checkbox"]:checked::after {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 6px;
+      height: 10px;
+      border: solid white;
+      border-width: 0 2px 2px 0;
+      transform: translate(-50%, -60%) rotate(45deg);
+    }
+    .checkbox-group label {
+      font-family: 'Inter', sans-serif;
+      font-size: 15px;
+      font-weight: 500;
+      color: #ffffff;
+      cursor: default;
+      line-height: 1.5;
+      user-select: none;
+    }
+    .checkbox-group label a {
+      color: #912138;
+      text-decoration: none;
+      text-decoration-color: #912138;
+      text-decoration-thickness: 6.5%;
+      text-underline-offset: 15%;
+      text-decoration-line: underline;
+      cursor: pointer;
+    }
+    .checkbox-group label a:hover {
+      opacity: 0.8;
+    }
+    .company-name-group {
+      display: none;
+      margin-top: 0;
+    }
+    .company-name-group.visible {
+      display: flex;
+      flex-direction: column;
+      grid-column: 1 / -1;
+    }
+    .company-checkbox-wrapper {
+      grid-column: 1;
+    }
+    .submit-btn {
+      width: 100%;
+      height: 48px;
+      padding: 0;
+      background-image: url('../public/images/backgrounds/bg.jpg');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      border: none;
+      border-radius: 9999px;
+      color: #ffffff;
+      font-family: 'Inter', sans-serif;
+      font-size: 24px;
+      font-weight: 500;
+      cursor: pointer;
+      grid-column: 1 / -1;
+      transition: opacity 0.2s;
+      box-sizing: border-box;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .submit-btn:hover {
+      opacity: 0.9;
+    }
+    .login-form {
+      display: none;
+    }
+    .login-form.active {
+      display: block;
+    }
+    .register-form {
+      display: none;
+    }
+    .register-form.active {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="content">
+    <div class="overview">
+      <div class="logo"><img src="../public/images/logos/logo.png" alt="logo"></div>
+      <p class="overview-text">
+        Управляйте проектами, аналитикой и командой в одном пространстве
+      </p>
+    </div>
+    <div class="auth">
+      <div class="auth-form">
+        <div class="auth-tabs">
+          <button class="auth-tab active" data-tab="login">вход</button>
+          <button class="auth-tab" data-tab="register">регистрация</button>
+        </div>
+
+        <!-- Форма входа -->
+        <div class="form-container login-form active" id="loginForm">
+          <form action="">
+            <div class="form-group" style="grid-column: span 2;">
+              <label>никнейм</label>
+              <input type="email" required>
+            </div>
+            <div class="form-group" style="grid-column: span 2;">
+              <label>пароль</label>
+              <input type="password" required>
+            </div>
+            <button type="submit" class="submit-btn">войти</button>
+          </form>
+        </div>
+
+        <!-- Форма регистрации -->
+        <div class="form-container register-form" id="registerForm">
+          <form id="registerFormElement" action="" novalidate>
+            <div class="form-group">
+              <label>имя</label>
+              <input type="text" id="firstName" name="firstName" maxlength="24" required>
+              <span class="error-message"></span>
+            </div>
+            <div class="form-group">
+              <label>фамилия</label>
+              <input type="text" id="lastName" name="lastName" maxlength="24" required>
+              <span class="error-message"></span>
+            </div>
+            <div class="form-group" style="grid-column: span 2;">
+              <label>email</label>
+              <input type="email" id="email" name="email" maxlength="56" required>
+              <span class="error-message"></span>
+            </div>
+            <div class="form-group" style="grid-column: span 2;">
+              <label>никнейм</label>
+              <input type="text" id="username" name="username" maxlength="56" required>
+              <span class="error-message"></span>
+            </div>
+            <div class="form-group">
+              <label>пароль</label>
+              <input type="password" id="password" name="password" minlength="8" maxlength="24" required>
+              <span class="error-message"></span>
+            </div>
+            <div class="form-group">
+              <label>повторите пароль</label>
+              <input type="password" id="confirmPassword" name="confirmPassword" required>
+              <span class="error-message"></span>
+            </div>
+            <div class="checkbox-wrapper">
+              <div class="checkbox-group">
+                <input type="checkbox" id="personalData" required>
+                <label><a href="https://google.com" target="_blank">cогласие</a> на обработку персональных данных</label>
+              </div>
+              <span class="error-message"></span>
+            </div>
+            <div class="checkbox-wrapper">
+              <div class="checkbox-group">
+                <input type="checkbox" id="marketing">
+                <label><a href="https://google.com" target="_blank">cогласие</a> на получение рекламных сообщений</label>
+              </div>
+            </div>
+            <div class="checkbox-wrapper">
+              <div class="checkbox-group company-checkbox-wrapper">
+                <input type="checkbox" id="createCompany">
+                <label>cоздать компанию</label>
+              </div>
+            </div>
+            <div class="form-group company-name-group" id="companyNameGroup">
+              <label>название компании</label>
+              <input type="text" id="companyName" name="companyName" maxlength="56">
+              <span class="error-message"></span>
+            </div>
+            <button type="submit" class="submit-btn">зарегистрироваться</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    // Переключение между вкладками
+    document.querySelectorAll('.auth-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        const tabName = tab.dataset.tab;
+        
+        // Обновляем активную вкладку
+        document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        
+        // Показываем/скрываем формы
+        document.getElementById('loginForm').classList.toggle('active', tabName === 'login');
+        document.getElementById('registerForm').classList.toggle('active', tabName === 'register');
+      });
+    });
+
+    // Показ/скрытие поля названия компании
+    document.getElementById('createCompany').addEventListener('change', (e) => {
+      const companyNameGroup = document.getElementById('companyNameGroup');
+      const companyNameInput = document.getElementById('companyName');
+      
+      if (e.target.checked) {
+        companyNameGroup.classList.add('visible');
+        companyNameInput.required = true;
+      } else {
+        companyNameGroup.classList.remove('visible');
+        companyNameInput.required = false;
+        companyNameInput.value = '';
+        clearError(companyNameInput);
+      }
+    });
+
+    // Валидация
+    function showError(input, message) {
+      const formGroup = input.closest('.form-group');
+      formGroup.classList.add('has-error');
+      const errorSpan = formGroup.querySelector('.error-message');
+      if (errorSpan) {
+        errorSpan.textContent = message;
+      }
+    }
+
+    function clearError(input) {
+      const formGroup = input.closest('.form-group');
+      formGroup.classList.remove('has-error');
+      const errorSpan = formGroup.querySelector('.error-message');
+      if (errorSpan) {
+        errorSpan.textContent = '';
+      }
+    }
+
+    // Валидация имени и фамилии (кириллица, латиница, дефис)
+    function validateName(value) {
+      return /^[а-яА-ЯёЁa-zA-Z\s-]+$/.test(value);
+    }
+
+    // Валидация email (латиница и символы - _ . @)
+    function validateEmail(value) {
+      return /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(value);
+    }
+
+    // Валидация никнейма (латиница и символы . _)
+    function validateUsername(value) {
+      return /^[a-zA-Z0-9._]+$/.test(value);
+    }
+
+    // Валидация пароля (латиница и специальные символы)
+    function validatePassword(value) {
+      return /^[a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]+$/.test(value);
+    }
+
+    // Валидация названия компании (кириллица, латиница, дефис)
+    function validateCompanyName(value) {
+      return /^[а-яА-ЯёЁa-zA-Z0-9\s-]+$/.test(value);
+    }
+
+    // Валидация поля
+    function validateField(input) {
+      const value = input.value.trim();
+      const fieldName = input.id;
+
+      // Проверка обязательности
+      if (input.required && !value) {
+        showError(input, 'Поле обязательно для заполнения');
+        return false;
+      }
+
+      if (!value && !input.required) {
+        clearError(input);
+        return true;
+      }
+
+      let isValid = true;
+      let errorMessage = '';
+
+      switch(fieldName) {
+        case 'firstName':
+        case 'lastName':
+          if (value.length > 24) {
+            errorMessage = 'Максимум 24 символа';
+            isValid = false;
+          } else if (!validateName(value)) {
+            errorMessage = 'Только буквы кириллицы, латиницы и символ -';
+            isValid = false;
+          }
+          break;
+        case 'email':
+          if (value.length > 56) {
+            errorMessage = 'Максимум 56 символов';
+            isValid = false;
+          } else if (!validateEmail(value)) {
+            errorMessage = 'Только буквы латиницы и символы - _ . @';
+            isValid = false;
+          }
+          break;
+        case 'username':
+          if (value.length > 56) {
+            errorMessage = 'Максимум 56 символов';
+            isValid = false;
+          } else if (!validateUsername(value)) {
+            errorMessage = 'Только буквы латиницы и символы . _';
+            isValid = false;
+          }
+          break;
+        case 'password':
+          if (value.length < 8 || value.length > 24) {
+            errorMessage = 'Пароль должен быть от 8 до 24 символов';
+            isValid = false;
+          } else if (!validatePassword(value)) {
+            errorMessage = 'Только буквы латиницы и специальные символы';
+            isValid = false;
+          }
+          break;
+        case 'confirmPassword':
+          const password = document.getElementById('password').value;
+          if (value !== password) {
+            errorMessage = 'Пароли не совпадают';
+            isValid = false;
+          }
+          break;
+        case 'companyName':
+          if (value.length > 56) {
+            errorMessage = 'Максимум 56 символов';
+            isValid = false;
+          } else if (!validateCompanyName(value)) {
+            errorMessage = 'Только буквы кириллицы, латиницы и символ -';
+            isValid = false;
+          }
+          break;
+      }
+
+      if (isValid) {
+        clearError(input);
+      } else {
+        showError(input, errorMessage);
+      }
+
+      return isValid;
+    }
+
+    // Валидация при потере фокуса
+    const formInputs = document.querySelectorAll('#registerFormElement input[type="text"], #registerFormElement input[type="email"], #registerFormElement input[type="password"]');
+    formInputs.forEach(input => {
+      input.addEventListener('blur', () => validateField(input));
+      input.addEventListener('input', () => {
+        if (input.closest('.form-group').classList.contains('has-error')) {
+          validateField(input);
+        }
+      });
+    });
+
+    // Валидация пароля при изменении
+    document.getElementById('password').addEventListener('input', () => {
+      const confirmPassword = document.getElementById('confirmPassword');
+      if (confirmPassword.value) {
+        validateField(confirmPassword);
+      }
+    });
+
+    // Очистка ошибки согласия при изменении
+    document.getElementById('personalData').addEventListener('change', (e) => {
+      const personalDataWrapper = e.target.closest('.checkbox-wrapper');
+      const personalDataError = personalDataWrapper.querySelector('.error-message');
+      if (e.target.checked) {
+        personalDataWrapper.classList.remove('has-error');
+        if (personalDataError) {
+          personalDataError.textContent = '';
+        }
+      }
+    });
+
+    // Валидация формы при отправке
+    document.getElementById('registerFormElement').addEventListener('submit', (e) => {
+      e.preventDefault();
+      
+      let isFormValid = true;
+
+      // Валидация всех полей
+      formInputs.forEach(input => {
+        if (!validateField(input)) {
+          isFormValid = false;
+        }
+      });
+
+      // Проверка согласия на обработку ПД
+      const personalDataCheckbox = document.getElementById('personalData');
+      const personalDataWrapper = personalDataCheckbox.closest('.checkbox-wrapper');
+      const personalDataError = personalDataWrapper.querySelector('.error-message');
+      
+      if (!personalDataCheckbox.checked) {
+        personalDataWrapper.classList.add('has-error');
+        if (personalDataError) {
+          personalDataError.textContent = 'Согласие на обработку персональных данных обязательно';
+        }
+        isFormValid = false;
+      } else {
+        personalDataWrapper.classList.remove('has-error');
+        if (personalDataError) {
+          personalDataError.textContent = '';
+        }
+      }
+
+      // Проверка названия компании, если чекбокс нажат
+      const createCompanyCheckbox = document.getElementById('createCompany');
+      if (createCompanyCheckbox.checked) {
+        const companyNameInput = document.getElementById('companyName');
+        if (!validateField(companyNameInput)) {
+          isFormValid = false;
+        }
+      }
+
+      if (isFormValid) {
+        // Форма валидна, можно отправить
+        console.log('Форма валидна');
+        // Здесь можно добавить отправку формы
+      }
+    });
+  </script>
+</body>
+</html>
