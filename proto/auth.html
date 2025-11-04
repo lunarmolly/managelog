@@ -33,10 +33,7 @@
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      padding-left: 152px;
-      padding-top: 0;
-      padding-right: 0;
-      padding-bottom: 0;
+      padding: 0 0 0 152px;
       gap: 36px;
       box-sizing: border-box;
     }
@@ -63,7 +60,6 @@
     .auth {
       width: 556px;
       flex-grow: 1;
-      
       display: flex;
       justify-content: center;
       align-items: center;
@@ -123,15 +119,9 @@
       row-gap: 24px;
       column-gap: 10px;
     }
-    .form-row {
-      display: contents;
-    }
     .form-group {
       display: flex;
       flex-direction: column;
-    }
-    .form-group.full-width {
-      grid-column: 1 / -1;
     }
     .form-group label {
       display: block;
@@ -155,9 +145,6 @@
     .form-group input:focus {
       outline: none;
       border-color: #ffffff;
-    }
-    .form-group input::placeholder {
-      color: #6b7280;
     }
     .form-group .error-message {
       font-family: 'Inter', sans-serif;
@@ -204,9 +191,6 @@
     }
     .checkbox-wrapper.has-error .error-message {
       display: block;
-    }
-    .checkbox-group.full-width {
-      grid-column: 1 / -1;
     }
     .checkbox-group input[type="checkbox"] {
       width: 24px;
@@ -268,9 +252,6 @@
       display: flex;
       flex-direction: column;
       grid-column: 1 / -1;
-    }
-    .company-checkbox-wrapper {
-      grid-column: 1;
     }
     .submit-btn {
       width: 100%;
@@ -388,7 +369,7 @@
               </div>
             </div>
             <div class="checkbox-wrapper">
-              <div class="checkbox-group company-checkbox-wrapper">
+              <div class="checkbox-group">
                 <input type="checkbox" id="createCompany">
                 <label>cоздать компанию</label>
               </div>
