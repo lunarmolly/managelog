@@ -309,14 +309,16 @@
 
         <!-- Форма входа -->
         <div class="form-container login-form active" id="loginForm">
-          <form action="">
+          <form id="loginFormElement" action="" novalidate>
             <div class="form-group" style="grid-column: span 2;">
               <label>никнейм</label>
-              <input type="email" required>
+              <input type="text" id="loginUsername" name="loginUsername" required>
+              <span class="error-message"></span>
             </div>
             <div class="form-group" style="grid-column: span 2;">
               <label>пароль</label>
-              <input type="password" required>
+              <input type="password" id="loginPassword" name="loginPassword" required>
+              <span class="error-message"></span>
             </div>
             <button type="submit" class="submit-btn">войти</button>
           </form>
@@ -399,6 +401,54 @@
         document.getElementById('loginForm').classList.toggle('active', tabName === 'login');
         document.getElementById('registerForm').classList.toggle('active', tabName === 'register');
       });
+    });
+
+    // Валидация формы входа
+    document.getElementById('loginFormElement').addEventListener('submit', (e) => {
+      e.preventDefault();
+      
+      let isFormValid = true;
+      const loginUsername = document.getElementById('loginUsername');
+      const loginPassword = document.getElementById('loginPassword');
+      
+      // Проверка никнейма
+      if (!loginUsername.value.trim()) {
+        showError(loginUsername, 'Поле обязательно для заполнения');
+        isFormValid = false;
+      } else {
+        clearError(loginUsername);
+      }
+      
+      // Проверка пароля
+      if (!loginPassword.value.trim()) {
+        showError(loginPassword, 'Поле обязательно для заполнения');
+        isFormValid = false;
+      } else {
+        clearError(loginPassword);
+      }
+      
+      if (isFormValid) {
+        // Форма валидна, можно отправить
+        console.log('Форма входа валидна');
+        // Здесь можно добавить отправку формы
+      }
+    });
+
+    // Валидация при потере фокуса для формы входа
+    document.getElementById('loginUsername').addEventListener('blur', function() {
+      if (!this.value.trim()) {
+        showError(this, 'Поле обязательно для заполнения');
+      } else {
+        clearError(this);
+      }
+    });
+    
+    document.getElementById('loginPassword').addEventListener('blur', function() {
+      if (!this.value.trim()) {
+        showError(this, 'Поле обязательно для заполнения');
+      } else {
+        clearError(this);
+      }
     });
 
     // Показ/скрытие поля названия компании
