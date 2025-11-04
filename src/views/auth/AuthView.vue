@@ -344,7 +344,7 @@ function validateCompanyName(value: string): boolean {
 function validateLoginField(field: 'username' | 'password'): void {
   const value = loginForm[field].trim();
   if (!value) {
-    loginErrors[field] = 'Поле обязательно для заполнения';
+    loginErrors[field] = 'поле обязательно для заполнения';
   } else {
     delete loginErrors[field];
   }
@@ -360,7 +360,7 @@ function validateField(field: keyof typeof registerForm): void {
 
   // Проверка обязательности
   if ((field === 'firstName' || field === 'lastName' || field === 'email' || field === 'username' || field === 'password' || field === 'confirmPassword') && !value) {
-    registerErrors[field] = 'Поле обязательно для заполнения';
+    registerErrors[field] = 'поле обязательно для заполнения';
     return;
   }
 
@@ -371,7 +371,7 @@ function validateField(field: keyof typeof registerForm): void {
       return;
     }
     if (!value) {
-      registerErrors[field] = 'Поле обязательно для заполнения';
+      registerErrors[field] = 'поле обязательно для заполнения';
       return;
     }
   }
@@ -388,52 +388,52 @@ function validateField(field: keyof typeof registerForm): void {
     case 'firstName':
     case 'lastName':
       if (value.length > 24) {
-        errorMessage = 'Максимум 24 символа';
+        errorMessage = 'максимум 24 символа';
         isValid = false;
       } else if (!validateName(value)) {
-        errorMessage = 'Только буквы кириллицы, латиницы и символ -';
+        errorMessage = 'только буквы кириллицы, латиницы и символ -';
         isValid = false;
       }
       break;
     case 'email':
       if (value.length > 56) {
-        errorMessage = 'Максимум 56 символов';
+        errorMessage = 'максимум 56 символов';
         isValid = false;
       } else if (!validateEmail(value)) {
-        errorMessage = 'Только буквы латиницы и символы - _ . @';
+        errorMessage = 'только буквы латиницы и символы - _ . @';
         isValid = false;
       }
       break;
     case 'username':
       if (value.length > 56) {
-        errorMessage = 'Максимум 56 символов';
+        errorMessage = 'максимум 56 символов';
         isValid = false;
       } else if (!validateUsername(value)) {
-        errorMessage = 'Только буквы латиницы и символы . _';
+        errorMessage = 'только буквы латиницы и символы . _';
         isValid = false;
       }
       break;
     case 'password':
       if (value.length < 8 || value.length > 24) {
-        errorMessage = 'Пароль должен быть от 8 до 24 символов';
+        errorMessage = 'пароль должен быть от 8 до 24 символов';
         isValid = false;
       } else if (!validatePassword(value)) {
-        errorMessage = 'Только буквы латиницы и специальные символы';
+        errorMessage = 'только буквы латиницы и специальные символы';
         isValid = false;
       }
       break;
     case 'confirmPassword':
       if (value !== registerForm.password) {
-        errorMessage = 'Пароли не совпадают';
+        errorMessage = 'пароли не совпадают';
         isValid = false;
       }
       break;
     case 'companyName':
       if (value.length > 56) {
-        errorMessage = 'Максимум 56 символов';
+        errorMessage = 'максимум 56 символов';
         isValid = false;
       } else if (!validateCompanyName(value)) {
-        errorMessage = 'Только буквы кириллицы, латиницы и символ -';
+        errorMessage = 'только буквы кириллицы, латиницы и символ -';
         isValid = false;
       }
       break;
@@ -503,19 +503,21 @@ async function handleLogin(): Promise<void> {
     await router.push('/dashboard');
   } catch (error: any) {
     // Обработка ошибок API
-    if (error.status === 422 || error.status === 400) {
+    if (error.status === 422) {
+      // Ошибки валидации - показываем под полями
       const errorData = error.data;
-      if (errorData.errors) {
-        // Ошибки валидации полей
+      if (errorData?.errors) {
         Object.keys(errorData.errors).forEach(field => {
           const fieldName = field === 'login' || field === 'email' ? 'username' : field;
           loginErrors[fieldName] = Array.isArray(errorData.errors[field]) ? errorData.errors[field][0] : errorData.errors[field];
         });
       } else {
-        loginErrors.username = error.message || 'Неверный логин или пароль';
+        loginErrors.username = errorData?.detail || errorData?.message || 'неверный логин или пароль';
       }
+    } else if (error.status === 409) {
+      loginErrors.username = 'пользователь уже существует';
     } else {
-      loginErrors.username = error.message || 'Произошла ошибка при входе';
+      loginErrors.username = 'неизвестная ошибка. попробуйте позже.';
     }
   } finally {
     isLoginLoading.value = false;
@@ -536,13 +538,13 @@ async function handleRegister(): Promise<void> {
 
   // Проверка согласия на обработку ПД
   if (!registerForm.personalData) {
-    registerErrors.personalData = 'Согласие на обработку персональных данных обязательно';
+    registerErrors.personalData = 'согласие на обработку персональных данных обязательно';
   }
 
   // Проверка названия компании
   if (registerForm.createCompany) {
     if (!registerForm.companyName.trim()) {
-      registerErrors.companyName = 'Поле обязательно для заполнения';
+      registerErrors.companyName = 'поле обязательно для заполнения';
     } else {
       validateField('companyName');
     }
@@ -570,28 +572,54 @@ async function handleRegister(): Promise<void> {
     });
 
     // Автоматический вход после регистрации
-    const isEmail = registerForm.email.includes('@');
-    const credentials = isEmail
-      ? { email: registerForm.email, password: registerForm.password }
-      : { login: registerForm.username, password: registerForm.password };
+    try {
+      const isEmail = registerForm.email.includes('@');
+      const credentials = isEmail
+        ? { email: registerForm.email, password: registerForm.password }
+        : { login: registerForm.username, password: registerForm.password };
 
-    const loginResponse = await login(credentials);
-    saveTokens(loginResponse.tokens);
-    await router.push('/dashboard');
+      const loginResponse = await login(credentials);
+      saveTokens(loginResponse.tokens);
+      await router.push('/dashboard');
+    } catch (loginError: any) {
+      // Обработка ошибок при автоматическом входе
+      if (loginError.status === 422) {
+        const errorData = loginError.data;
+        if (errorData?.errors) {
+          Object.keys(errorData.errors).forEach(field => {
+            const fieldName = field === 'login' || field === 'email' ? 'username' : field;
+            registerErrors[fieldName] = Array.isArray(errorData.errors[field]) ? errorData.errors[field][0] : errorData.errors[field];
+          });
+        } else {
+          registerErrors.email = errorData?.detail || errorData?.message || 'ошибка при входе после регистрации';
+        }
+      } else if (loginError.status === 409) {
+        registerErrors.email = 'пользователь уже существует';
+      } else {
+        registerErrors.email = 'неизвестная ошибка. попробуйте позже.';
+      }
+    }
   } catch (error: any) {
-    // Обработка ошибок API
-    if (error.status === 422 || error.status === 400) {
+    // Обработка ошибок API при регистрации
+    if (error.status === 422) {
+      // Ошибки валидации - показываем под полями
       const errorData = error.data;
-      if (errorData.errors) {
-        // Ошибки валидации полей
+      if (errorData?.errors) {
         Object.keys(errorData.errors).forEach(field => {
-          registerErrors[field] = Array.isArray(errorData.errors[field]) ? errorData.errors[field][0] : errorData.errors[field];
+          // Маппинг полей бэкенда на поля формы
+          let fieldName = field;
+          if (field === 'login') {
+            fieldName = 'username';
+          }
+          registerErrors[fieldName] = Array.isArray(errorData.errors[field]) ? errorData.errors[field][0] : errorData.errors[field];
         });
       } else {
-        registerErrors.email = error.message || 'Ошибка при регистрации';
+        registerErrors.email = errorData?.detail || errorData?.message || 'ошибка валидации данных';
       }
+    } else if (error.status === 409) {
+      registerErrors.email = 'пользователь уже существует';
     } else {
-      registerErrors.email = error.message || 'Произошла ошибка при регистрации';
+      registerErrors.email = 'неизвестная ошибка. попробуйте позже.';
     }
   } finally {
     isRegisterLoading.value = false;

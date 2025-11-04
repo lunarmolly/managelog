@@ -79,3 +79,25 @@ export function clearTokens(): void {
   localStorage.removeItem('auth_tokens');
 }
 
+export async function logout(): Promise<void> {
+  const tokens = getTokens();
+  if (!tokens) {
+    return;
+  }
+
+  try {
+    await fetch(`${API_BASE_URL}/auth/logout/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${tokens.access_token}`,
+      },
+    });
+  } catch (error) {
+    // Игнорируем ошибки при logout, все равно очищаем токены локально
+    console.error('Logout error:', error);
+  } finally {
+    clearTokens();
+  }
+}
+
