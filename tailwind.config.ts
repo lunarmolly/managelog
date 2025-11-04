@@ -4,6 +4,9 @@ export default {
   content: ['./index.html', './src/**/*.{vue,ts,tsx}'],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['Inter', 'system-ui', 'sans-serif'],
+      },
       colors: {
         brand: {
           50: '#f5f8ff',
