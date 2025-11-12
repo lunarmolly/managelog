@@ -103,61 +103,16 @@
             font-size: 20px;
             font-weight: 500;
             cursor: pointer;
-            transition: all 0.3s ease;
             position: relative;
             text-decoration: none;
         }
 
-        .nav-item:hover {
-            background: rgba(4, 9, 16, 0.3);
-        }
-
         .nav-item.active {
-            background: rgba(4, 9, 16, 0.8);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .nav-item.active::before {
-            content: '';
-            position: absolute;
-            inset: -15.25% -4.07%;
-            filter: blur(6.1px);
-            pointer-events: none;
-        }
-
-        .nav-item.active .nav-glow {
-            position: absolute;
-            inset: 0;
-            border-radius: 20px;
-            overflow: hidden;
-        }
-
-        .nav-item.active .nav-glow-left,
-        .nav-item.active .nav-glow-right {
-            position: absolute;
-            width: 92px;
-            height: 89px;
-            opacity: 0.05;
-        }
-
-        .nav-item.active .nav-glow-left {
-            right: -42px;
-            top: -30px;
-            background: linear-gradient(135deg, #E48585 0%, #85AFE4 100%);
-            filter: blur(10px);
-        }
-
-        .nav-item.active .nav-glow-right {
-            left: -42px;
-            top: -1px;
-            background: linear-gradient(135deg, #E48585 0%, #85AFE4 100%);
-            filter: blur(10px);
-        }
-
-        .nav-item.active span {
-            position: relative;
-            z-index: 1;
+            background-image: url('../public/images/backgrounds/bg.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            color: #ffffff;
         }
 
         /* Правая секция */
@@ -176,17 +131,12 @@
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            transition: transform 0.2s ease;
             flex-shrink: 0;
         }
 
-        .notification-btn:hover {
-            transform: scale(1.05);
-        }
-
         .notification-icon {
-            width: 20px;
-            height: 20px;
+            width: 28px;
+            height: 28px;
             fill: #E1EAF8;
         }
 
@@ -199,13 +149,7 @@
             padding: 0 20px;
             height: 40px;
             cursor: pointer;
-            transition: all 0.2s ease;
             flex-shrink: 0;
-        }
-
-        .checkin-btn:hover {
-            background: #a82643;
-            transform: translateY(-1px);
         }
 
         .checkin-icon {
@@ -227,12 +171,7 @@
             border-radius: 50%;
             overflow: hidden;
             cursor: pointer;
-            transition: transform 0.2s ease;
             flex-shrink: 0;
-        }
-
-        .user-avatar:hover {
-            transform: scale(1.05);
         }
 
         .user-avatar img {
@@ -368,10 +307,6 @@
                     <span>Дашборд</span>
                 </a>
                 <a href="#" class="nav-item active">
-                    <div class="nav-glow">
-                        <div class="nav-glow-left"></div>
-                        <div class="nav-glow-right"></div>
-                    </div>
                     <span>Проекты</span>
                 </a>
                 <a href="#" class="nav-item">
@@ -407,48 +342,5 @@
             </div>
         </div>
     </div>
-
-    <script>
-        // Интерактивность для навигации
-        document.querySelectorAll('.nav-item').forEach(item => {
-            item.addEventListener('click', function(e) {
-                e.preventDefault();
-                
-                // Удаляем active класс у всех элементов
-                document.querySelectorAll('.nav-item').forEach(nav => {
-                    nav.classList.remove('active');
-                    const glow = nav.querySelector('.nav-glow');
-                    if (glow) glow.remove();
-                });
-                
-                // Добавляем active класс текущему элементу
-                this.classList.add('active');
-                
-                // Добавляем эффект свечения
-                const glowDiv = document.createElement('div');
-                glowDiv.className = 'nav-glow';
-                glowDiv.innerHTML = `
-                    <div class="nav-glow-left"></div>
-                    <div class="nav-glow-right"></div>
-                `;
-                this.insertBefore(glowDiv, this.firstChild);
-            });
-        });
-
-        // Интерактивность для кнопки уведомлений
-        document.querySelector('.notification-btn').addEventListener('click', function() {
-            alert('Уведомления: У вас нет новых уведомлений');
-        });
-
-        // Интерактивность для кнопки чекин
-        document.querySelector('.checkin-btn').addEventListener('click', function() {
-            alert('Чекин выполнен успешно!');
-        });
-
-        // Интерактивность для аватара
-        document.querySelector('.user-avatar').addEventListener('click', function() {
-            alert('Открыть ��рофиль пользователя');
-        });
-    </script>
 </body>
 </html>
