@@ -43,7 +43,12 @@
             font-family: 'Involve', Arial, sans-serif;
             background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
             min-height: 100vh;
-            padding: 20px;
+            padding: 20px 20px 0;
+        }
+
+        .content {
+            width: 95hv;
+            min-height: calc(100vh - 91px);
         }
 
         .header-container {
@@ -316,9 +321,11 @@
 
         /* Footer Styles */
         .footer-container {
-            min-width: 100hv;
-            margin: 40px auto 0;
+            width: 100vw;
+            margin: 0;
             position: relative;
+            left: 50%;
+            transform: translateX(-50%);
         }
 
         .footer-bg {
@@ -326,7 +333,7 @@
             backdrop-filter: blur(25px);
             -webkit-backdrop-filter: blur(25px);
             border-radius: 0;
-            padding: 12px 36px;
+            padding: 24px 36px;
         }
 
         .footer-content {
@@ -433,7 +440,7 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            padding: 12px 0;
+            padding: 12px 0 0;
         }
 
         .footer-copyright-icon {
@@ -610,6 +617,9 @@
                 </div>
             </div>
         </div>
+    </div>
+    <div class="content">
+        <span>content</span>
     </div>
 
     <!-- Footer -->
