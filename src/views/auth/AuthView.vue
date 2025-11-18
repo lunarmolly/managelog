@@ -62,16 +62,51 @@
               </div>
               <div class="col-span-2 flex flex-col">
                 <label class="block mb-2 text-[15px] font-medium text-white select-none">пароль</label>
-                <input
-                  v-model="loginForm.password"
-                  type="password"
-                  autocomplete="current-password"
-                  class="w-full h-12 px-4 py-3 bg-transparent border border-white rounded-full text-[#e5e7eb] text-sm box-border focus:outline-none focus:border-white"
-                  :class="{ 'border-[#912138]': loginErrors.password }"
-                  :aria-invalid="!!loginErrors.password"
-                  aria-live="polite"
-                  @blur="validateLoginField('password')"
-                />
+                <div class="relative">
+                  <input
+                    v-model="loginForm.password"
+                    :type="showLoginPassword ? 'text' : 'password'"
+                    autocomplete="current-password"
+                    class="w-full h-12 px-4 pr-12 py-3 bg-transparent border border-white rounded-full text-[#e5e7eb] text-sm box-border focus:outline-none focus:border-white"
+                    :class="{ 'border-[#912138]': loginErrors.password }"
+                    :aria-invalid="!!loginErrors.password"
+                    aria-live="polite"
+                    @blur="validateLoginField('password')"
+                  />
+                  <button
+                    type="button"
+                    @click="showLoginPassword = !showLoginPassword"
+                    class="absolute right-4 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center cursor-pointer bg-transparent border-none outline-none"
+                    :aria-label="showLoginPassword ? 'Скрыть пароль' : 'Показать пароль'"
+                  >
+                    <svg
+                      v-if="showLoginPassword"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="#E1EAF8"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      class="w-5 h-5"
+                    >
+                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                      <line x1="1" y1="1" x2="23" y2="23" />
+                    </svg>
+                    <svg
+                      v-else
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="#E1EAF8"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      class="w-5 h-5"
+                    >
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                      <circle cx="12" cy="12" r="3" />
+                    </svg>
+                  </button>
+                </div>
                 <span v-if="loginErrors.password" class="text-[15px] font-normal text-[#912138] mt-1 mb-0" role="alert">
                   {{ loginErrors.password }}
                 </span>
@@ -172,19 +207,54 @@
               <!-- Пароль -->
               <div class="flex flex-col">
                 <label class="block mb-2 text-[15px] font-medium text-white select-none">пароль</label>
-                <input
-                  v-model="registerForm.password"
-                  type="password"
-                  minlength="8"
-                  maxlength="24"
-                  autocomplete="new-password"
-                  class="w-full h-12 px-4 py-3 bg-transparent border border-white rounded-full text-[#e5e7eb] text-sm box-border focus:outline-none focus:border-white"
-                  :class="{ 'border-[#912138]': registerErrors.password }"
-                  :aria-invalid="!!registerErrors.password"
-                  aria-live="polite"
-                  @blur="validateField('password')"
-                  @input="handlePasswordInput"
-                />
+                <div class="relative">
+                  <input
+                    v-model="registerForm.password"
+                    :type="showRegisterPassword ? 'text' : 'password'"
+                    minlength="8"
+                    maxlength="24"
+                    autocomplete="new-password"
+                    class="w-full h-12 px-4 pr-12 py-3 bg-transparent border border-white rounded-full text-[#e5e7eb] text-sm box-border focus:outline-none focus:border-white"
+                    :class="{ 'border-[#912138]': registerErrors.password }"
+                    :aria-invalid="!!registerErrors.password"
+                    aria-live="polite"
+                    @blur="validateField('password')"
+                    @input="handlePasswordInput"
+                  />
+                  <button
+                    type="button"
+                    @click="showRegisterPassword = !showRegisterPassword"
+                    class="absolute right-4 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center cursor-pointer bg-transparent border-none outline-none"
+                    :aria-label="showRegisterPassword ? 'Скрыть пароль' : 'Показать пароль'"
+                  >
+                    <svg
+                      v-if="showRegisterPassword"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="#E1EAF8"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      class="w-5 h-5"
+                    >
+                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                      <line x1="1" y1="1" x2="23" y2="23" />
+                    </svg>
+                    <svg
+                      v-else
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="#E1EAF8"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      class="w-5 h-5"
+                    >
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                      <circle cx="12" cy="12" r="3" />
+                    </svg>
+                  </button>
+                </div>
                 <span v-if="registerErrors.password" class=" text-[15px] font-normal text-[#912138] mt-1 mb-0" role="alert">
                   {{ registerErrors.password }}
                 </span>
@@ -192,17 +262,52 @@
               <!-- Повторите пароль -->
               <div class="flex flex-col">
                 <label class="block mb-2 text-[15px] font-medium text-white select-none">повторите пароль</label>
-                <input
-                  v-model="registerForm.confirmPassword"
-                  type="password"
-                  autocomplete="new-password"
-                  class="w-full h-12 px-4 py-3 bg-transparent border border-white rounded-full text-[#e5e7eb] text-sm box-border focus:outline-none focus:border-white"
-                  :class="{ 'border-[#912138]': registerErrors.confirmPassword }"
-                  :aria-invalid="!!registerErrors.confirmPassword"
-                  aria-live="polite"
-                  @blur="validateField('confirmPassword')"
-                  @input="clearErrorIfValid('confirmPassword')"
-                />
+                <div class="relative">
+                  <input
+                    v-model="registerForm.confirmPassword"
+                    :type="showConfirmPassword ? 'text' : 'password'"
+                    autocomplete="new-password"
+                    class="w-full h-12 px-4 pr-12 py-3 bg-transparent border border-white rounded-full text-[#e5e7eb] text-sm box-border focus:outline-none focus:border-white"
+                    :class="{ 'border-[#912138]': registerErrors.confirmPassword }"
+                    :aria-invalid="!!registerErrors.confirmPassword"
+                    aria-live="polite"
+                    @blur="validateField('confirmPassword')"
+                    @input="clearErrorIfValid('confirmPassword')"
+                  />
+                  <button
+                    type="button"
+                    @click="showConfirmPassword = !showConfirmPassword"
+                    class="absolute right-4 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center cursor-pointer bg-transparent border-none outline-none"
+                    :aria-label="showConfirmPassword ? 'Скрыть пароль' : 'Показать пароль'"
+                  >
+                    <svg
+                      v-if="showConfirmPassword"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="#E1EAF8"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      class="w-5 h-5"
+                    >
+                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                      <line x1="1" y1="1" x2="23" y2="23" />
+                    </svg>
+                    <svg
+                      v-else
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="#E1EAF8"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      class="w-5 h-5"
+                    >
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                      <circle cx="12" cy="12" r="3" />
+                    </svg>
+                  </button>
+                </div>
                 <span v-if="registerErrors.confirmPassword" class=" text-[15px] font-normal text-[#912138] mt-1 mb-0" role="alert">
                   {{ registerErrors.confirmPassword }}
                 </span>
@@ -296,6 +401,11 @@ const router = useRouter();
 
 // Состояние табов
 const activeTab = ref<'login' | 'register'>('login');
+
+// Состояние видимости паролей
+const showLoginPassword = ref(false);
+const showRegisterPassword = ref(false);
+const showConfirmPassword = ref(false);
 
 // Форма входа
 const loginForm = reactive({
