@@ -13,7 +13,7 @@
 
     <!-- Правая часть - Auth Form -->
     <div class="w-full md:w-[556px] md:flex-grow flex justify-center items-center">
-      <div class="w-[95vw] md:min-w-[556px] md:w-fit h-fit p-10 box-border flex flex-col rounded-[40px] bg-[rgba(255,255,255,0.5)]">
+      <div class="w-[95vw] md:min-w-[556px] md:w-fit h-fit p-10 box-border flex flex-col rounded-[40px] bg-[rgba(255,255,255,0.5)] auth-form-scroll">
         <!-- Табы -->
         <div class="flex gap-[10px] mb-8">
           <button
@@ -816,6 +816,28 @@ async function handleRegister(): Promise<void> {
 }
 
 .scrollable-fields::-webkit-scrollbar-thumb:hover {
+  background-color: #b83d5e;
+}
+
+.auth-form-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #912138 transparent;
+}
+
+.auth-form-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+
+.auth-form-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.auth-form-scroll::-webkit-scrollbar-thumb {
+  background-color: #912138;
+  border-radius: 4px;
+}
+
+.auth-form-scroll::-webkit-scrollbar-thumb:hover {
   background-color: #b83d5e;
 }
 
