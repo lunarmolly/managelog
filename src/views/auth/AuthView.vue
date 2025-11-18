@@ -1,19 +1,19 @@
 <template>
-  <div class="flex h-screen w-full">
+  <div class="flex flex-col md:flex-row min-h-screen h-auto md:h-screen w-full gap-[max(10vw,2rem)] md:gap-[max(10vw,2rem)] px-4 md:px-0 py-4 md:py-0">
     <!-- Левая часть - Overview -->
-    <div class="w-[672px] flex flex-col justify-center items-center pl-[152px] gap-9 box-border">
+    <div class="w-full md:w-[672px] flex flex-col justify-start md:justify-center items-center md:pl-[152px] gap-9 box-border pt-8 md:pt-0">
       <div class="flex items-center gap-6 m-0">
-        <div class="w-[55px] h-[55px] rounded-full bg-[#e1eaf8] flex-shrink-0"></div>
-        <span class="text-[3rem] font-semibold text-[#e1eaf8] whitespace-nowrap lowercase select-none self-center" style="line-height: 1;">managelog</span>
+        <div class="w-[50px] h-[50px] md:w-[55px] md:h-[55px] rounded-full bg-[#e1eaf8] flex-shrink-0"></div>
+        <span class="text-[2.7rem] md:text-[3rem] font-semibold text-[#e1eaf8] whitespace-nowrap lowercase select-none self-center" style="line-height: 1;">managelog</span>
       </div>
-      <p class="text-2xl font-bold text-white leading-6 text-center w-[440px] h-16 m-0 select-none">
+      <p class="hidden md:block text-2xl font-bold text-white leading-6 text-center w-[440px] h-16 m-0 select-none">
         Управляйте проектами, аналитикой и командой в одном пространстве
       </p>
     </div>
 
     <!-- Правая часть - Auth Form -->
-    <div class="w-[556px] flex-grow flex justify-center items-center">
-      <div class="min-w-[556px] w-fit h-fit p-10 box-border flex flex-col rounded-[40px] bg-[rgba(255,255,255,0.5)]">
+    <div class="w-full md:w-[556px] md:flex-grow flex justify-center items-center">
+      <div class="w-[95vw] md:min-w-[556px] md:w-fit h-fit p-10 box-border flex flex-col rounded-[40px] bg-[rgba(255,255,255,0.5)]">
         <!-- Табы -->
         <div class="flex gap-[10px] mb-8">
           <button
@@ -41,10 +41,10 @@
         </div>
 
         <!-- Форма входа -->
-        <div v-show="activeTab === 'login'" class="flex-1 overflow-y-auto scrollable-fields">
+        <div v-show="activeTab === 'login'" class="flex-1 md:overflow-y-auto md:scrollable-fields">
           <form @submit.prevent="handleLogin" novalidate>
-            <div class="grid grid-cols-[249px_249px] gap-x-[10px] gap-y-6 pr-2">
-              <div class="col-span-2 flex flex-col">
+            <div class="grid grid-cols-1 md:grid-cols-[249px_249px] gap-x-[10px] gap-y-6 md:pr-2">
+              <div class="col-span-1 md:col-span-2 flex flex-col">
                 <label class="block mb-2 text-[15px] font-medium text-white select-none">никнейм</label>
                 <input
                   v-model="loginForm.username"
@@ -60,7 +60,7 @@
                   {{ loginErrors.username }}
                 </span>
               </div>
-              <div class="col-span-2 flex flex-col">
+              <div class="col-span-1 md:col-span-2 flex flex-col">
                 <label class="block mb-2 text-[15px] font-medium text-white select-none">пароль</label>
                 <div class="relative">
                   <input
@@ -114,7 +114,7 @@
               <button
                 type="submit"
                 :disabled="isLoginLoading"
-                class="w-full h-12 p-0 bg-[url('/images/backgrounds/bg.jpg')] bg-cover bg-center bg-no-repeat border-none rounded-full text-white  text-2xl font-medium cursor-pointer col-span-2 transition-opacity box-border flex items-center justify-center hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+                class="w-full h-12 p-0 bg-[url('/images/backgrounds/bg.jpg')] bg-cover bg-center bg-no-repeat border-none rounded-full text-white  text-2xl font-medium cursor-pointer col-span-1 md:col-span-2 transition-opacity box-border flex items-center justify-center hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <span v-if="isLoginLoading">Загрузка...</span>
                 <span v-else>войти</span>
@@ -124,10 +124,10 @@
         </div>
 
         <!-- Форма регистрации -->
-        <div v-show="activeTab === 'register'" class="flex flex-col flex-1 min-h-0" style="max-height: 70vh;">
+        <div v-show="activeTab === 'register'" class="flex flex-col flex-1 min-h-0 register-form-container">
           <form @submit.prevent="handleRegister" novalidate class="flex flex-col flex-1 min-h-0">
-            <div class="flex-1 overflow-y-auto mb-6 scrollable-fields">
-              <div class="grid grid-cols-[249px_249px] gap-x-[10px] gap-y-6 pr-2">
+            <div class="flex-1 md:overflow-y-auto mb-6 md:scrollable-fields">
+              <div class="grid grid-cols-1 md:grid-cols-[249px_249px] gap-x-[10px] gap-y-6 md:pr-2">
               <!-- Имя -->
               <div class="flex flex-col">
                 <label class="block mb-2 text-[15px] font-medium text-white select-none">имя</label>
@@ -167,7 +167,7 @@
                 </span>
               </div>
               <!-- Email -->
-              <div class="col-span-2 flex flex-col">
+              <div class="col-span-1 md:col-span-2 flex flex-col">
                 <label class="block mb-2 text-[15px] font-medium text-white select-none">email</label>
                 <input
                   v-model="registerForm.email"
@@ -186,7 +186,7 @@
                 </span>
               </div>
               <!-- Никнейм -->
-              <div class="col-span-2 flex flex-col">
+              <div class="col-span-1 md:col-span-2 flex flex-col">
                 <label class="block mb-2 text-[15px] font-medium text-white select-none">никнейм</label>
                 <input
                   v-model="registerForm.username"
@@ -313,7 +313,7 @@
                 </span>
               </div>
               <!-- Согласие на обработку ПД -->
-              <div class="col-span-2 flex flex-col" :class="{ 'border border-[#912138] rounded-[4px] p-2 -mt-2 mb-2': registerErrors.personalData }">
+              <div class="col-span-1 md:col-span-2 flex flex-col" :class="{ 'border border-[#912138] rounded-[4px] p-2 -mt-2 mb-2': registerErrors.personalData }">
                 <div class="flex items-center gap-3 mb-0 flex-nowrap">
                   <input
                     v-model="registerForm.personalData"
@@ -343,7 +343,7 @@
                 </div>
               </div> -->
               <!-- Создать компанию -->
-              <div class="col-span-2 flex flex-col">
+              <div class="col-span-1 md:col-span-2 flex flex-col">
                 <div class="flex items-center gap-3 mb-0 flex-nowrap">
                   <input
                     v-model="registerForm.createCompany"
@@ -355,7 +355,7 @@
                 </div>
               </div>
               <!-- Название компании -->
-              <div v-if="registerForm.createCompany" class="col-span-2 flex flex-col">
+              <div v-if="registerForm.createCompany" class="col-span-1 md:col-span-2 flex flex-col">
                 <label class="block mb-2 text-[15px] font-medium text-white select-none">название компании</label>
                 <input
                   v-model="registerForm.companyName"
@@ -817,6 +817,16 @@ async function handleRegister(): Promise<void> {
 
 .scrollable-fields::-webkit-scrollbar-thumb:hover {
   background-color: #b83d5e;
+}
+
+.register-form-container {
+  max-height: none;
+}
+
+@media (min-width: 768px) {
+  .register-form-container {
+    max-height: 70vh;
+  }
 }
 
 /* Стили для чекбоксов */
