@@ -258,13 +258,14 @@
 @media (max-width: 768px) {
   .footer__content {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: center;
     gap: 20px;
   }
 
   .footer__main {
     flex-direction: column;
     width: 100%;
+    align-items: center;
   }
 
   .footer__columns {
@@ -273,6 +274,15 @@
 
   .footer__right {
     width: 100%;
+    align-items: center;
+  }
+
+  .footer__social {
+    justify-content: center;
+  }
+
+  .footer__bottom {
+    justify-content: center;
   }
 }
 
