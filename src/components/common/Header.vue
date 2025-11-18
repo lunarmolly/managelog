@@ -504,25 +504,29 @@ async function handleLogout(): Promise<void> {
 }
 
 .profile-panel__action-btn {
-  padding: 10px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 0 24px;
+  height: 48px;
   background: rgba(145, 33, 56, 0.85);
   border: none;
-  border-radius: 20px;
+  border-radius: 80px;
   color: #e1eaf8;
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 500;
   font-family: 'Involve', Arial, sans-serif;
   text-transform: lowercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 1px;
   cursor: pointer;
-  transition: background 0.3s ease, transform 0.2s ease;
+  transition: opacity 0.2s ease;
   text-decoration: none;
-  display: inline-block;
+  flex-shrink: 0;
 }
 
 .profile-panel__action-btn:hover {
-  background: rgba(145, 33, 56, 1);
-  transform: translateY(-2px);
+  opacity: 0.85;
 }
 
 .profile-panel__close-btn {
