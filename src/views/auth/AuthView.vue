@@ -40,9 +40,9 @@
         </div>
 
         <!-- Форма входа -->
-        <div v-show="activeTab === 'login'" class="flex-1 overflow-y-auto">
+        <div v-show="activeTab === 'login'" class="flex-1 overflow-y-auto scrollable-fields">
           <form @submit.prevent="handleLogin" novalidate>
-            <div class="grid grid-cols-[249px_249px] gap-x-[10px] gap-y-6">
+            <div class="grid grid-cols-[249px_249px] gap-x-[10px] gap-y-6 pr-2">
               <div class="col-span-2 flex flex-col">
                 <label class="block mb-2 text-[15px] font-medium text-white select-none">никнейм</label>
                 <input
@@ -88,9 +88,10 @@
         </div>
 
         <!-- Форма регистрации -->
-        <div v-show="activeTab === 'register'" class="flex-1 overflow-y-auto">
-          <form @submit.prevent="handleRegister" novalidate>
-            <div class="grid grid-cols-[249px_249px] gap-x-[10px] gap-y-6">
+        <div v-show="activeTab === 'register'" class="flex flex-col flex-1 min-h-0" style="max-height: 70vh;">
+          <form @submit.prevent="handleRegister" novalidate class="flex flex-col flex-1 min-h-0">
+            <div class="flex-1 overflow-y-auto mb-6 scrollable-fields">
+              <div class="grid grid-cols-[249px_249px] gap-x-[10px] gap-y-6 pr-2">
               <!-- Имя -->
               <div class="flex flex-col">
                 <label class="block mb-2 text-[15px] font-medium text-white select-none">имя</label>
@@ -266,16 +267,17 @@
                   {{ registerErrors.companyName }}
                 </span>
               </div>
-              <!-- Кнопка отправки -->
-              <button
-                type="submit"
-                :disabled="isRegisterLoading"
-                class="w-full h-12 p-0 bg-[url('/images/backgrounds/bg.jpg')] bg-cover bg-center bg-no-repeat border-none rounded-full text-white  text-2xl font-medium cursor-pointer col-span-2 transition-opacity box-border flex items-center justify-center hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <span v-if="isRegisterLoading">Загрузка...</span>
-                <span v-else>зарегистрироваться</span>
-              </button>
+              </div>
             </div>
+            <!-- Кнопка отправки -->
+            <button
+              type="submit"
+              :disabled="isRegisterLoading"
+              class="w-full h-12 p-0 bg-[url('/images/backgrounds/bg.jpg')] bg-cover bg-center bg-no-repeat border-none rounded-full text-white  text-2xl font-medium cursor-pointer transition-opacity box-border flex items-center justify-center hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+            >
+              <span v-if="isRegisterLoading">Загрузка...</span>
+              <span v-else>зарегистрироваться</span>
+            </button>
           </form>
         </div>
       </div>
@@ -626,4 +628,28 @@ async function handleRegister(): Promise<void> {
   }
 }
 </script>
+
+<style scoped>
+.scrollable-fields {
+  scrollbar-width: thin;
+  scrollbar-color: #912138 transparent;
+}
+
+.scrollable-fields::-webkit-scrollbar {
+  width: 8px;
+}
+
+.scrollable-fields::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollable-fields::-webkit-scrollbar-thumb {
+  background-color: #912138;
+  border-radius: 4px;
+}
+
+.scrollable-fields::-webkit-scrollbar-thumb:hover {
+  background-color: #b83d5e;
+}
+</style>
 
