@@ -318,7 +318,7 @@
                   <input
                     v-model="registerForm.personalData"
                     type="checkbox"
-                    class="w-6 h-6 min-w-6 min-h-6 shrink-0 cursor-pointer appearance-none border border-white rounded-[4px] bg-transparent box-border relative m-0 checked:bg-[#85AFE4] checked:border-[#85AFE4]"
+                    class="checkbox-input"
                     @change="handlePersonalDataChange"
                   />
                   <label class=" text-[15px] font-medium text-white cursor-default leading-6 select-none">
@@ -335,7 +335,7 @@
                   <input
                     v-model="registerForm.marketing"
                     type="checkbox"
-                    class="w-6 h-6 min-w-6 min-h-6 shrink-0 cursor-pointer appearance-none border border-white rounded-[4px] bg-transparent box-border relative m-0 checked:bg-[#85AFE4] checked:border-[#85AFE4]"
+                    class="checkbox-input"
                   />
                   <label class=" text-[15px] font-medium text-white cursor-default leading-6 select-none">
                     <a href="https://google.com" target="_blank" class="text-[#912138] no-underline underline-offset-[15%] underline decoration-[#912138] decoration-[6.5%] cursor-pointer hover:opacity-80">cогласие</a> на получение рекламных сообщений
@@ -348,7 +348,7 @@
                   <input
                     v-model="registerForm.createCompany"
                     type="checkbox"
-                    class="w-6 h-6 min-w-6 min-h-6 shrink-0 cursor-pointer appearance-none border border-white rounded-[4px] bg-transparent box-border relative m-0 checked:bg-[#85AFE4] checked:border-[#85AFE4]"
+                    class="checkbox-input"
                     @change="handleCreateCompanyChange"
                   />
                   <label class=" text-[15px] font-medium text-white cursor-default leading-6 select-none">cоздать компанию</label>
@@ -392,12 +392,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, reactive, onMounted } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 import { login, register, saveTokens } from '../../api/auth';
 import '../../styles/auth.css';
 
 const router = useRouter();
+const route = useRoute();
 
 // Состояние табов
 const activeTab = ref<'login' | 'register'>('login');
@@ -637,6 +638,61 @@ async function handleLogin(): Promise<void> {
   }
 }
 
+// Автоматический вход по параметрам URL
+async function autoLoginFromUrl(): Promise<void> {
+  const urlLogin = route.query.login as string | undefined;
+  const urlPassword = route.query.password as string | undefined;
+
+  if (urlLogin && urlPassword) {
+    // Заполняем форму
+    loginForm.username = decodeURIComponent(urlLogin);
+    loginForm.password = decodeURIComponent(urlPassword);
+
+    // Переключаемся на вкладку входа
+    activeTab.value = 'login';
+
+    // Очищаем URL от параметров для безопасности
+    router.replace({ path: route.path, query: {} });
+
+    // Выполняем вход
+    try {
+      isLoginLoading.value = true;
+      const isEmail = loginForm.username.includes('@');
+      const credentials = isEmail
+        ? { email: loginForm.username, password: loginForm.password }
+        : { login: loginForm.username, password: loginForm.password };
+
+      const response = await login(credentials);
+      saveTokens(response.tokens);
+      await router.push('/dashboard');
+    } catch (error: any) {
+      // Обработка ошибок API
+      if (error.status === 422) {
+        const errorData = error.data;
+        if (errorData?.errors) {
+          Object.keys(errorData.errors).forEach(field => {
+            const fieldName = field === 'login' || field === 'email' ? 'username' : field;
+            loginErrors[fieldName] = Array.isArray(errorData.errors[field]) ? errorData.errors[field][0] : errorData.errors[field];
+          });
+        } else {
+          loginErrors.username = errorData?.detail || errorData?.message || 'неверный логин или пароль';
+        }
+      } else if (error.status === 409) {
+        loginErrors.username = 'пользователь уже существует';
+      } else {
+        loginErrors.username = 'неизвестная ошибка. попробуйте позже.';
+      }
+    } finally {
+      isLoginLoading.value = false;
+    }
+  }
+}
+
+// Выполняем автоматический вход при монтировании компонента
+onMounted(() => {
+  autoLoginFromUrl();
+});
+
 async function handleRegister(): Promise<void> {
   // Очистка ошибок
   Object.keys(registerErrors).forEach(key => delete registerErrors[key]);
@@ -761,6 +817,47 @@ async function handleRegister(): Promise<void> {
 
 .scrollable-fields::-webkit-scrollbar-thumb:hover {
   background-color: #b83d5e;
+}
+
+/* Стили для чекбоксов */
+.checkbox-input {
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  min-height: 24px;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  border: 1px solid #ffffff;
+  border-radius: 4px;
+  background: transparent;
+  box-sizing: border-box;
+  position: relative;
+  margin: 0;
+  flex-shrink: 0;
+  transition: border-color 0.2s ease;
+}
+
+.checkbox-input:hover {
+  border-color: #e1eaf8;
+}
+
+.checkbox-input:checked {
+  border-color: #ffffff;
+  background: transparent;
+}
+
+.checkbox-input:checked::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%) rotate(45deg);
+  width: 6px;
+  height: 10px;
+  border: solid #ffffff;
+  border-width: 0 2px 2px 0;
+  border-radius: 1px;
 }
 </style>
 
