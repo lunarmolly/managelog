@@ -108,7 +108,7 @@
               <div class="profile-panel__actions">
                 <router-link to="/tariff" class="profile-panel__action-btn">тариф</router-link>
                 <button class="profile-panel__action-btn">настройки</button>
-                <button class="profile-panel__action-btn">выход</button>
+                <button class="profile-panel__action-btn" @click="handleLogout">выход</button>
               </div>
               <button
                 type="button"
@@ -137,6 +137,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import { useRoute } from 'vue-router';
+import { logout, clearTokens } from '../../api/auth';
 
 const route = useRoute();
 const isProfileOpen = ref(false);
@@ -159,6 +160,19 @@ function isActive(path: string): boolean {
 
 function toggleProfile() {
   isProfileOpen.value = !isProfileOpen.value;
+}
+
+async function handleLogout(): Promise<void> {
+  try {
+    await logout();
+  } catch (error) {
+    console.error('Logout failed:', error);
+  } finally {
+    // Убеждаемся, что токены очищены
+    clearTokens();
+    // Используем window.location для полной перезагрузки и обхода guard'а
+    window.location.href = '/auth';
+  }
 }
 </script>
 

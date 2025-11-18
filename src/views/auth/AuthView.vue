@@ -2,8 +2,9 @@
   <div class="flex h-screen w-full">
     <!-- Левая часть - Overview -->
     <div class="w-[672px] flex flex-col justify-center items-center pl-[152px] gap-9 box-border">
-      <div class="w-auto h-[71px] m-0">
-        <img src="/images/logos/logo.png" alt="logo" class="h-[71px] w-auto" />
+      <div class="flex items-center gap-6 m-0">
+        <div class="w-[55px] h-[55px] rounded-full bg-[#e1eaf8] flex-shrink-0"></div>
+        <span class="text-[3rem] font-semibold text-[#e1eaf8] whitespace-nowrap lowercase select-none self-center" style="line-height: 1;">managelog</span>
       </div>
       <p class="text-2xl font-bold text-white leading-6 text-center w-[440px] h-16 m-0 select-none">
         Управляйте проектами, аналитикой и командой в одном пространстве
