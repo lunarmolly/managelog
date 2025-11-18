@@ -106,7 +106,7 @@
             </div>
             <div class="profile-panel__right-section">
               <div class="profile-panel__actions">
-                <router-link to="/tariff" class="profile-panel__action-btn">тариф</router-link>
+                <!-- <router-link to="/tariff" class="profile-panel__action-btn">тариф</router-link> -->
                 <button class="profile-panel__action-btn">настройки</button>
                 <button class="profile-panel__action-btn" @click="handleLogout">выход</button>
               </div>

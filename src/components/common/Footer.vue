@@ -13,14 +13,14 @@
               <h4 class="footer__column-title">пользователям</h4>
               <a class="footer__link" href="#">контакты</a>
               <a class="footer__link" href="#">помощь</a>
-              <a class="footer__link" href="#">telegram</a>
-              <a class="footer__link" href="mailto:hello@managelog.com">email</a>
+              <a class="footer__link" href="https://t.me/appmanagelog">telegram</a>
+              <a class="footer__link" href="mailto:info@managelog.ru">email</a>
             </div>
             <div class="footer__column">
               <h4 class="footer__column-title">юридическая информация</h4>
-              <a class="footer__link" href="#">политика конфиденциальности</a>
-              <a class="footer__link" href="#">пользовательское соглашение</a>
-              <a class="footer__link" href="#">согласие на обработку персональных данных</a>
+              <a class="footer__link" href="/privacy">политика конфиденциальности</a>
+              <!-- <a class="footer__link" href="#">пользовательское соглашение</a>
+              <a class="footer__link" href="#">согласие на обработку персональных данных</a> -->
             </div>
           </div>
 

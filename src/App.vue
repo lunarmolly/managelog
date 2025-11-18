@@ -1,7 +1,7 @@
 <template>
   <div class="app">
-    <Header v-if="!isAuthPage" />
-    <main :class="['app__content', { 'app__content--with-header': !isAuthPage }]">
+    <Header v-if="shouldShowHeader" />
+    <main :class="['app__content', { 'app__content--with-header': shouldShowHeader }]">
       <router-view />
     </main>
     <Footer />
@@ -15,7 +15,9 @@ import Header from '@/components/common/Header.vue';
 import Footer from '@/components/common/Footer.vue';
 
 const route = useRoute();
-const isAuthPage = computed(() => route.path.startsWith('/auth'));
+const shouldShowHeader = computed(() => {
+  return !route.path.startsWith('/auth') && route.path !== '/privacy';
+});
 </script>
 
 <style>

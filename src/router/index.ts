@@ -37,6 +37,11 @@ const routes: RouteRecordRaw[] = [
     component: () => import('../views/TeamsView.vue'),
   },
   {
+    path: '/privacy',
+    name: 'privacy',
+    component: () => import('../views/PrivacyView.vue'),
+  },
+  {
     path: '/',
     redirect: '/auth',
   },
