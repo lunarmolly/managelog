@@ -1,7 +1,7 @@
 <template>
-  <div class="flex flex-col md:flex-row min-h-screen h-auto md:h-screen w-full gap-[max(10vw,2rem)] md:gap-[max(10vw,2rem)] px-4 md:px-0 py-4 md:py-0">
+  <div class="flex flex-col md:flex-row min-h-screen h-auto md:h-screen w-full gap-[max(10vw,2rem)] md:gap-[10vw] px-4 md:px-0 py-4 md:py-0 md:justify-center md:items-center">
     <!-- Левая часть - Overview -->
-    <div class="w-full md:w-[672px] flex flex-col justify-start md:justify-center items-center md:pl-[152px] gap-9 box-border pt-8 md:pt-0">
+    <div class="w-full md:w-auto flex flex-col justify-start md:justify-center items-center gap-9 box-border pt-8 md:pt-0">
       <div class="flex items-center gap-6 m-0">
         <div class="w-[50px] h-[50px] md:w-[55px] md:h-[55px] rounded-full bg-[#e1eaf8] flex-shrink-0"></div>
         <span class="text-[2.7rem] md:text-[3rem] font-semibold text-[#e1eaf8] whitespace-nowrap lowercase select-none self-center" style="line-height: 1;">managelog</span>
@@ -12,7 +12,7 @@
     </div>
 
     <!-- Правая часть - Auth Form -->
-    <div class="w-full md:w-[556px] md:flex-grow flex justify-center items-center">
+    <div class="w-full md:w-auto flex justify-center items-center">
       <div class="w-[95vw] md:min-w-[556px] md:w-fit h-fit p-10 box-border flex flex-col rounded-[40px] bg-[rgba(255,255,255,0.5)] auth-form-scroll">
         <!-- Табы -->
         <div class="flex gap-[10px] mb-8">
@@ -322,7 +322,7 @@
                     @change="handlePersonalDataChange"
                   />
                   <label class=" text-[15px] font-medium text-white cursor-default leading-6 select-none">
-                    <a href="https://google.com" target="_blank" class="text-[#912138] no-underline underline-offset-[15%] underline decoration-[#912138] decoration-[6.5%] cursor-pointer hover:opacity-80">cогласие</a> на обработку персональных данных
+                    соглашаюсь с <a href="/privacy" class="text-[#912138] underline underline-offset-[15%] decoration-[#912138] decoration-dotted cursor-pointer hover:opacity-80">политикой конфиденциальности</a> и даю согласие на обработку моих персональных данных
                   </label>
                 </div>
                 <span v-if="registerErrors.personalData" class=" text-[15px] font-normal text-[#912138] mt-1 mb-0" role="alert">
