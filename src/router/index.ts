@@ -22,6 +22,21 @@ const routes: RouteRecordRaw[] = [
     component: () => import('../views/DashboardView.vue'),
   },
   {
+    path: '/projects',
+    name: 'projects',
+    component: () => import('../views/ProjectsView.vue'),
+  },
+  {
+    path: '/crm',
+    name: 'crm',
+    component: () => import('../views/CrmView.vue'),
+  },
+  {
+    path: '/teams',
+    name: 'teams',
+    component: () => import('../views/TeamsView.vue'),
+  },
+  {
     path: '/',
     redirect: '/auth',
   },
