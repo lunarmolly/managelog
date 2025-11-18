@@ -330,7 +330,7 @@
                 </span>
               </div>
               <!-- Согласие на рассылку -->
-              <div class="col-span-2 flex flex-col">
+              <!-- <div class="col-span-2 flex flex-col">
                 <div class="flex items-center gap-3 mb-0 flex-nowrap">
                   <input
                     v-model="registerForm.marketing"
@@ -341,7 +341,7 @@
                     <a href="https://google.com" target="_blank" class="text-[#912138] no-underline underline-offset-[15%] underline decoration-[#912138] decoration-[6.5%] cursor-pointer hover:opacity-80">cогласие</a> на получение рекламных сообщений
                   </label>
                 </div>
-              </div>
+              </div> -->
               <!-- Создать компанию -->
               <div class="col-span-2 flex flex-col">
                 <div class="flex items-center gap-3 mb-0 flex-nowrap">
