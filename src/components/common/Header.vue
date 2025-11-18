@@ -545,12 +545,12 @@ function toggleProfile() {
 
 .avatar-fade-enter-from {
   opacity: 0;
-  transform: scale(0.8) rotate(-90deg);
+  transform: scale(0.8);
 }
 
 .avatar-fade-leave-to {
   opacity: 0;
-  transform: scale(0.8) rotate(90deg);
+  transform: scale(0.8);
 }
 
 @media (max-width: 1400px) {
