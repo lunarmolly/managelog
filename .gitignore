@@ -8,4 +8,9 @@ vite.config.local.*
 .vscode/
 coverage/
 
+# Environment variables
+.env
+.env.local
+.env.*.local
+
 

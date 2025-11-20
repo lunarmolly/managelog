@@ -1,33 +1,31 @@
 # managelog
 
-managelog.ru — минималистичный фронтенд (Vue 3 + Vite + TS + Tailwind) с модулем регистрации/авторизации, роутингом, Pinia, мок-API (MSW) и готовностью к FastAPI-бэкенду.
+## Деплой
 
-## Технологии
-- Vue 3 (Composition API), TypeScript, Vite
-- Router (vue-router), Store (Pinia)
-- Tailwind CSS, PostCSS, Autoprefixer
-- fetch с лёгкой обёрткой (без axios)
-- MSW (Mock Service Worker) для dev-моков
-
-## Запуск
+### 1. Установка зависимостей
 ```bash
-npm i
-npm run dev
+npm install
 ```
 
-## Структура
-- `src/router` — маршруты и guards
-- `src/stores/auth.ts` — Pinia-store авторизации
-- `src/api` — fetchJson, типы и endpoints
-- `src/mocks` — MSW (handlers + worker)
-- `src/views` — Auth/Dashboard
-- `src/components/auth` — формы входа/регистрации
-- `src/styles` — Tailwind и токены
+### 2. Настройка переменных окружения
+Создайте файл `.env` на основе `.env.example`:
+```bash
+cp .env.example .env
+```
 
-## MSW
-- Активен в DEV автоматически. Отключить — закомментировать инициализацию в `src/main.ts`.
-- Эмулируется httpOnly-refresh cookie через внутреннее хранилище MSW.
+Отредактируйте `.env` и укажите ваш API URL:
+```
+VITE_API_BASE_URL=http://your-api-host:port/api/v1
+```
 
-## Автор и лицензия
-- Автор: managelog.ru
-- Примечание: проект в разработке, код проприетарный (не open-source).
+### 3. Сборка проекта
+```bash
+npm run build
+```
+
+Результат сборки будет в папке `dist/`.
+
+### 4. Запуск dev-сервера (для разработки)
+```bash
+npm run dev
+```
