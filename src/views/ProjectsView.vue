@@ -216,11 +216,167 @@
     <div v-if="projects.length === 0" class="empty-projects">
       <p class="empty-projects__text">создайте свой первый проект</p>
     </div>
+
+    <!-- Модальное окно создания проекта -->
+    <div
+      v-if="isCreateProjectModalOpen"
+      class="modal-overlay"
+      @click="closeModalOnOverlay"
+    >
+      <div class="create-project-modal" @click.stop>
+        <div class="modal-header">
+          <div class="modal-back-btn" @click="closeCreateProjectModal">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path
+                d="M3.29279 10.9377C3.10532 11.1252 3 11.3795 3 11.6447C3 11.9099 3.10532 12.1642 3.29279 12.3517L8.94979 18.0087C9.13839 18.1909 9.39099 18.2917 9.65319 18.2894C9.91538 18.2871 10.1662 18.1819 10.3516 17.9965C10.537 17.8111 10.6422 17.5603 10.6445 17.2981C10.6467 17.0359 10.5459 16.7833 10.3638 16.5947L6.41379 12.6447H19.6568C19.922 12.6447 20.1764 12.5394 20.3639 12.3518C20.5514 12.1643 20.6568 11.9099 20.6568 11.6447C20.6568 11.3795 20.5514 11.1251 20.3639 10.9376C20.1764 10.7501 19.922 10.6447 19.6568 10.6447H6.41379L10.3638 6.69471C10.5459 6.50611 10.6467 6.25351 10.6445 5.99131C10.6422 5.72911 10.537 5.4783 10.3516 5.29289C10.1662 5.10748 9.91538 5.00232 9.65319 5.00004C9.39099 4.99776 9.13839 5.09855 8.94979 5.28071L3.29279 10.9377Z"
+                fill="#E1EAF8"
+              />
+            </svg>
+          </div>
+          <div class="modal-title">к проектам</div>
+        </div>
+        <div class="modal-field">
+          <div class="modal-field-label">название:</div>
+          <input
+            v-model="projectName"
+            type="text"
+            class="modal-field-input"
+            placeholder="введите название"
+          />
+        </div>
+        <div class="modal-field">
+          <div class="modal-field-label">иконка:</div>
+          <div class="modal-icons-list-container">
+            <div class="modal-icons-list">
+              <div
+                v-for="icon in iconsWithSvg"
+                :key="`${icon.id}-${iconColor}`"
+                class="modal-icon-option"
+                :class="{ selected: selectedIcon === icon.id }"
+                @click="selectIcon(icon.id)"
+                v-html="icon.svgHtml"
+              />
+            </div>
+          </div>
+        </div>
+        <div class="modal-field">
+          <div class="modal-field-label">цвет:</div>
+          <div class="modal-colors-list-container">
+            <div class="modal-colors-list">
+              <div
+                v-for="color in projectColors"
+                :key="color.id"
+                class="modal-color-option"
+                :class="{ selected: selectedColor === color.hex }"
+                :style="{ backgroundColor: color.hex }"
+                @click="selectColor(color.hex)"
+              />
+            </div>
+          </div>
+        </div>
+        <div class="modal-description-container">
+          <textarea
+            v-model="projectDescription"
+            class="modal-description-textarea"
+            placeholder="описание проекта:"
+            @scroll="updateScrollbar"
+          />
+          <div class="modal-description-scrollbar">
+            <div
+              ref="scrollbarThumb"
+              class="modal-description-scrollbar-thumb"
+            />
+          </div>
+        </div>
+        <div class="modal-generate-section">
+          <div class="modal-generate-btn" @click="generateDescription">
+            <div class="modal-generate-btn-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path
+                  d="M9.01238 5.448C9.61038 3.698 12.0284 3.645 12.7374 5.289L12.7974 5.449L13.6044 7.809C13.7893 8.35023 14.0882 8.84551 14.4808 9.26142C14.8734 9.67734 15.3507 10.0042 15.8804 10.22L16.0974 10.301L18.4574 11.107C20.2074 11.705 20.2604 14.123 18.6174 14.832L18.4574 14.892L16.0974 15.699C15.556 15.8838 15.0605 16.1826 14.6444 16.5753C14.2283 16.9679 13.9013 17.4452 13.6854 17.975L13.6044 18.191L12.7984 20.552C12.2004 22.302 9.78238 22.355 9.07438 20.712L9.01238 20.552L8.20638 18.192C8.02156 17.6506 7.72275 17.1551 7.33012 16.739C6.93749 16.3229 6.46017 15.9959 5.93038 15.78L5.71438 15.699L3.35438 14.893C1.60338 14.295 1.55038 11.877 3.19438 11.169L3.35438 11.107L5.71438 10.301C6.25561 10.1161 6.75089 9.81719 7.1668 9.42457C7.58271 9.03195 7.90959 8.55469 8.12538 8.025L8.20638 7.809L9.01238 5.448ZM10.9054 6.094L10.0994 8.454C9.81777 9.2793 9.35965 10.0333 8.75691 10.6635C8.15418 11.2937 7.42132 11.7849 6.60938 12.103L6.35938 12.194L3.99938 13L6.35938 13.806C7.18468 14.0876 7.93868 14.5457 8.56887 15.1485C9.19907 15.7512 9.6903 16.4841 10.0084 17.296L10.0994 17.546L10.9054 19.906L11.7114 17.546C11.993 16.7207 12.4511 15.9667 13.0538 15.3365C13.6566 14.7063 14.3894 14.2151 15.2014 13.897L15.4514 13.807L17.8114 13L15.4514 12.194C14.6261 11.9124 13.8721 11.4543 13.2419 10.8515C12.6117 10.2488 12.1205 9.51595 11.8024 8.704L11.7124 8.454L10.9054 6.094ZM18.9054 2C19.0925 2 19.2758 2.05248 19.4345 2.15147C19.5933 2.25046 19.7211 2.392 19.8034 2.56L19.8514 2.677L20.2014 3.703L21.2284 4.053C21.4159 4.1167 21.5802 4.23462 21.7006 4.39182C21.821 4.54902 21.892 4.73842 21.9047 4.93602C21.9173 5.13362 21.871 5.33053 21.7716 5.50179C21.6722 5.67304 21.5242 5.81094 21.3464 5.898L21.2284 5.946L20.2024 6.296L19.8524 7.323C19.7886 7.51043 19.6706 7.6747 19.5133 7.79499C19.356 7.91529 19.1666 7.98619 18.969 7.99872C18.7714 8.01125 18.5746 7.96484 18.4034 7.86538C18.2322 7.76591 18.0944 7.61787 18.0074 7.44L17.9594 7.323L17.6094 6.297L16.5824 5.947C16.3949 5.8833 16.2305 5.76538 16.1101 5.60819C15.9898 5.45099 15.9187 5.26158 15.9061 5.06398C15.8935 4.86638 15.9398 4.66947 16.0392 4.49821C16.1385 4.32696 16.2865 4.18906 16.4644 4.102L16.5824 4.054L17.6084 3.704L17.9584 2.677C18.0258 2.47943 18.1534 2.30791 18.3232 2.1865C18.493 2.06509 18.6966 1.99987 18.9054 2Z"
+                  fill="#E1EAF8"
+                />
+              </svg>
+            </div>
+            <div class="modal-generate-btn-text">сгенерировать описание</div>
+          </div>
+          <div
+            v-if="generatedDescription"
+            class="modal-generated-description"
+          >
+            <div class="modal-generated-content">
+              <div class="modal-generated-text">{{ generatedDescription }}</div>
+              <div class="modal-generated-actions">
+                <div class="modal-action-btn modal-action-accept" @click="acceptGeneratedDescription">
+                  <div class="modal-action-btn-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path
+                        d="M11 20C11 20.2652 11.1054 20.5196 11.2929 20.7071C11.4804 20.8946 11.7348 21 12 21C12.2652 21 12.5196 20.8946 12.7071 20.7071C12.8946 20.5196 13 20.2652 13 20V13H20C20.2652 13 20.5196 12.8946 20.7071 12.7071C20.8946 12.5196 21 12.2652 21 12C21 11.7348 20.8946 11.4804 20.7071 11.2929C20.5196 11.1054 20.2652 11 20 11H13V4C13 3.73478 12.8946 3.48043 12.7071 3.29289C12.5196 3.10536 12.2652 3 12 3C11.7348 3 11.4804 3.10536 11.2929 3.29289C11.1054 3.48043 11 3.73478 11 4V11H4C3.73478 11 3.48043 11.1054 3.29289 11.2929C3.10536 11.4804 3 11.7348 3 12C3 12.2652 3.10536 12.5196 3.29289 12.7071C3.48043 12.8946 3.73478 13 4 13H11V20Z"
+                        fill="#292D32"
+                      />
+                    </svg>
+                  </div>
+                  <span>принять</span>
+                </div>
+                <div class="modal-action-btn modal-action-refine" @click="refineGeneratedDescription">
+                  <div class="modal-action-btn-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path
+                        fill-rule="evenodd"
+                        clip-rule="evenodd"
+                        d="M3.07612 5.617C3.15186 5.43431 3.28007 5.27819 3.44454 5.16837C3.60901 5.05854 3.80235 4.99995 4.00012 5H14.0001C14.9194 5 15.8296 5.18106 16.6789 5.53284C17.5282 5.88463 18.2999 6.40024 18.9499 7.05025C19.5999 7.70026 20.1155 8.47194 20.4673 9.32122C20.8191 10.1705 21.0001 11.0807 21.0001 12C21.0001 12.9193 20.8191 13.8295 20.4673 14.6788C20.1155 15.5281 19.5999 16.2997 18.9499 16.9497C18.2999 17.5998 17.5282 18.1154 16.6789 18.4672C15.8296 18.8189 14.9194 19 14.0001 19H5.00012C4.7349 19 4.48055 18.8946 4.29301 18.7071C4.10547 18.5196 4.00012 18.2652 4.00012 18C4.00012 17.7348 4.10547 17.4804 4.29301 17.2929C4.48055 17.1054 4.7349 17 5.00012 17H14.0001C15.3262 17 16.598 16.4732 17.5357 15.5355C18.4733 14.5979 19.0001 13.3261 19.0001 12C19.0001 10.6739 18.4733 9.40215 17.5357 8.46447C16.598 7.52678 15.3262 7 14.0001 7H6.41412L8.20712 8.793C8.38927 8.9816 8.49007 9.2342 8.48779 9.4964C8.48551 9.7586 8.38034 10.0094 8.19493 10.1948C8.00953 10.3802 7.75871 10.4854 7.49652 10.4877C7.23432 10.49 6.98172 10.3892 6.79312 10.207L3.29312 6.707C3.15318 6.56715 3.05787 6.38895 3.01925 6.19492C2.98062 6.0009 3.00041 5.79977 3.07612 5.617Z"
+                        fill="#292D32"
+                      />
+                    </svg>
+                  </div>
+                  <span>доработать</span>
+                </div>
+                <div class="modal-action-btn modal-action-delete" @click="deleteGeneratedDescription">
+                  <div class="modal-action-btn-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path
+                        d="M20 5C20.2652 5 20.5196 5.10536 20.7071 5.29289C20.8946 5.48043 21 5.73478 21 6C21 6.26522 20.8946 6.51957 20.7071 6.70711C20.5196 6.89464 20.2652 7 20 7H19L18.997 7.071L18.064 20.142C18.0281 20.6466 17.8023 21.1188 17.4321 21.4636C17.0619 21.8083 16.5749 22 16.069 22H7.93C7.42414 22 6.93707 21.8083 6.56688 21.4636C6.1967 21.1188 5.97092 20.6466 5.935 20.142L5.002 7.072L5 7H4C3.73478 7 3.48043 6.89464 3.29289 6.70711C3.10536 6.51957 3 6.26522 3 6C3 5.73478 3.10536 5.48043 3.29289 5.29289C3.48043 5.10536 3.73478 5 4 5H20ZM16.997 7H7.003L7.931 20H16.069L16.997 7ZM14 2C14.2652 2 14.5196 2.10536 14.7071 2.29289C14.8946 2.48043 15 2.73478 15 3C15 3.26522 14.8946 3.51957 14.7071 3.70711C14.5196 3.89464 14.2652 4 14 4H10C9.73478 4 9.48043 3.89464 9.29289 3.70711C9.10536 3.51957 9 3.26522 9 3C9 2.73478 9.10536 2.48043 9.29289 2.29289C9.48043 2.10536 9.73478 2 10 2H14Z"
+                        fill="#292D32"
+                      />
+                    </svg>
+                  </div>
+                  <span>удалить</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <div class="modal-btn modal-btn-create" @click="submitCreateProject">
+            <div class="modal-btn-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path
+                  d="M11 20C11 20.2652 11.1054 20.5196 11.2929 20.7071C11.4804 20.8946 11.7348 21 12 21C12.2652 21 12.5196 20.8946 12.7071 20.7071C12.8946 20.5196 13 20.2652 13 20V13H20C20.2652 13 20.5196 12.8946 20.7071 12.7071C20.8946 12.5196 21 12.2652 21 12C21 11.7348 20.8946 11.4804 20.7071 11.2929C20.5196 11.1054 20.2652 11 20 11H13V4C13 3.73478 12.8946 3.48043 12.7071 3.29289C12.5196 3.10536 12.2652 3 12 3C11.7348 3 11.4804 3.10536 11.2929 3.29289C11.1054 3.48043 11 3.73478 11 4V11H4C3.73478 11 3.48043 11.1054 3.29289 11.2929C3.10536 11.4804 3 11.7348 3 12C3 12.2652 3.10536 12.5196 3.29289 12.7071C3.48043 12.8946 3.73478 13 4 13H11V20Z"
+                  fill="#912138"
+                />
+              </svg>
+            </div>
+            <span>создать проект</span>
+          </div>
+          <div class="modal-btn modal-btn-cancel" @click="closeCreateProjectModal">
+            <div class="modal-btn-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path
+                  d="M20 5C20.2652 5 20.5196 5.10536 20.7071 5.29289C20.8946 5.48043 21 5.73478 21 6C21 6.26522 20.8946 6.51957 20.7071 6.70711C20.5196 6.89464 20.2652 7 20 7H19L18.997 7.071L18.064 20.142C18.0281 20.6466 17.8023 21.1188 17.4321 21.4636C17.0619 21.8083 16.5749 22 16.069 22H7.93C7.42414 22 6.93707 21.8083 6.56688 21.4636C6.1967 21.1188 5.97092 20.6466 5.935 20.142L5.002 7.072L5 7H4C3.73478 7 3.48043 6.89464 3.29289 6.70711C3.10536 6.51957 3 6.26522 3 6C3 5.73478 3.10536 5.48043 3.29289 5.29289C3.48043 5.10536 3.73478 5 4 5H20ZM16.997 7H7.003L7.931 20H16.069L16.997 7ZM14 2C14.2652 2 14.5196 2.10536 14.7071 2.29289C14.8946 2.48043 15 2.73478 15 3C15 3.26522 14.8946 3.51957 14.7071 3.70711C14.5196 3.89464 14.2652 4 14 4H10C9.73478 4 9.48043 3.89464 9.29289 3.70711C9.10536 3.51957 9 3.26522 9 3C9 2.73478 9.10536 2.48043 9.29289 2.29289C9.48043 2.10536 9.73478 2 10 2H14Z"
+                  fill="#912138"
+                />
+              </svg>
+            </div>
+            <span>отмена</span>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
 
 // Типы
 interface User {
@@ -238,6 +394,18 @@ interface SelectedFilters {
   manager: (string | number)[];
   status: string[];
   actions: boolean;
+}
+
+interface ProjectIcon {
+  id: string;
+  name: string;
+  svg: string;
+}
+
+interface ProjectColor {
+  id: string;
+  hex: string;
+  name: string;
 }
 
 // Состояние фильтров
@@ -264,6 +432,73 @@ const selectedSort = ref<string>('activity');
 
 // Проекты (заглушка - пока пустой массив)
 const projects = ref<any[]>([]);
+
+// Состояние модального окна создания проекта
+const isCreateProjectModalOpen = ref(false);
+const projectName = ref('');
+const projectDescription = ref('');
+const generatedDescription = ref('');
+const selectedIcon = ref('building');
+const selectedColor = ref('#c2c7f3');
+const scrollbarThumb = ref<HTMLElement | null>(null);
+
+// Массив иконок для проектов (хранятся на фронте)
+const projectIcons: ProjectIcon[] = [
+  {
+    id: 'building',
+    name: 'Здание',
+    svg: '<path d="M3 11L12 5L21 11V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V11Z"/><path d="M9 22V13H15V22"/>',
+  },
+  {
+    id: 'folder',
+    name: 'Папка',
+    svg: '<path d="M4 8.5C4 7.94772 4.21071 7.4179 4.58579 7.04289C4.96086 6.66781 5.46957 6.5 6 6.5H10.5L13 9H18C18.5304 9 19.0391 9.21071 19.4142 9.58579C19.7893 9.96086 20 10.4696 20 11V19.5C20 20.0523 19.7893 20.5821 19.4142 20.9571C19.0391 21.3322 18.5304 21.5 18 21.5H6C5.46957 21.5 4.96086 21.3322 4.58579 20.9571C4.21071 20.5821 4 20.0523 4 19.5V8.5Z"/>',
+  },
+  {
+    id: 'calendar',
+    name: 'Календарь',
+    svg: '<path d="M6 11.5H18M9 6V7.5M15 6V7.5M8 15H9.5M12.5 15H14M15.5 15H17M8 18H9.5M12.5 18H14M15.5 18H17M8 11.5H18C19.1046 11.5 20 12.3954 20 13.5V19.5C20 20.6046 19.1046 21.5 18 21.5H8C6.89543 21.5 6 20.6046 6 19.5V13.5C6 12.3954 6.89543 11.5 8 11.5Z"/>',
+  },
+  {
+    id: 'chart',
+    name: 'График',
+    svg: '<path d="M5.5 6V19.5H20.5M10 18L13 15L15.5 17.5L20.5 12.5M20.5 12.5H17.5M20.5 12.5V15.5"/>',
+  },
+  {
+    id: 'star',
+    name: 'Звезда',
+    svg: '<path d="M12 4.5L14.295 10.13L20.25 11.135L16.125 15.32L17.09 21.27L12 18.635L6.91 21.27L7.875 15.32L3.75 11.135L9.705 10.13L12 4.5Z"/>',
+  },
+  {
+    id: 'target',
+    name: 'Цель',
+    svg: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5.5"/><circle cx="12" cy="12" r="2"/>',
+  },
+];
+
+// Массив цветов для проектов
+const projectColors: ProjectColor[] = [
+  { id: 'c2c7f3', hex: '#c2c7f3', name: 'Голубой' },
+  { id: 'c2f3d5', hex: '#c2f3d5', name: 'Зеленый' },
+  { id: 'f3c2c3', hex: '#f3c2c3', name: 'Розовый' },
+  { id: 'efc2f3', hex: '#efc2f3', name: 'Фиолетовый' },
+  { id: 'f3dbc2', hex: '#f3dbc2', name: 'Персиковый' },
+  { id: 'f0f3c2', hex: '#f0f3c2', name: 'Лимонный' },
+];
+
+// Вычисляемый цвет для иконок (затемненный выбранный цвет)
+const iconColor = computed(() => {
+  return darkenColor(selectedColor.value);
+});
+
+// Вычисляемый массив иконок с SVG
+const iconsWithSvg = computed(() => {
+  const color = iconColor.value;
+  return projectIcons.map(icon => ({
+    ...icon,
+    svgHtml: `<svg width="28" height="26" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="stroke: ${color}; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;">${icon.svg}</svg>`,
+  }));
+});
 
 // Данные для заглушек
 const mockExecutorUsers: User[] = [
@@ -410,6 +645,193 @@ function resetFilters() {
   executorSearchQuery.value = '';
   managerSearchQuery.value = '';
   console.log('Все фильтры сброшены');
+}
+
+// Функции для работы с модальным окном создания проекта
+function openCreateProjectModal() {
+  isCreateProjectModalOpen.value = true;
+  projectName.value = '';
+  projectDescription.value = '';
+  generatedDescription.value = '';
+  selectedIcon.value = 'building';
+  selectedColor.value = '#c2c7f3';
+  nextTick(() => {
+    updateScrollbar();
+  });
+}
+
+function closeCreateProjectModal() {
+  isCreateProjectModalOpen.value = false;
+  projectName.value = '';
+  projectDescription.value = '';
+  generatedDescription.value = '';
+}
+
+function closeModalOnOverlay(event: MouseEvent) {
+  const target = event.target as HTMLElement;
+  if (target.classList.contains('modal-overlay')) {
+    closeCreateProjectModal();
+  }
+}
+
+// Функция для затемнения цвета на 50%
+function darkenColor(hex: string, percent = 50): string {
+  // Убираем #
+  hex = hex.replace('#', '');
+  
+  // Конвертируем в RGB
+  const r = parseInt(hex.substr(0, 2), 16);
+  const g = parseInt(hex.substr(2, 2), 16);
+  const b = parseInt(hex.substr(4, 2), 16);
+  
+  // Затемняем
+  const newR = Math.floor(r * (1 - percent / 100));
+  const newG = Math.floor(g * (1 - percent / 100));
+  const newB = Math.floor(b * (1 - percent / 100));
+  
+  // Конвертируем обратно в hex
+  return '#' + [newR, newG, newB].map(x => {
+    const hex = x.toString(16);
+    return hex.length === 1 ? '0' + hex : hex;
+  }).join('');
+}
+
+// Выбор иконки
+function selectIcon(iconId: string) {
+  selectedIcon.value = iconId;
+}
+
+// Выбор цвета
+function selectColor(colorHex: string) {
+  selectedColor.value = colorHex;
+}
+
+// Генерация описания (заглушка)
+function generateDescription() {
+  const name = projectName.value.trim() || 'проект';
+  
+  const mockDescriptions = [
+    `Описание проекта "${name}":\n\nЭтот проект направлен на решение ключевых задач и достижение поставленных целей. Проект включает в себя разработку функциональности, тестирование и внедрение решений.`,
+    `Проект "${name}" представляет собой комплексное решение для оптимизации бизнес-процессов. В рамках проекта планируется реализовать современные подходы и технологии.`,
+    `Цель проекта "${name}" - создание эффективного инструмента для управления задачами. Проект включает несколько этапов: планирование, разработка, тестирование и запуск.`,
+  ];
+  
+  const randomDescription = mockDescriptions[Math.floor(Math.random() * mockDescriptions.length)];
+  generatedDescription.value = randomDescription;
+}
+
+// Доработка описания
+function refineGeneratedDescription() {
+  const name = projectName.value.trim() || 'проект';
+  
+  const mockDescriptions = [
+    `Описание проекта "${name}":\n\nЭтот проект направлен на решение ключевых задач и достижение поставленных целей. Проект включает в себя разработку функциональности, тестирование и внедрение решений.`,
+    `Проект "${name}" представляет собой комплексное решение для оптимизации бизнес-процессов. В рамках проекта планируется реализовать современные подходы и технологии.`,
+    `Цель проекта "${name}" - создание эффективного инструмента для управления задачами. Проект включает несколько этапов: планирование, разработка, тестирование и запуск.`,
+    `Проект "${name}" - это инновационное решение, которое объединяет передовые технологии и проверенные практики. Основная цель - повышение эффективности и оптимизация рабочих процессов.`,
+    `В рамках проекта "${name}" планируется создание масштабируемой системы, способной адаптироваться к изменяющимся требованиям. Проект включает анализ требований, проектирование архитектуры и поэтапную реализацию.`,
+  ];
+  
+  const currentText = generatedDescription.value;
+  let newDescription;
+  do {
+    newDescription = mockDescriptions[Math.floor(Math.random() * mockDescriptions.length)];
+  } while (newDescription === currentText && mockDescriptions.length > 1);
+  
+  generatedDescription.value = newDescription;
+}
+
+// Принятие сгенерированного описания
+function acceptGeneratedDescription() {
+  projectDescription.value = generatedDescription.value;
+  generatedDescription.value = '';
+  nextTick(() => {
+    updateScrollbar();
+  });
+}
+
+// Удаление сгенерированного описания
+function deleteGeneratedDescription() {
+  generatedDescription.value = '';
+}
+
+// Обновление скроллбара
+function updateScrollbar() {
+  nextTick(() => {
+    const textarea = document.querySelector('.modal-description-textarea') as HTMLTextAreaElement;
+    const scrollbar = document.querySelector('.modal-description-scrollbar') as HTMLElement;
+    const thumb = scrollbarThumb.value;
+    
+    if (!textarea || !scrollbar || !thumb) return;
+
+    const scrollHeight = textarea.scrollHeight;
+    const clientHeight = textarea.clientHeight;
+    const scrollTop = textarea.scrollTop;
+    const scrollbarHeight = scrollbar.clientHeight;
+
+    // Проверяем, нужен ли скроллбар
+    if (scrollHeight <= clientHeight) {
+      thumb.style.display = 'none';
+      return;
+    } else {
+      thumb.style.display = 'block';
+    }
+
+    // Вычисляем размер и позицию бегунка
+    const thumbHeight = Math.max(48, (clientHeight / scrollHeight) * scrollbarHeight);
+    const maxThumbTop = scrollbarHeight - thumbHeight;
+    const thumbTop = (scrollTop / (scrollHeight - clientHeight)) * maxThumbTop;
+
+    thumb.style.height = thumbHeight + 'px';
+    thumb.style.top = thumbTop + 'px';
+  });
+}
+
+// Создание проекта (заглушка API)
+async function submitCreateProject() {
+  const name = projectName.value.trim();
+  const description = projectDescription.value.trim();
+
+  if (!name) {
+    alert('Пожалуйста, введите название проекта');
+    return;
+  }
+
+  // Заглушка API - здесь будет вызов реального API
+  try {
+    // TODO: Заменить на реальный вызов API
+    // const response = await fetch('/api/projects', {
+    //   method: 'POST',
+    //   headers: { 'Content-Type': 'application/json' },
+    //   body: JSON.stringify({
+    //     name,
+    //     description: description || 'Описание не указано',
+    //     icon: selectedIcon.value,
+    //     color: selectedColor.value,
+    //   }),
+    // });
+    // const newProject = await response.json();
+
+    // Заглушка
+    const newProject = {
+      id: Date.now(),
+      name,
+      description: description || 'Описание не указано',
+      icon: selectedIcon.value,
+      color: selectedColor.value,
+      createdAt: new Date().toISOString(),
+    };
+
+    console.log('Проект создан (заглушка):', newProject);
+    
+    // Закрываем модальное окно
+    closeCreateProjectModal();
+    
+    // TODO: Обновить список проектов после создания
+  } catch (error) {
+    console.error('Ошибка при создании проекта:', error);
+    alert('Не удалось создать проект. Попробуйте еще раз.');
+  }
 }
 
 // Закрытие меню при клике вне
@@ -1032,5 +1454,421 @@ onUnmounted(() => {
     width: 1.125rem;
     height: 1.125rem;
   }
+}
+
+/* Модальное окно создания проекта */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  display: flex;
+  align-items: stretch;
+  justify-content: flex-end;
+  z-index: 1000;
+}
+
+.create-project-modal {
+  background: rgba(4, 9, 16, 0.6);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-left: 1px solid #000000;
+  border-radius: 0;
+  width: 100%;
+  max-width: 800px;
+  height: 100vh;
+  overflow-y: auto;
+  padding: 12px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  box-shadow: -10px 0 40px rgba(0, 0, 0, 0.5);
+}
+
+.modal-header {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  height: 24px;
+}
+
+.modal-back-btn {
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.modal-back-btn svg {
+  width: 100%;
+  height: 100%;
+}
+
+.modal-title {
+  color: #e1eaf8;
+  font-size: 1.25rem;
+  font-weight: 400;
+  font-family: 'Involve', Arial, sans-serif;
+  flex: 1;
+}
+
+.modal-field {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  color: #e1eaf8;
+}
+
+.modal-field-label {
+  font-size: 1.25rem;
+  font-weight: 400;
+  font-family: 'Involve', Arial, sans-serif;
+  width: 168px;
+  flex-shrink: 0;
+}
+
+.modal-field-input {
+  flex: 1;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  font-family: 'Involve', Arial, sans-serif;
+  color: #ffffff;
+  background: transparent;
+  border: none;
+  outline: none;
+}
+
+.modal-field-input::placeholder {
+  color: rgba(225, 234, 248, 0.6);
+}
+
+.modal-icons-list-container,
+.modal-colors-list-container {
+  flex: 1;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(225, 234, 248, 0.3) transparent;
+}
+
+.modal-icons-list-container::-webkit-scrollbar,
+.modal-colors-list-container::-webkit-scrollbar {
+  height: 6px;
+}
+
+.modal-icons-list-container::-webkit-scrollbar-track,
+.modal-colors-list-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.modal-icons-list-container::-webkit-scrollbar-thumb,
+.modal-colors-list-container::-webkit-scrollbar-thumb {
+  background: rgba(225, 234, 248, 0.3);
+  border-radius: 3px;
+}
+
+.modal-icons-list-container::-webkit-scrollbar-thumb:hover,
+.modal-colors-list-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(225, 234, 248, 0.5);
+}
+
+.modal-icons-list,
+.modal-colors-list {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 8px 0;
+}
+
+.modal-icon-option {
+  width: 52px;
+  height: 52px;
+  background: rgba(225, 234, 248, 0.1);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 2px solid transparent;
+  flex-shrink: 0;
+}
+
+.modal-icon-option:hover {
+  background: rgba(225, 234, 248, 0.2);
+}
+
+.modal-icon-option.selected {
+  border-color: #912138;
+  background: rgba(145, 33, 56, 0.2);
+}
+
+.modal-icon-option svg {
+  width: 28px;
+  height: 26px;
+}
+
+.modal-color-option {
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 3px solid transparent;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.modal-color-option:hover {
+  transform: scale(1.05);
+}
+
+.modal-color-option.selected {
+  border-color: #912138;
+}
+
+.modal-description-container {
+  background: #292d32;
+  border-radius: 16px;
+  padding: 12px;
+  display: flex;
+  gap: 6px;
+  min-height: 327px;
+  max-height: 400px;
+}
+
+.modal-description-textarea {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 400;
+  font-family: 'Involve', Arial, sans-serif;
+  resize: none;
+  min-height: 300px;
+  overflow-y: auto;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.modal-description-textarea::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+.modal-description-textarea::placeholder {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.modal-description-scrollbar {
+  width: 8px;
+  background: rgba(225, 234, 248, 0.25);
+  border-radius: 100px;
+  position: relative;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.modal-description-scrollbar-thumb {
+  width: 100%;
+  min-height: 48px;
+  background: #e1eaf8;
+  border-radius: 100px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  transition: top 0.1s ease, height 0.1s ease;
+  cursor: pointer;
+}
+
+.modal-description-scrollbar-thumb:hover {
+  background: #c8d3e5;
+}
+
+.modal-generate-btn {
+  background: #912138;
+  border-radius: 16px;
+  padding: 6px 12px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.modal-generate-btn:hover {
+  background: #a02a43;
+}
+
+.modal-generate-btn-icon {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.modal-generate-btn-icon svg {
+  width: 100%;
+  height: 100%;
+  fill: #e1eaf8;
+}
+
+.modal-generate-btn-text {
+  color: #e1eaf8;
+  font-size: 0.9375rem;
+  font-weight: 400;
+  font-family: 'Involve', Arial, sans-serif;
+  flex: 1;
+}
+
+.modal-generate-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.modal-generated-description {
+  background: #292d32;
+  border: 3px solid #912138;
+  border-radius: 16px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.modal-generated-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.modal-generated-text {
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 400;
+  font-family: 'Involve', Arial, sans-serif;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.modal-generated-actions {
+  display: flex;
+  gap: 24px;
+}
+
+.modal-action-btn {
+  border-radius: 16px;
+  padding: 6px 12px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+  font-size: 0.9375rem;
+  font-weight: 400;
+  font-family: 'Involve', Arial, sans-serif;
+  flex: 1;
+}
+
+.modal-action-accept {
+  background: #dbf3c2;
+  color: #292d32;
+}
+
+.modal-action-accept:hover {
+  background: #c8e8a5;
+}
+
+.modal-action-refine {
+  background: #f3dbc2;
+  color: #292d32;
+}
+
+.modal-action-refine:hover {
+  background: #f0d0a8;
+}
+
+.modal-action-delete {
+  background: #f3c2c3;
+  color: #292d32;
+}
+
+.modal-action-delete:hover {
+  background: #f0a8aa;
+}
+
+.modal-action-btn-icon {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-action-btn-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 24px;
+}
+
+.modal-btn {
+  border-radius: 16px;
+  padding: 6px 12px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+  font-size: 0.9375rem;
+  font-weight: 400;
+  font-family: 'Involve', Arial, sans-serif;
+}
+
+.modal-btn-create {
+  background: #dbf3c2;
+  color: #912138;
+}
+
+.modal-btn-create:hover {
+  background: #c8e8a5;
+}
+
+.modal-btn-cancel {
+  background: #f3c2c3;
+  color: #912138;
+}
+
+.modal-btn-cancel:hover {
+  background: #f0a8aa;
+}
+
+.modal-btn-icon {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-btn-icon svg {
+  width: 100%;
+  height: 100%;
 }
 </style>
