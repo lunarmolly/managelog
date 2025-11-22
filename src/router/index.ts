@@ -42,6 +42,11 @@ const routes: RouteRecordRaw[] = [
     component: () => import('../views/PrivacyView.vue'),
   },
   {
+    path: '/settings',
+    name: 'settings',
+    component: () => import('../views/SettingsView.vue'),
+  },
+  {
     path: '/',
     redirect: '/auth',
   },

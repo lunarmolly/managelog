@@ -1,7 +1,16 @@
 <template>
   <div class="app">
-    <Header v-if="shouldShowHeader" />
-    <main :class="['app__content', { 'app__content--with-header': shouldShowHeader }]">
+    <BrandHeader v-if="shouldShowHeader && settingsStore.headerType === 'brand'" />
+    <CompactHeader v-if="shouldShowHeader && settingsStore.headerType === 'compact'" />
+    <main
+      :class="[
+        'app__content',
+        {
+          'app__content--with-header-brand': shouldShowHeader && settingsStore.headerType === 'brand',
+          'app__content--with-header-compact': shouldShowHeader && settingsStore.headerType === 'compact',
+        },
+      ]"
+    >
       <router-view />
     </main>
     <Footer />
@@ -11,10 +20,14 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useRoute } from 'vue-router';
-import Header from '@/components/common/Header.vue';
+import { useSettingsStore } from '@/stores/settings';
+import BrandHeader from '@/components/common/BrandHeader.vue';
+import CompactHeader from '@/components/common/CompactHeader.vue';
 import Footer from '@/components/common/Footer.vue';
 
 const route = useRoute();
+const settingsStore = useSettingsStore();
+
 const shouldShowHeader = computed(() => {
   return !route.path.startsWith('/auth') && route.path !== '/privacy';
 });
@@ -40,7 +53,11 @@ body {
   padding-top: 24px;
 }
 
-.app__content--with-header {
+.app__content--with-header-brand {
   padding-top: 120px;
+}
+
+.app__content--with-header-compact {
+  padding-top: 80px;
 }
 </style>
