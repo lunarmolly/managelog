@@ -591,8 +591,8 @@ onUnmounted(() => {
   background: rgba(145, 33, 56, 0.95);
   backdrop-filter: blur(25px);
   -webkit-backdrop-filter: blur(25px);
-  border-radius: 20px;
-  padding: 12px 0;
+  border-radius: 16px;
+  padding: 8px 0;
   min-width: 200px;
   z-index: 10000;
   display: none;
@@ -604,16 +604,16 @@ onUnmounted(() => {
 }
 
 .dropdown-item {
-  padding: 12px 24px;
+  padding: 10px 20px;
   color: #e1eaf8;
-  font-size: 1.125rem;
+  font-size: 1rem;
   font-weight: 500;
   cursor: pointer;
   transition: background 0.2s;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 10px;
 }
 
 .dropdown-item:hover {
@@ -626,8 +626,8 @@ onUnmounted(() => {
 }
 
 .dropdown-item .checkbox {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   border: 2px solid #e1eaf8;
   border-radius: 4px;
   display: flex;
@@ -642,8 +642,8 @@ onUnmounted(() => {
 }
 
 .dropdown-item .checkbox svg {
-  width: 12px;
-  height: 12px;
+  width: 10px;
+  height: 10px;
   stroke: #912138;
   fill: none;
   display: none;
@@ -657,17 +657,17 @@ onUnmounted(() => {
 .filter-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin: 8px 12px 0;
+  gap: 6px;
+  margin: 6px 10px 0;
 }
 
 .apply-btn {
   flex: 1;
-  padding: 10px 20px;
+  padding: 8px 16px;
   background: #912138;
-  border-radius: 20px;
+  border-radius: 16px;
   color: #ffffff;
-  font-size: 1.125rem;
+  font-size: 0.9375rem;
   font-weight: 500;
   text-align: center;
   cursor: pointer;
@@ -679,11 +679,11 @@ onUnmounted(() => {
 }
 
 .reset-filters-btn {
-  padding: 10px 20px;
+  padding: 8px 16px;
   background: #912138;
-  border-radius: 20px;
+  border-radius: 16px;
   color: #ffffff;
-  font-size: 1.125rem;
+  font-size: 0.9375rem;
   font-weight: 500;
   text-align: center;
   cursor: pointer;
@@ -700,8 +700,8 @@ onUnmounted(() => {
 }
 
 .reset-filters-icon {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -715,7 +715,7 @@ onUnmounted(() => {
 }
 
 .filter-btn .dropdown-menu {
-  padding-bottom: 8px;
+  padding-bottom: 6px;
 }
 
 .sort-btn .dropdown-menu {
@@ -730,9 +730,9 @@ onUnmounted(() => {
 /* Подменю фильтров */
 .filter-submenu {
   display: none;
-  padding: 8px 0;
+  padding: 6px 0;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
-  margin-top: 8px;
+  margin-top: 6px;
 }
 
 .filter-submenu.active {
@@ -740,18 +740,18 @@ onUnmounted(() => {
 }
 
 .filter-search {
-  padding: 8px 24px;
-  margin-bottom: 8px;
+  padding: 6px 20px;
+  margin-bottom: 6px;
 }
 
 .filter-search-input {
   width: 100%;
-  padding: 8px 12px;
+  padding: 6px 10px;
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 8px;
+  border-radius: 6px;
   color: #ffffff;
-  font-size: 1rem;
+  font-size: 0.9375rem;
   font-weight: 400;
   font-family: 'Involve', Arial, sans-serif;
 }
@@ -767,24 +767,24 @@ onUnmounted(() => {
 }
 
 .filter-results {
-  max-height: 200px;
+  max-height: 180px;
   overflow-y: auto;
-  padding: 0 12px;
+  padding: 0 10px;
 }
 
 .filter-result-item {
-  padding: 8px 12px;
+  padding: 6px 10px;
   color: #e1eaf8;
-  font-size: 1rem;
+  font-size: 0.9375rem;
   font-weight: 400;
   cursor: pointer;
   transition: background 0.2s;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 10px;
   border-radius: 6px;
-  margin-bottom: 4px;
+  margin-bottom: 3px;
 }
 
 .filter-result-item:hover {
@@ -797,8 +797,8 @@ onUnmounted(() => {
 }
 
 .filter-result-item .checkbox {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   border: 2px solid #e1eaf8;
   border-radius: 4px;
   display: flex;
@@ -813,8 +813,8 @@ onUnmounted(() => {
 }
 
 .filter-result-item .checkbox svg {
-  width: 12px;
-  height: 12px;
+  width: 10px;
+  height: 10px;
   stroke: #912138;
   fill: none;
   display: none;
@@ -825,20 +825,20 @@ onUnmounted(() => {
 }
 
 .filter-status-list {
-  padding: 8px 0;
+  padding: 6px 0;
 }
 
 .filter-status-item {
-  padding: 8px 24px;
+  padding: 6px 20px;
   color: #e1eaf8;
-  font-size: 1rem;
+  font-size: 0.9375rem;
   font-weight: 400;
   cursor: pointer;
   transition: background 0.2s;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 10px;
 }
 
 .filter-status-item:hover {
@@ -851,8 +851,8 @@ onUnmounted(() => {
 }
 
 .filter-status-item .checkbox {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   border: 2px solid #e1eaf8;
   border-radius: 4px;
   display: flex;
@@ -867,8 +867,8 @@ onUnmounted(() => {
 }
 
 .filter-status-item .checkbox svg {
-  width: 12px;
-  height: 12px;
+  width: 10px;
+  height: 10px;
   stroke: #912138;
   fill: none;
   display: none;
