@@ -963,6 +963,42 @@
 
             // Восстанавливаем выбранные статусы
             restoreStatusSelection();
+
+            // Обновляем подсветку основных блоков фильтров
+            updateFilterItemsHighlight();
+        }
+
+        // Обновление подсветки основных блоков фильтров
+        function updateFilterItemsHighlight() {
+            // Проверяем исполнителей
+            const executorItem = document.querySelector('#filters-menu .dropdown-item[data-filter="executor"]');
+            if (executorItem) {
+                if (selectedFilters.executor.length > 0) {
+                    executorItem.classList.add('active');
+                } else {
+                    executorItem.classList.remove('active');
+                }
+            }
+
+            // Проверяем руководителей
+            const managerItem = document.querySelector('#filters-menu .dropdown-item[data-filter="manager"]');
+            if (managerItem) {
+                if (selectedFilters.manager.length > 0) {
+                    managerItem.classList.add('active');
+                } else {
+                    managerItem.classList.remove('active');
+                }
+            }
+
+            // Проверяем статусы
+            const statusItem = document.querySelector('#filters-menu .dropdown-item[data-filter="status"]');
+            if (statusItem) {
+                if (selectedFilters.status.length > 0) {
+                    statusItem.classList.add('active');
+                } else {
+                    statusItem.classList.remove('active');
+                }
+            }
         }
 
         // Восстановление выбора пользователей
@@ -1057,7 +1093,27 @@
 
             if (!submenu || !item) return;
 
-            // Переключаем подменю
+            // Проверяем, открывается ли это подменю
+            const isOpening = !submenu.classList.contains('active');
+
+            // Если открываем новое подменю, закрываем все остальные
+            if (isOpening) {
+                // Закрываем все другие подменю
+                document.querySelectorAll('.filter-submenu').forEach(otherSubmenu => {
+                    if (otherSubmenu !== submenu) {
+                        otherSubmenu.classList.remove('active');
+                    }
+                });
+
+                // Убираем класс expanded у всех других элементов
+                document.querySelectorAll('.dropdown-item.expandable').forEach(otherItem => {
+                    if (otherItem !== item) {
+                        otherItem.classList.remove('expanded');
+                    }
+                });
+            }
+
+            // Переключаем текущее подменю
             submenu.classList.toggle('active');
             item.classList.toggle('expanded');
 
@@ -1071,6 +1127,9 @@
                     loadStatuses();
                 }
             }
+
+            // Обновляем подсветку основных блоков
+            updateFilterItemsHighlight();
         }
 
         // Поиск пользователей (заглушка, в реальном приложении запрос к API)
@@ -1166,6 +1225,9 @@
             }
 
             console.log(`Выбранные ${type}:`, selectedFilters[type]);
+            
+            // Обновляем подсветку основных блоков фильтров
+            updateFilterItemsHighlight();
         }
 
         // Загрузка статусов (в реальном приложении запрос к API)
@@ -1220,6 +1282,9 @@
             }
 
             console.log('Выбранные статусы:', selectedFilters.status);
+            
+            // Обновляем подсветку основных блоков фильтров
+            updateFilterItemsHighlight();
         }
 
         // Переключение фильтра (для "Рекомендуются действия")
