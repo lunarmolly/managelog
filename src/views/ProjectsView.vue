@@ -606,7 +606,7 @@ onUnmounted(() => {
 .dropdown-item {
   padding: 10px 20px;
   color: #e1eaf8;
-  font-size: 1rem;
+  font-size: 0.9375rem;
   font-weight: 500;
   cursor: pointer;
   transition: background 0.2s;
@@ -667,7 +667,7 @@ onUnmounted(() => {
   background: #912138;
   border-radius: 16px;
   color: #ffffff;
-  font-size: 0.9375rem;
+  font-size: 0.875rem;
   font-weight: 500;
   text-align: center;
   cursor: pointer;
@@ -683,7 +683,7 @@ onUnmounted(() => {
   background: #912138;
   border-radius: 16px;
   color: #ffffff;
-  font-size: 0.9375rem;
+  font-size: 0.875rem;
   font-weight: 500;
   text-align: center;
   cursor: pointer;
@@ -751,7 +751,7 @@ onUnmounted(() => {
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 6px;
   color: #ffffff;
-  font-size: 0.9375rem;
+  font-size: 0.875rem;
   font-weight: 400;
   font-family: 'Involve', Arial, sans-serif;
 }
@@ -775,7 +775,7 @@ onUnmounted(() => {
 .filter-result-item {
   padding: 6px 10px;
   color: #e1eaf8;
-  font-size: 0.9375rem;
+  font-size: 0.875rem;
   font-weight: 400;
   cursor: pointer;
   transition: background 0.2s;
@@ -831,7 +831,7 @@ onUnmounted(() => {
 .filter-status-item {
   padding: 6px 20px;
   color: #e1eaf8;
-  font-size: 0.9375rem;
+  font-size: 0.875rem;
   font-weight: 400;
   cursor: pointer;
   transition: background 0.2s;

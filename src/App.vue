@@ -58,6 +58,6 @@ body {
 }
 
 .app__content--with-header-compact {
-  padding-top: 80px;
+  padding-top: 3rem;
 }
 </style>
