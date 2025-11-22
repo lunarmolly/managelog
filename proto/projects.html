@@ -996,6 +996,297 @@
                 height: 14px;
             }
         }
+
+        /* Модальное окно создания проекта */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            display: none;
+            align-items: stretch;
+            justify-content: flex-end;
+            z-index: 1000;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .create-project-modal {
+            background: rgba(4, 9, 16, 0.6);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-left: 1px solid #000000;
+            border-radius: 0;
+            width: 100%;
+            max-width: 800px;
+            height: 100vh;
+            overflow-y: auto;
+            padding: 12px 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            box-shadow: -10px 0 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-header {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            height: 24px;
+        }
+
+        .modal-back-btn {
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .modal-back-btn svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .modal-title {
+            color: #E1EAF8;
+            font-size: 1.25rem;
+            font-weight: 400;
+            font-family: 'Involve', Arial, sans-serif;
+            flex: 1;
+        }
+
+        .modal-field {
+            display: flex;
+            gap: 24px;
+            align-items: center;
+            color: #E1EAF8;
+        }
+
+        .modal-field-label {
+            font-size: 1.25rem;
+            font-weight: 400;
+            font-family: 'Involve', Arial, sans-serif;
+            width: 168px;
+            flex-shrink: 0;
+        }
+
+        .modal-field-input {
+            flex: 1;
+            font-size: 0.9375rem;
+            font-weight: 500;
+            font-family: 'Involve', Arial, sans-serif;
+            color: #ffffff;
+            background: transparent;
+            border: none;
+            outline: none;
+        }
+
+        .modal-field-input::placeholder {
+            color: rgba(225, 234, 248, 0.6);
+        }
+
+        .modal-description-container {
+            background: #292d32;
+            border-radius: 16px;
+            padding: 12px;
+            display: flex;
+            gap: 6px;
+            min-height: 327px;
+            max-height: 400px;
+        }
+
+        .modal-description-textarea {
+            flex: 1;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: #ffffff;
+            font-size: 1rem;
+            font-weight: 400;
+            font-family: 'Involve', Arial, sans-serif;
+            resize: none;
+            min-height: 300px;
+            overflow-y: auto;
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none; /* IE and Edge */
+        }
+
+        .modal-description-textarea::-webkit-scrollbar {
+            display: none; /* Chrome, Safari, Opera */
+        }
+
+        .modal-description-textarea::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .modal-description-scrollbar {
+            width: 8px;
+            background: rgba(225, 234, 248, 0.25);
+            border-radius: 100px;
+            position: relative;
+            flex-shrink: 0;
+            cursor: pointer;
+        }
+
+        .modal-description-scrollbar-thumb {
+            width: 100%;
+            min-height: 48px;
+            background: #E1EAF8;
+            border-radius: 100px;
+            position: absolute;
+            top: 0;
+            left: 0;
+            transition: top 0.1s ease, height 0.1s ease;
+            cursor: pointer;
+        }
+
+        .modal-description-scrollbar-thumb:hover {
+            background: #c8d3e5;
+        }
+
+        .modal-generate-btn {
+            background: #912138;
+            border-radius: 16px;
+            padding: 6px 12px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .modal-generate-btn:hover {
+            background: #a02a43;
+        }
+
+        .modal-generate-btn-icon {
+            width: 24px;
+            height: 24px;
+            flex-shrink: 0;
+        }
+
+        .modal-generate-btn-icon svg {
+            width: 100%;
+            height: 100%;
+            fill: #E1EAF8;
+        }
+
+        .modal-generate-btn-text {
+            color: #E1EAF8;
+            font-size: 0.9375rem;
+            font-weight: 400;
+            font-family: 'Involve', Arial, sans-serif;
+            flex: 1;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 24px;
+        }
+
+        .modal-btn {
+            border-radius: 16px;
+            padding: 6px 12px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+            font-size: 0.9375rem;
+            font-weight: 400;
+            font-family: 'Involve', Arial, sans-serif;
+        }
+
+        .modal-btn-create {
+            background: #dbf3c2;
+            color: #912138;
+        }
+
+        .modal-btn-create:hover {
+            background: #c8e8a5;
+        }
+
+        .modal-btn-cancel {
+            background: #f3c2c3;
+            color: #912138;
+        }
+
+        .modal-btn-cancel:hover {
+            background: #f0a8aa;
+        }
+
+        .modal-btn-icon {
+            width: 24px;
+            height: 24px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-btn-icon svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Секция проектов */
+        .projects-section {
+            margin-top: 40px;
+            padding: 0 20px;
+        }
+
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 24px;
+        }
+
+        .project-card {
+            background: rgba(145, 33, 56, 0.3);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .project-card:hover {
+            background: rgba(145, 33, 56, 0.4);
+        }
+
+        .project-card-title {
+            color: #ffffff;
+            font-size: 1.25rem;
+            font-weight: 500;
+            font-family: 'Involve', Arial, sans-serif;
+        }
+
+        .project-card-description {
+            color: #E1EAF8;
+            font-size: 1rem;
+            font-weight: 400;
+            font-family: 'Involve', Arial, sans-serif;
+            line-height: 1.5;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
     </style>
 </head>
 <body>
@@ -1154,6 +1445,65 @@
                 <svg viewBox="0 0 18 18" fill="none">
                     <path d="M9 0V18M0 9H18" stroke="white" stroke-width="2" stroke-linecap="round"/>
                 </svg>
+            </div>
+        </div>
+    </div>
+
+    <!-- Секция проектов -->
+    <div class="projects-section">
+        <div class="projects-grid" id="projects-grid">
+            <!-- Проекты будут добавлены через JavaScript -->
+        </div>
+    </div>
+
+    <!-- Модальное окно создания проекта -->
+    <div class="modal-overlay" id="create-project-modal-overlay" onclick="closeModalOnOverlay(event)">
+        <div class="create-project-modal" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <div class="modal-back-btn" onclick="closeCreateProjectModal()">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M3.29279 10.9377C3.10532 11.1252 3 11.3795 3 11.6447C3 11.9099 3.10532 12.1642 3.29279 12.3517L8.94979 18.0087C9.13839 18.1909 9.39099 18.2917 9.65319 18.2894C9.91538 18.2871 10.1662 18.1819 10.3516 17.9965C10.537 17.8111 10.6422 17.5603 10.6445 17.2981C10.6467 17.0359 10.5459 16.7833 10.3638 16.5947L6.41379 12.6447H19.6568C19.922 12.6447 20.1764 12.5394 20.3639 12.3518C20.5514 12.1643 20.6568 11.9099 20.6568 11.6447C20.6568 11.3795 20.5514 11.1251 20.3639 10.9376C20.1764 10.7501 19.922 10.6447 19.6568 10.6447H6.41379L10.3638 6.69471C10.5459 6.50611 10.6467 6.25351 10.6445 5.99131C10.6422 5.72911 10.537 5.4783 10.3516 5.29289C10.1662 5.10748 9.91538 5.00232 9.65319 5.00004C9.39099 4.99776 9.13839 5.09855 8.94979 5.28071L3.29279 10.9377Z" fill="#E1EAF8"/>
+                    </svg>
+                </div>
+                <div class="modal-title">к проектам</div>
+            </div>
+            <div class="modal-field">
+                <div class="modal-field-label">название:</div>
+                <input type="text" class="modal-field-input" id="project-name-input" placeholder="Lorem ipsum dolor sit amet, consectetur." />
+            </div>
+            <div class="modal-description-container">
+                <textarea class="modal-description-textarea" id="project-description-input" placeholder="описание проекта:"></textarea>
+                <div class="modal-description-scrollbar">
+                    <div class="modal-description-scrollbar-thumb"></div>
+                </div>
+            </div>
+            <div>
+                <div class="modal-generate-btn" onclick="generateDescription()">
+                    <div class="modal-generate-btn-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M9.01238 5.448C9.61038 3.698 12.0284 3.645 12.7374 5.289L12.7974 5.449L13.6044 7.809C13.7893 8.35023 14.0882 8.84551 14.4808 9.26142C14.8734 9.67734 15.3507 10.0042 15.8804 10.22L16.0974 10.301L18.4574 11.107C20.2074 11.705 20.2604 14.123 18.6174 14.832L18.4574 14.892L16.0974 15.699C15.556 15.8838 15.0605 16.1826 14.6444 16.5753C14.2283 16.9679 13.9013 17.4452 13.6854 17.975L13.6044 18.191L12.7984 20.552C12.2004 22.302 9.78238 22.355 9.07438 20.712L9.01238 20.552L8.20638 18.192C8.02156 17.6506 7.72275 17.1551 7.33012 16.739C6.93749 16.3229 6.46017 15.9959 5.93038 15.78L5.71438 15.699L3.35438 14.893C1.60338 14.295 1.55038 11.877 3.19438 11.169L3.35438 11.107L5.71438 10.301C6.25561 10.1161 6.75089 9.81719 7.1668 9.42457C7.58271 9.03195 7.90959 8.55469 8.12538 8.025L8.20638 7.809L9.01238 5.448ZM10.9054 6.094L10.0994 8.454C9.81777 9.2793 9.35965 10.0333 8.75691 10.6635C8.15418 11.2937 7.42132 11.7849 6.60938 12.103L6.35938 12.194L3.99938 13L6.35938 13.806C7.18468 14.0876 7.93868 14.5457 8.56887 15.1485C9.19907 15.7512 9.6903 16.4841 10.0084 17.296L10.0994 17.546L10.9054 19.906L11.7114 17.546C11.993 16.7207 12.4511 15.9667 13.0538 15.3365C13.6566 14.7063 14.3894 14.2151 15.2014 13.897L15.4514 13.807L17.8114 13L15.4514 12.194C14.6261 11.9124 13.8721 11.4543 13.2419 10.8515C12.6117 10.2488 12.1205 9.51595 11.8024 8.704L11.7124 8.454L10.9054 6.094ZM18.9054 2C19.0925 2 19.2758 2.05248 19.4345 2.15147C19.5933 2.25046 19.7211 2.392 19.8034 2.56L19.8514 2.677L20.2014 3.703L21.2284 4.053C21.4159 4.1167 21.5802 4.23462 21.7006 4.39182C21.821 4.54902 21.892 4.73842 21.9047 4.93602C21.9173 5.13362 21.871 5.33053 21.7716 5.50179C21.6722 5.67304 21.5242 5.81094 21.3464 5.898L21.2284 5.946L20.2024 6.296L19.8524 7.323C19.7886 7.51043 19.6706 7.6747 19.5133 7.79499C19.356 7.91529 19.1666 7.98619 18.969 7.99872C18.7714 8.01125 18.5746 7.96484 18.4034 7.86538C18.2322 7.76591 18.0944 7.61787 18.0074 7.44L17.9594 7.323L17.6094 6.297L16.5824 5.947C16.3949 5.8833 16.2305 5.76538 16.1101 5.60819C15.9898 5.45099 15.9187 5.26158 15.9061 5.06398C15.8935 4.86638 15.9398 4.66947 16.0392 4.49821C16.1385 4.32696 16.2865 4.18906 16.4644 4.102L16.5824 4.054L17.6084 3.704L17.9584 2.677C18.0258 2.47943 18.1534 2.30791 18.3232 2.1865C18.493 2.06509 18.6966 1.99987 18.9054 2Z" fill="#E1EAF8"/>
+                        </svg>
+                    </div>
+                    <div class="modal-generate-btn-text">сгенерировать описание</div>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <div class="modal-btn modal-btn-create" onclick="submitCreateProject()">
+                    <div class="modal-btn-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M11 20C11 20.2652 11.1054 20.5196 11.2929 20.7071C11.4804 20.8946 11.7348 21 12 21C12.2652 21 12.5196 20.8946 12.7071 20.7071C12.8946 20.5196 13 20.2652 13 20V13H20C20.2652 13 20.5196 12.8946 20.7071 12.7071C20.8946 12.5196 21 12.2652 21 12C21 11.7348 20.8946 11.4804 20.7071 11.2929C20.5196 11.1054 20.2652 11 20 11H13V4C13 3.73478 12.8946 3.48043 12.7071 3.29289C12.5196 3.10536 12.2652 3 12 3C11.7348 3 11.4804 3.10536 11.2929 3.29289C11.1054 3.48043 11 3.73478 11 4V11H4C3.73478 11 3.48043 11.1054 3.29289 11.2929C3.10536 11.4804 3 11.7348 3 12C3 12.2652 3.10536 12.5196 3.29289 12.7071C3.48043 12.8946 3.73478 13 4 13H11V20Z" fill="#912138"/>
+                        </svg>
+                    </div>
+                    <span>создать проект</span>
+                </div>
+                <div class="modal-btn modal-btn-cancel" onclick="closeCreateProjectModal()">
+                    <div class="modal-btn-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M20 5C20.2652 5 20.5196 5.10536 20.7071 5.29289C20.8946 5.48043 21 5.73478 21 6C21 6.26522 20.8946 6.51957 20.7071 6.70711C20.5196 6.89464 20.2652 7 20 7H19L18.997 7.071L18.064 20.142C18.0281 20.6466 17.8023 21.1188 17.4321 21.4636C17.0619 21.8083 16.5749 22 16.069 22H7.93C7.42414 22 6.93707 21.8083 6.56688 21.4636C6.1967 21.1188 5.97092 20.6466 5.935 20.142L5.002 7.072L5 7H4C3.73478 7 3.48043 6.89464 3.29289 6.70711C3.10536 6.51957 3 6.26522 3 6C3 5.73478 3.10536 5.48043 3.29289 5.29289C3.48043 5.10536 3.73478 5 4 5H20ZM16.997 7H7.003L7.931 20H16.069L16.997 7ZM14 2C14.2652 2 14.5196 2.10536 14.7071 2.29289C14.8946 2.48043 15 2.73478 15 3C15 3.26522 14.8946 3.51957 14.7071 3.70711C14.5196 3.89464 14.2652 4 14 4H10C9.73478 4 9.48043 3.89464 9.29289 3.70711C9.10536 3.51957 9 3.26522 9 3C9 2.73478 9.10536 2.48043 9.29289 2.29289C9.48043 2.10536 9.73478 2 10 2H14Z" fill="#912138"/>
+                        </svg>
+                    </div>
+                    <span>отмена</span>
+                </div>
             </div>
         </div>
     </div>
@@ -1692,10 +2042,243 @@
             console.log('Выбрана сортировка:', sortType);
         }
 
+        // Массив проектов
+        let projects = [];
+
         // Создание проекта
         function createProject() {
-            // Здесь будет логика создания проекта
-            console.log('Создание нового проекта');
+            const modal = document.getElementById('create-project-modal-overlay');
+            if (modal) {
+                modal.classList.add('active');
+                // Очищаем поля формы
+                document.getElementById('project-name-input').value = '';
+                const descriptionInput = document.getElementById('project-description-input');
+                descriptionInput.value = '';
+                
+                // Инициализируем скроллбар
+                setTimeout(() => {
+                    updateScrollbar();
+                    // Добавляем обработчик прокрутки
+                    descriptionInput.addEventListener('scroll', updateScrollbar);
+                }, 100);
+            }
+        }
+
+        // Закрытие модального окна
+        function closeCreateProjectModal() {
+            const modal = document.getElementById('create-project-modal-overlay');
+            if (modal) {
+                modal.classList.remove('active');
+            }
+            // Удаляем обработчик прокрутки
+            const descriptionInput = document.getElementById('project-description-input');
+            if (descriptionInput) {
+                descriptionInput.removeEventListener('scroll', updateScrollbar);
+            }
+        }
+
+        // Обновление скроллбара
+        function updateScrollbar() {
+            const textarea = document.getElementById('project-description-input');
+            const scrollbar = document.querySelector('.modal-description-scrollbar');
+            const thumb = document.querySelector('.modal-description-scrollbar-thumb');
+            
+            if (!textarea || !scrollbar || !thumb) return;
+
+            const scrollHeight = textarea.scrollHeight;
+            const clientHeight = textarea.clientHeight;
+            const scrollTop = textarea.scrollTop;
+            const scrollbarHeight = scrollbar.clientHeight;
+
+            // Проверяем, нужен ли скроллбар
+            if (scrollHeight <= clientHeight) {
+                thumb.style.display = 'none';
+                return;
+            } else {
+                thumb.style.display = 'block';
+            }
+
+            // Вычисляем размер и позицию бегунка
+            const thumbHeight = Math.max(48, (clientHeight / scrollHeight) * scrollbarHeight);
+            const maxThumbTop = scrollbarHeight - thumbHeight;
+            const thumbTop = (scrollTop / (scrollHeight - clientHeight)) * maxThumbTop;
+
+            thumb.style.height = thumbHeight + 'px';
+            thumb.style.top = thumbTop + 'px';
+        }
+
+        // Закрытие при клике на overlay
+        function closeModalOnOverlay(event) {
+            if (event.target.id === 'create-project-modal-overlay') {
+                closeCreateProjectModal();
+            }
+        }
+
+        // Генерация описания (заглушка)
+        function generateDescription() {
+            const descriptionInput = document.getElementById('project-description-input');
+            const nameInput = document.getElementById('project-name-input');
+            const projectName = nameInput.value.trim() || 'проект';
+
+            // Заглушка для генерации описания
+            const mockDescriptions = [
+                `Описание проекта "${projectName}":\n\nЭтот проект направлен на решение ключевых задач и достижение поставленных целей. Проект включает в себя разработку функциональности, тестирование и внедрение решений.`,
+                `Проект "${projectName}" представляет собой комплексное решение для оптимизации бизнес-процессов. В рамках проекта планируется реализовать современные подходы и технологии.`,
+                `Цель проекта "${projectName}" - создание эффективного инструмента для управления задачами. Проект включает несколько этапов: планирование, разработка, тестирование и запуск.`
+            ];
+
+            // Выбираем случайное описание
+            const randomDescription = mockDescriptions[Math.floor(Math.random() * mockDescriptions.length)];
+            descriptionInput.value = randomDescription;
+
+            // Скроллим вниз текстового поля
+            descriptionInput.scrollTop = descriptionInput.scrollHeight;
+            
+            // Обновляем скроллбар после генерации
+            setTimeout(updateScrollbar, 100);
+        }
+
+        // Создание проекта
+        function submitCreateProject() {
+            const nameInput = document.getElementById('project-name-input');
+            const descriptionInput = document.getElementById('project-description-input');
+            
+            const projectName = nameInput.value.trim();
+            const projectDescription = descriptionInput.value.trim();
+
+            if (!projectName) {
+                alert('Пожалуйста, введите название проекта');
+                return;
+            }
+
+            // Создаем новый проект
+            const newProject = {
+                id: Date.now(), // Используем timestamp как ID
+                name: projectName,
+                description: projectDescription || 'Описание не указано',
+                createdAt: new Date().toISOString()
+            };
+
+            // Добавляем проект в массив
+            projects.push(newProject);
+
+            // Обновляем отображение проектов
+            renderProjects();
+
+            // Закрываем модальное окно
+            closeCreateProjectModal();
+
+            console.log('Проект создан:', newProject);
+        }
+
+        // Отображение проектов
+        function renderProjects() {
+            const projectsGrid = document.getElementById('projects-grid');
+            if (!projectsGrid) return;
+
+            // Очищаем сетку
+            projectsGrid.innerHTML = '';
+
+            if (projects.length === 0) {
+                projectsGrid.innerHTML = '<div style="color: #E1EAF8; font-size: 1rem; text-align: center; width: 100%; padding: 40px;">Проекты не найдены</div>';
+                return;
+            }
+
+            // Создаем карточки проектов
+            projects.forEach(project => {
+                const projectCard = document.createElement('div');
+                projectCard.className = 'project-card';
+                projectCard.onclick = () => {
+                    console.log('Открыт проект:', project);
+                    // Здесь можно добавить логику открытия проекта
+                };
+
+                projectCard.innerHTML = `
+                    <div class="project-card-title">${escapeHtml(project.name)}</div>
+                    <div class="project-card-description">${escapeHtml(project.description)}</div>
+                `;
+
+                projectsGrid.appendChild(projectCard);
+            });
+        }
+
+        // Функция для экранирования HTML
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Закрытие модального окна по Escape
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeCreateProjectModal();
+            }
+        });
+
+        // Инициализация скроллбара при изменении размера текстового поля
+        const descriptionInput = document.getElementById('project-description-input');
+        if (descriptionInput) {
+            // Обновляем скроллбар при изменении содержимого
+            descriptionInput.addEventListener('input', function() {
+                setTimeout(updateScrollbar, 10);
+            });
+
+            // Добавляем обработчик для перетаскивания скроллбара
+            let isDragging = false;
+            let startY = 0;
+            let startScrollTop = 0;
+
+            const scrollbar = document.querySelector('.modal-description-scrollbar');
+            const thumb = document.querySelector('.modal-description-scrollbar-thumb');
+
+            if (scrollbar && thumb) {
+                // Клик на скроллбар для прокрутки
+                scrollbar.addEventListener('click', function(e) {
+                    if (e.target === scrollbar) {
+                        const rect = scrollbar.getBoundingClientRect();
+                        const clickY = e.clientY - rect.top;
+                        const scrollbarHeight = scrollbar.clientHeight;
+                        const scrollHeight = descriptionInput.scrollHeight;
+                        const clientHeight = descriptionInput.clientHeight;
+                        const scrollRatio = clickY / scrollbarHeight;
+                        descriptionInput.scrollTop = (scrollHeight - clientHeight) * scrollRatio;
+                        updateScrollbar();
+                    }
+                });
+
+                // Начало перетаскивания
+                thumb.addEventListener('mousedown', function(e) {
+                    isDragging = true;
+                    startY = e.clientY;
+                    startScrollTop = descriptionInput.scrollTop;
+                    e.preventDefault();
+                });
+
+                // Перетаскивание
+                document.addEventListener('mousemove', function(e) {
+                    if (!isDragging) return;
+
+                    const scrollbar = document.querySelector('.modal-description-scrollbar');
+                    if (!scrollbar) return;
+
+                    const rect = scrollbar.getBoundingClientRect();
+                    const deltaY = e.clientY - startY;
+                    const scrollbarHeight = scrollbar.clientHeight;
+                    const scrollHeight = descriptionInput.scrollHeight;
+                    const clientHeight = descriptionInput.clientHeight;
+                    const scrollRatio = deltaY / scrollbarHeight;
+                    const scrollDelta = (scrollHeight - clientHeight) * scrollRatio;
+                    
+                    descriptionInput.scrollTop = Math.max(0, Math.min(scrollHeight - clientHeight, startScrollTop + scrollDelta));
+                    updateScrollbar();
+                });
+
+                // Конец перетаскивания
+                document.addEventListener('mouseup', function() {
+                    isDragging = false;
+                });
+            }
         }
 
         // Инициализация при загрузке
@@ -1703,6 +2286,7 @@
             restoreFilterSelection();
             restoreSortSelection();
             // Статусы и пользователи будут загружены при открытии соответствующих подменю
+            renderProjects();
         });
     </script>
 </body>
