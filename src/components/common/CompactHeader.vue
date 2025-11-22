@@ -359,8 +359,8 @@ async function handleLogout(): Promise<void> {
 }
 
 .actions__notify {
-  width: 40px;
-  height: 40px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
   background: #912138;
   flex-shrink: 0;
@@ -372,8 +372,8 @@ async function handleLogout(): Promise<void> {
 }
 
 .actions__notify-icon {
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
 }
 
 .actions__checkin {
