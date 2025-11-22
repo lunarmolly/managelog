@@ -1061,13 +1061,11 @@
             submenu.classList.toggle('active');
             item.classList.toggle('expanded');
 
-            // Если открываем подменю впервые, загружаем данные
+            // Если открываем подменю, загружаем данные
             if (submenu.classList.contains('active')) {
                 if (filterType === 'executor' || filterType === 'manager') {
-                    // Инициализируем поиск пользователей (заглушка)
-                    if (!document.getElementById(`${filterType}-results`).hasChildNodes()) {
-                        searchUsers(filterType, '');
-                    }
+                    // Всегда показываем "я" и список пользователей
+                    searchUsers(filterType, '');
                 } else if (filterType === 'status') {
                     // Загружаем статусы
                     loadStatuses();
@@ -1173,7 +1171,10 @@
         // Загрузка статусов (в реальном приложении запрос к API)
         function loadStatuses() {
             const statusList = document.getElementById('status-list');
-            if (!statusList || statusList.hasChildNodes()) return;
+            if (!statusList) return;
+
+            // Очищаем список, если уже есть элементы (для обновления)
+            statusList.innerHTML = '';
 
             // Загружаем статусы из заглушки (в реальном приложении загрузка с API)
             availableStatuses.forEach(status => {
@@ -1323,8 +1324,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             restoreFilterSelection();
             restoreSortSelection();
-            // Загружаем статусы при загрузке страницы
-            loadStatuses();
+            // Статусы и пользователи будут загружены при открытии соответствующих подменю
         });
     </script>
 </body>
