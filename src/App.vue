@@ -70,7 +70,7 @@ body {
 }
 
 .app__content--with-header-brand {
-  padding-top: 120px;
+  padding-top: 5rem;
 }
 
 .app__content--with-header-compact {

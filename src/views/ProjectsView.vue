@@ -201,8 +201,8 @@
         </div>
       </div>
 
-      <!-- Кнопка создания проекта (неактивная) -->
-      <div class="create-project-btn disabled">
+      <!-- Кнопка создания проекта -->
+      <div class="create-project-btn" @click="openCreateProjectModal">
         <span class="create-project-text">создать новый проект</span>
         <div class="plus-icon">
           <svg viewBox="0 0 18 18" fill="none">
