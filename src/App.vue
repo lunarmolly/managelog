@@ -13,12 +13,12 @@
     >
       <router-view />
     </main>
-    <Footer />
+    <Footer :class="{ 'footer--visible': showFooter }" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref, onMounted, onUnmounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { useSettingsStore } from '@/stores/settings';
 import BrandHeader from '@/components/common/BrandHeader.vue';
@@ -27,9 +27,25 @@ import Footer from '@/components/common/Footer.vue';
 
 const route = useRoute();
 const settingsStore = useSettingsStore();
+const showFooter = ref(false);
 
 const shouldShowHeader = computed(() => {
   return !route.path.startsWith('/auth') && route.path !== '/privacy';
+});
+
+function checkScroll() {
+  const scrollTop = window.scrollY || document.documentElement.scrollTop;
+  // Показываем футер, если прокрутка больше 100px
+  showFooter.value = scrollTop > 100;
+}
+
+onMounted(() => {
+  window.addEventListener('scroll', checkScroll);
+  checkScroll(); // Проверяем при монтировании
+});
+
+onUnmounted(() => {
+  window.removeEventListener('scroll', checkScroll);
 });
 </script>
 
@@ -60,4 +76,5 @@ body {
 .app__content--with-header-compact {
   padding-top: 3rem;
 }
+
 </style>

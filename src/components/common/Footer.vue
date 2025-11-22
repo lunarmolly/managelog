@@ -1,5 +1,5 @@
 <template>
-  <footer class="footer">
+  <footer :class="['footer', $attrs.class]">
     <div class="footer__bg">
       <div class="footer__content">
         <div class="footer__logo">
@@ -101,6 +101,15 @@
 .footer {
   width: 100%;
   font-family: 'Involve', Arial, sans-serif;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1), transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: opacity, transform;
+}
+
+.footer.footer--visible {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .footer__bg {
