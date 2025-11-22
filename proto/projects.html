@@ -477,8 +477,15 @@
             stroke: #912138;
         }
 
-        .apply-btn {
+        .filter-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
             margin: 8px 12px 0;
+        }
+
+        .apply-btn {
+            flex: 1;
             padding: 10px 20px;
             background: #912138;
             border-radius: 20px;
@@ -492,6 +499,44 @@
 
         .apply-btn:hover {
             background: #a02a43;
+        }
+
+        .reset-filters-btn {
+            width: 36px;
+            height: 36px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+
+        .reset-filters-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .reset-filters-icon {
+            width: 18px;
+            height: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .reset-filters-icon svg {
+            width: 100%;
+            height: 100%;
+            stroke: #E1EAF8;
+            fill: none;
+        }
+
+        .reset-filters-btn:hover .reset-filters-icon svg {
+            stroke: #ffffff;
         }
 
         .filter-btn .dropdown-menu {
@@ -863,7 +908,16 @@
                         </div>
                     </div>
 
-                    <div class="apply-btn" onclick="applyFilters(event)">применить</div>
+                    <div class="filter-actions">
+                        <div class="apply-btn" onclick="applyFilters(event)">применить</div>
+                        <div class="reset-filters-btn" onclick="resetFilters(event)" title="Сбросить фильтры">
+                            <div class="reset-filters-icon">
+                                <svg viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M13.5 4.5L4.5 13.5M4.5 4.5L13.5 13.5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -1345,6 +1399,63 @@
                     filterText.textContent = 'фильтры';
                 }
             }
+        }
+
+        // Сброс всех фильтров
+        function resetFilters(e) {
+            if (e) {
+                e.stopPropagation();
+                e.preventDefault();
+            }
+
+            // Сбрасываем все фильтры
+            selectedFilters = {
+                executor: [],
+                manager: [],
+                status: [],
+                actions: false
+            };
+
+            // Снимаем все выделения с пользователей
+            document.querySelectorAll('.filter-result-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+
+            // Снимаем все выделения со статусов
+            document.querySelectorAll('.filter-status-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+
+            // Снимаем выделение с "Рекомендуются действия"
+            const actionsItem = document.querySelector('#filters-menu .dropdown-item[data-filter="actions"]');
+            if (actionsItem) {
+                actionsItem.classList.remove('active');
+            }
+
+            // Обновляем подсветку основных блоков
+            updateFilterItemsHighlight();
+
+            // Обновляем текст кнопки фильтров
+            const filterText = document.querySelector('.filter-text');
+            if (filterText) {
+                filterText.textContent = 'фильтры';
+            }
+
+            // Очищаем поля поиска
+            const executorSearch = document.getElementById('executor-search');
+            if (executorSearch) {
+                executorSearch.value = '';
+            }
+            const managerSearch = document.getElementById('manager-search');
+            if (managerSearch) {
+                managerSearch.value = '';
+            }
+
+            // Обновляем результаты поиска (показываем всех пользователей)
+            searchUsers('executor', '');
+            searchUsers('manager', '');
+
+            console.log('Все фильтры сброшены');
         }
 
         // Выбор сортировки (моновыбор)
