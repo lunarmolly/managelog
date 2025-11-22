@@ -2166,31 +2166,123 @@
         }
 
         // Массив проектов
-        let projects = [];
+        let projects = [
+            {
+                id: 1,
+                name: 'Разработка мобильного приложения',
+                description: 'Создание кроссплатформенного мобильного приложения для управления задачами. Включает разработку UI/UX дизайна, интеграцию с backend API, тестирование на различных устройствах и публикацию в app stores.',
+                createdAt: '2024-01-15T10:00:00.000Z'
+            },
+            {
+                id: 2,
+                name: 'Внедрение системы аналитики',
+                description: 'Настройка и интеграция системы аналитики для отслеживания поведения пользователей на сайте. Настройка дашбордов, создание отчетов и обучение команды работе с новыми инструментами.',
+                createdAt: '2024-01-20T14:30:00.000Z'
+            },
+            {
+                id: 3,
+                name: 'Оптимизация базы данных',
+                description: 'Проведение аудита производительности базы данных, оптимизация медленных запросов, индексирование критических таблиц и настройка репликации для повышения отказоустойчивости системы.',
+                createdAt: '2024-01-25T09:15:00.000Z'
+            },
+            {
+                id: 4,
+                name: 'Разработка API для интеграции',
+                description: 'Создание RESTful API для интеграции с внешними сервисами. Разработка документации, реализация аутентификации и авторизации, написание unit-тестов и нагрузочное тестирование.',
+                createdAt: '2024-02-01T11:45:00.000Z'
+            },
+            {
+                id: 5,
+                name: 'Обновление дизайна сайта',
+                description: 'Редизайн основного сайта компании с учетом современных трендов и улучшением пользовательского опыта. Адаптация под мобильные устройства и обеспечение быстрой загрузки страниц.',
+                createdAt: '2024-02-10T16:20:00.000Z'
+            }
+        ];
+        
+        // ID редактируемого проекта (null = новый проект)
+        let editingProjectId = null;
 
         // Создание проекта
         function createProject() {
+            editingProjectId = null;
+            openProjectModal();
+        }
+
+        // Открытие проекта для редактирования
+        function editProject(projectId) {
+            editingProjectId = projectId;
+            const project = projects.find(p => p.id === projectId);
+            
+            if (project) {
+                openProjectModal(project);
+            }
+        }
+
+        // Открытие модального окна проекта
+        function openProjectModal(project = null) {
             const modal = document.getElementById('create-project-modal-overlay');
-            if (modal) {
-                modal.classList.add('active');
-                // Очищаем поля формы
-                document.getElementById('project-name-input').value = '';
-                const descriptionInput = document.getElementById('project-description-input');
+            if (!modal) return;
+
+            modal.classList.add('active');
+            
+            const nameInput = document.getElementById('project-name-input');
+            const descriptionInput = document.getElementById('project-description-input');
+            const generatedBlock = document.getElementById('generated-description-block');
+            const createBtn = document.querySelector('.modal-btn-create');
+            const createBtnIcon = createBtn ? createBtn.querySelector('.modal-btn-icon') : null;
+            const createBtnText = createBtn ? createBtn.querySelector('span') : null;
+
+            if (project) {
+                // Режим редактирования
+                nameInput.value = project.name;
+                descriptionInput.value = project.description;
+                
+                // Меняем кнопку на "сохранить" с иконкой галочки
+                if (createBtnText) {
+                    createBtnText.textContent = 'сохранить';
+                }
+                if (createBtnIcon) {
+                    createBtnIcon.innerHTML = `
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M9 16.17L4.83 12L3.41 13.41L9 19L21 7L19.59 5.59L9 16.17Z" fill="#912138"/>
+                        </svg>
+                    `;
+                }
+                if (createBtn) {
+                    createBtn.onclick = submitSaveProject;
+                }
+            } else {
+                // Режим создания
+                nameInput.value = '';
                 descriptionInput.value = '';
                 
-                // Скрываем блок с сгенерированным описанием
-                const generatedBlock = document.getElementById('generated-description-block');
-                if (generatedBlock) {
-                    generatedBlock.style.display = 'none';
+                // Меняем кнопку на "создать проект" с иконкой плюса
+                if (createBtnText) {
+                    createBtnText.textContent = 'создать проект';
                 }
-                
-                // Инициализируем скроллбар
-                setTimeout(() => {
-                    updateScrollbar();
-                    // Добавляем обработчик прокрутки
-                    descriptionInput.addEventListener('scroll', updateScrollbar);
-                }, 100);
+                if (createBtnIcon) {
+                    createBtnIcon.innerHTML = `
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M11 20C11 20.2652 11.1054 20.5196 11.2929 20.7071C11.4804 20.8946 11.7348 21 12 21C12.2652 21 12.5196 20.8946 12.7071 20.7071C12.8946 20.5196 13 20.2652 13 20V13H20C20.2652 13 20.5196 12.8946 20.7071 12.7071C20.8946 12.5196 21 12.2652 21 12C21 11.7348 20.8946 11.4804 20.7071 11.2929C20.5196 11.1054 20.2652 11 20 11H13V4C13 3.73478 12.8946 3.48043 12.7071 3.29289C12.5196 3.10536 12.2652 3 12 3C11.7348 3 11.4804 3.10536 11.2929 3.29289C11.1054 3.48043 11 3.73478 11 4V11H4C3.73478 11 3.48043 11.1054 3.29289 11.2929C3.10536 11.4804 3 11.7348 3 12C3 12.2652 3.10536 12.5196 3.29289 12.7071C3.48043 12.8946 3.73478 13 4 13H11V20Z" fill="#912138"/>
+                        </svg>
+                    `;
+                }
+                if (createBtn) {
+                    createBtn.onclick = submitCreateProject;
+                }
             }
+            
+            // Скрываем блок с сгенерированным описанием
+            if (generatedBlock) {
+                generatedBlock.style.display = 'none';
+            }
+            
+            // Инициализируем скроллбар
+            setTimeout(() => {
+                updateScrollbar();
+                // Добавляем обработчик прокрутки
+                descriptionInput.addEventListener('scroll', updateScrollbar);
+            }, 100);
         }
 
         // Закрытие модального окна
@@ -2199,6 +2291,28 @@
             if (modal) {
                 modal.classList.remove('active');
             }
+            
+            // Сбрасываем режим редактирования
+            editingProjectId = null;
+            
+            // Восстанавливаем кнопку "создать проект"
+            const createBtn = document.querySelector('.modal-btn-create');
+            if (createBtn) {
+                const createBtnIcon = createBtn.querySelector('.modal-btn-icon');
+                const createBtnText = createBtn.querySelector('span');
+                if (createBtnText) {
+                    createBtnText.textContent = 'создать проект';
+                }
+                if (createBtnIcon) {
+                    createBtnIcon.innerHTML = `
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M11 20C11 20.2652 11.1054 20.5196 11.2929 20.7071C11.4804 20.8946 11.7348 21 12 21C12.2652 21 12.5196 20.8946 12.7071 20.7071C12.8946 20.5196 13 20.2652 13 20V13H20C20.2652 13 20.5196 12.8946 20.7071 12.7071C20.8946 12.5196 21 12.2652 21 12C21 11.7348 20.8946 11.4804 20.7071 11.2929C20.5196 11.1054 20.2652 11 20 11H13V4C13 3.73478 12.8946 3.48043 12.7071 3.29289C12.5196 3.10536 12.2652 3 12 3C11.7348 3 11.4804 3.10536 11.2929 3.29289C11.1054 3.48043 11 3.73478 11 4V11H4C3.73478 11 3.48043 11.1054 3.29289 11.2929C3.10536 11.4804 3 11.7348 3 12C3 12.2652 3.10536 12.5196 3.29289 12.7071C3.48043 12.8946 3.73478 13 4 13H11V20Z" fill="#912138"/>
+                        </svg>
+                    `;
+                }
+                createBtn.onclick = submitCreateProject;
+            }
+            
             // Удаляем обработчик прокрутки
             const descriptionInput = document.getElementById('project-description-input');
             if (descriptionInput) {
@@ -2361,6 +2475,49 @@
             console.log('Проект создан:', newProject);
         }
 
+        // Сохранение проекта (редактирование)
+        function submitSaveProject() {
+            const nameInput = document.getElementById('project-name-input');
+            const descriptionInput = document.getElementById('project-description-input');
+            
+            const projectName = nameInput.value.trim();
+            const projectDescription = descriptionInput.value.trim();
+
+            if (!projectName) {
+                alert('Пожалуйста, введите название проекта');
+                return;
+            }
+
+            if (editingProjectId === null) {
+                // Если почему-то нет ID, создаем новый проект
+                submitCreateProject();
+                return;
+            }
+
+            // Находим проект для обновления
+            const projectIndex = projects.findIndex(p => p.id === editingProjectId);
+            if (projectIndex === -1) {
+                alert('Проект не найден');
+                return;
+            }
+
+            // Обновляем проект
+            projects[projectIndex] = {
+                ...projects[projectIndex],
+                name: projectName,
+                description: projectDescription || 'Описание не указано',
+                updatedAt: new Date().toISOString()
+            };
+
+            // Обновляем отображение проектов
+            renderProjects();
+
+            // Закрываем модальное окно
+            closeCreateProjectModal();
+
+            console.log('Проект обновлен:', projects[projectIndex]);
+        }
+
         // Отображение проектов
         function renderProjects() {
             const projectsGrid = document.getElementById('projects-grid');
@@ -2379,8 +2536,7 @@
                 const projectCard = document.createElement('div');
                 projectCard.className = 'project-card';
                 projectCard.onclick = () => {
-                    console.log('Открыт проект:', project);
-                    // Здесь можно добавить логику открытия проекта
+                    editProject(project.id);
                 };
 
                 projectCard.innerHTML = `
