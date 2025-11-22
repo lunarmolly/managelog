@@ -1096,77 +1096,42 @@
             color: rgba(225, 234, 248, 0.6);
         }
 
-        .modal-select-btn {
+        .modal-icons-list-container,
+        .modal-colors-list-container {
             flex: 1;
+            overflow-x: auto;
+            overflow-y: hidden;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(225, 234, 248, 0.3) transparent;
+        }
+
+        .modal-icons-list-container::-webkit-scrollbar,
+        .modal-colors-list-container::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        .modal-icons-list-container::-webkit-scrollbar-track,
+        .modal-colors-list-container::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .modal-icons-list-container::-webkit-scrollbar-thumb,
+        .modal-colors-list-container::-webkit-scrollbar-thumb {
+            background: rgba(225, 234, 248, 0.3);
+            border-radius: 3px;
+        }
+
+        .modal-icons-list-container::-webkit-scrollbar-thumb:hover,
+        .modal-colors-list-container::-webkit-scrollbar-thumb:hover {
+            background: rgba(225, 234, 248, 0.5);
+        }
+
+        .modal-icons-list,
+        .modal-colors-list {
             display: flex;
-            align-items: center;
-            justify-content: space-between;
             gap: 12px;
-            padding: 12px 16px;
-            background: rgba(225, 234, 248, 0.1);
-            border-radius: 16px;
-            cursor: pointer;
-            transition: background 0.2s;
-            position: relative;
-        }
-
-        .modal-select-btn:hover {
-            background: rgba(225, 234, 248, 0.2);
-        }
-
-        .modal-select-preview {
-            display: flex;
             align-items: center;
-            gap: 12px;
-        }
-
-        .modal-select-preview-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        }
-
-        .modal-select-preview-icon svg {
-            width: 24px;
-            height: 22px;
-        }
-
-        .modal-select-preview-color {
-            width: 40px;
-            height: 40px;
-            border-radius: 12px;
-            flex-shrink: 0;
-        }
-
-        .modal-select-dropdown {
-            position: absolute;
-            top: calc(100% + 8px);
-            left: 0;
-            right: 0;
-            background: rgba(41, 45, 50, 0.95);
-            backdrop-filter: blur(25px);
-            -webkit-backdrop-filter: blur(25px);
-            border-radius: 16px;
-            padding: 16px;
-            display: none;
-            z-index: 10001;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-            max-height: 300px;
-            overflow-y: auto;
-        }
-
-        .modal-select-dropdown.active {
-            display: block;
-        }
-
-        .modal-icons-grid {
-            display: grid;
-            grid-template-columns: repeat(6, 1fr);
-            gap: 12px;
+            padding: 8px 0;
         }
 
         .modal-icon-option {
@@ -1180,6 +1145,7 @@
             cursor: pointer;
             transition: all 0.2s;
             border: 2px solid transparent;
+            flex-shrink: 0;
         }
 
         .modal-icon-option:hover {
@@ -1196,12 +1162,6 @@
             height: 26px;
         }
 
-        .modal-colors-grid {
-            display: grid;
-            grid-template-columns: repeat(6, 1fr);
-            gap: 12px;
-        }
-
         .modal-color-option {
             width: 52px;
             height: 52px;
@@ -1210,6 +1170,7 @@
             transition: all 0.2s;
             border: 3px solid transparent;
             position: relative;
+            flex-shrink: 0;
         }
 
         .modal-color-option:hover {
@@ -1218,18 +1179,6 @@
 
         .modal-color-option.selected {
             border-color: #912138;
-        }
-
-        .modal-color-option.selected::after {
-            content: '✓';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: #ffffff;
-            font-size: 20px;
-            font-weight: bold;
-            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
         }
 
         .modal-description-container {
@@ -1848,32 +1797,16 @@
             </div>
             <div class="modal-field">
                 <div class="modal-field-label">иконка:</div>
-                <div class="modal-select-btn" id="icon-select-btn">
-                    <div class="modal-select-preview">
-                        <div class="modal-select-preview-icon" id="icon-preview"></div>
-                    </div>
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M7 10L12 15L17 10" stroke="#E1EAF8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                </div>
-                <div class="modal-select-dropdown" id="icon-select-dropdown">
-                    <div class="modal-icons-grid" id="icons-grid">
+                <div class="modal-icons-list-container">
+                    <div class="modal-icons-list" id="icons-list">
                         <!-- Иконки будут добавлены через JavaScript -->
                     </div>
                 </div>
             </div>
             <div class="modal-field">
                 <div class="modal-field-label">цвет:</div>
-                <div class="modal-select-btn" id="color-select-btn">
-                    <div class="modal-select-preview">
-                        <div class="modal-select-preview-color" id="color-preview"></div>
-                    </div>
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M7 10L12 15L17 10" stroke="#E1EAF8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                </div>
-                <div class="modal-select-dropdown" id="color-select-dropdown">
-                    <div class="modal-colors-grid" id="colors-grid">
+                <div class="modal-colors-list-container">
+                    <div class="modal-colors-list" id="colors-list">
                         <!-- Цвета будут добавлены через JavaScript -->
                     </div>
                 </div>
@@ -2552,124 +2485,129 @@
 
         // Инициализация выбора иконки и цвета
         function initIconColorSelectors() {
-            // Заполняем сетку иконок
-            const iconsGrid = document.getElementById('icons-grid');
-            if (iconsGrid) {
-                iconsGrid.innerHTML = '';
+            // Заполняем список иконок
+            const iconsList = document.getElementById('icons-list');
+            if (iconsList) {
+                iconsList.innerHTML = '';
                 projectIcons.forEach(icon => {
                     const iconOption = document.createElement('div');
                     iconOption.className = 'modal-icon-option';
                     iconOption.dataset.iconId = icon.id;
-                    iconOption.innerHTML = `<svg width="28" height="26" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="stroke: rgba(41, 45, 50, 0.5); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;">${icon.svg}</svg>`;
+                    const iconColor = darkenColor(selectedColor);
+                    iconOption.innerHTML = `<svg width="28" height="26" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="stroke: ${iconColor}; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;">${icon.svg}</svg>`;
                     iconOption.onclick = () => selectIcon(icon.id);
-                    iconsGrid.appendChild(iconOption);
+                    if (icon.id === selectedIcon) {
+                        iconOption.classList.add('selected');
+                    }
+                    iconsList.appendChild(iconOption);
                 });
+                // Перемещаем выбранную иконку влево
+                moveSelectedToLeft('icons-list', '.modal-icon-option', selectedIcon);
             }
 
-            // Заполняем сетку цветов
-            const colorsGrid = document.getElementById('colors-grid');
-            if (colorsGrid) {
-                colorsGrid.innerHTML = '';
+            // Заполняем список цветов
+            const colorsList = document.getElementById('colors-list');
+            if (colorsList) {
+                colorsList.innerHTML = '';
                 projectColors.forEach(color => {
                     const colorOption = document.createElement('div');
                     colorOption.className = 'modal-color-option';
-                    colorOption.dataset.colorId = color.id;
+                    colorOption.dataset.colorHex = color.hex;
                     colorOption.style.backgroundColor = color.hex;
                     colorOption.onclick = () => selectColor(color.hex);
-                    colorsGrid.appendChild(colorOption);
+                    if (color.hex === selectedColor) {
+                        colorOption.classList.add('selected');
+                    }
+                    colorsList.appendChild(colorOption);
                 });
+                // Перемещаем выбранный цвет влево
+                moveSelectedToLeft('colors-list', '.modal-color-option', selectedColor, 'colorHex');
             }
+        }
 
-            // Обработчики для кнопок выбора
-            const iconSelectBtn = document.getElementById('icon-select-btn');
-            const colorSelectBtn = document.getElementById('color-select-btn');
-            const iconDropdown = document.getElementById('icon-select-dropdown');
-            const colorDropdown = document.getElementById('color-select-dropdown');
+        // Перемещение выбранного элемента влево
+        function moveSelectedToLeft(listId, itemSelector, selectedValue, dataAttr = 'iconId') {
+            const list = document.getElementById(listId);
+            if (!list) return;
 
-            if (iconSelectBtn && iconDropdown) {
-                iconSelectBtn.onclick = (e) => {
-                    e.stopPropagation();
-                    // Закрываем другие выпадающие меню
-                    if (colorDropdown) colorDropdown.classList.remove('active');
-                    iconDropdown.classList.toggle('active');
-                };
-            }
-
-            if (colorSelectBtn && colorDropdown) {
-                colorSelectBtn.onclick = (e) => {
-                    e.stopPropagation();
-                    // Закрываем другие выпадающие меню
-                    if (iconDropdown) iconDropdown.classList.remove('active');
-                    colorDropdown.classList.toggle('active');
-                };
-            }
-
-            // Закрытие выпадающих меню при клике вне их
-            document.addEventListener('click', (e) => {
-                if (!e.target.closest('.modal-select-btn') && !e.target.closest('.modal-select-dropdown')) {
-                    if (iconDropdown) iconDropdown.classList.remove('active');
-                    if (colorDropdown) colorDropdown.classList.remove('active');
+            const items = Array.from(list.querySelectorAll(itemSelector));
+            const selectedItem = items.find(item => {
+                if (dataAttr === 'iconId') {
+                    return item.dataset.iconId === selectedValue;
+                } else if (dataAttr === 'colorHex') {
+                    return item.dataset.colorHex === selectedValue;
                 }
+                return false;
             });
 
-            // Обновляем превью
-            updateIconColorPreview();
+            if (selectedItem && selectedItem !== list.firstChild) {
+                // Удаляем выбранный элемент из списка
+                selectedItem.remove();
+                // Вставляем его в начало
+                list.insertBefore(selectedItem, list.firstChild);
+                // Прокручиваем к началу
+                const container = list.parentElement;
+                if (container) {
+                    container.scrollLeft = 0;
+                }
+            }
         }
 
         // Выбор иконки
         function selectIcon(iconId) {
             selectedIcon = iconId;
             
-            // Обновляем выделение
-            document.querySelectorAll('.modal-icon-option').forEach(option => {
-                option.classList.remove('selected');
-                if (option.dataset.iconId === iconId) {
-                    option.classList.add('selected');
-                }
-            });
-            
-            // Закрываем выпадающее меню
-            const iconDropdown = document.getElementById('icon-select-dropdown');
-            if (iconDropdown) iconDropdown.classList.remove('active');
-            
-            // Обновляем превью
-            updateIconColorPreview();
+            // Обновляем выделение и перемещаем выбранную иконку влево
+            const iconsList = document.getElementById('icons-list');
+            if (iconsList) {
+                const items = Array.from(iconsList.querySelectorAll('.modal-icon-option'));
+                items.forEach(option => {
+                    option.classList.remove('selected');
+                    if (option.dataset.iconId === iconId) {
+                        option.classList.add('selected');
+                    }
+                });
+                
+                // Обновляем иконки с правильным цветом
+                updateIconsColor();
+                
+                // Перемещаем выбранную иконку влево
+                moveSelectedToLeft('icons-list', '.modal-icon-option', iconId);
+            }
         }
 
         // Выбор цвета
         function selectColor(colorHex) {
             selectedColor = colorHex;
             
-            // Обновляем выделение
-            document.querySelectorAll('.modal-color-option').forEach(option => {
-                option.classList.remove('selected');
-                if (option.style.backgroundColor.toLowerCase() === colorHex.toLowerCase()) {
-                    option.classList.add('selected');
-                }
-            });
-            
-            // Закрываем выпадающее меню
-            const colorDropdown = document.getElementById('color-select-dropdown');
-            if (colorDropdown) colorDropdown.classList.remove('active');
-            
-            // Обновляем превью
-            updateIconColorPreview();
+            // Обновляем выделение и перемещаем выбранный цвет влево
+            const colorsList = document.getElementById('colors-list');
+            if (colorsList) {
+                const items = Array.from(colorsList.querySelectorAll('.modal-color-option'));
+                items.forEach(option => {
+                    option.classList.remove('selected');
+                    if (option.dataset.colorHex === colorHex) {
+                        option.classList.add('selected');
+                    }
+                });
+                
+                // Перемещаем выбранный цвет влево
+                moveSelectedToLeft('colors-list', '.modal-color-option', colorHex, 'colorHex');
+                
+                // Обновляем цвета иконок
+                updateIconsColor();
+            }
         }
 
-        // Обновление превью иконки и цвета
-        function updateIconColorPreview() {
-            const iconPreview = document.getElementById('icon-preview');
-            const colorPreview = document.getElementById('color-preview');
-            
-            if (iconPreview) {
-                const icon = projectIcons.find(i => i.id === selectedIcon) || projectIcons[0];
+        // Обновление цвета иконок
+        function updateIconsColor() {
+            const iconsList = document.getElementById('icons-list');
+            if (iconsList) {
                 const iconColor = darkenColor(selectedColor);
-                iconPreview.style.backgroundColor = selectedColor;
-                iconPreview.innerHTML = `<svg width="24" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="stroke: ${iconColor}; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;">${icon.svg}</svg>`;
-            }
-            
-            if (colorPreview) {
-                colorPreview.style.backgroundColor = selectedColor;
+                const items = iconsList.querySelectorAll('.modal-icon-option svg');
+                items.forEach(svg => {
+                    svg.style.stroke = iconColor;
+                });
             }
         }
 
@@ -2763,23 +2701,9 @@
                 // Загружаем иконку и цвет проекта
                 selectedIcon = project.icon || 'building';
                 selectedColor = project.color || '#c2c7f3';
-                updateIconColorPreview();
                 
-                // Обновляем выделение в выпадающих меню
-                setTimeout(() => {
-                    document.querySelectorAll('.modal-icon-option').forEach(option => {
-                        option.classList.remove('selected');
-                        if (option.dataset.iconId === selectedIcon) {
-                            option.classList.add('selected');
-                        }
-                    });
-                    document.querySelectorAll('.modal-color-option').forEach(option => {
-                        option.classList.remove('selected');
-                        if (option.style.backgroundColor.toLowerCase() === selectedColor.toLowerCase()) {
-                            option.classList.add('selected');
-                        }
-                    });
-                }, 100);
+                // Инициализируем селекторы
+                initIconColorSelectors();
                 
                 // Меняем кнопку на "сохранить" с иконкой галочки
                 if (createBtnText) {
@@ -2803,23 +2727,9 @@
                 // Сбрасываем иконку и цвет на значения по умолчанию
                 selectedIcon = 'building';
                 selectedColor = '#c2c7f3';
-                updateIconColorPreview();
                 
-                // Сбрасываем выделение в выпадающих меню
-                setTimeout(() => {
-                    document.querySelectorAll('.modal-icon-option').forEach(option => {
-                        option.classList.remove('selected');
-                        if (option.dataset.iconId === selectedIcon) {
-                            option.classList.add('selected');
-                        }
-                    });
-                    document.querySelectorAll('.modal-color-option').forEach(option => {
-                        option.classList.remove('selected');
-                        if (option.style.backgroundColor.toLowerCase() === selectedColor.toLowerCase()) {
-                            option.classList.add('selected');
-                        }
-                    });
-                }, 100);
+                // Инициализируем селекторы
+                initIconColorSelectors();
                 
                 // Меняем кнопку на "создать проект" с иконкой плюса
                 if (createBtnText) {
