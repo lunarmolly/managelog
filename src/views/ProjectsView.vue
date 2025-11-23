@@ -241,6 +241,40 @@
             />
             <div class="project-card-title-wrapper">
               <div class="project-card-title">{{ project.name }}</div>
+              <div
+                class="project-card-menu"
+                @click.stop="toggleProjectMenu(project.id)"
+              >
+                <svg viewBox="0 0 3 15" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="1.5" cy="2.5" r="1.5" fill="#292D32" />
+                  <circle cx="1.5" cy="7.5" r="1.5" fill="#292D32" />
+                  <circle cx="1.5" cy="12.5" r="1.5" fill="#292D32" />
+                </svg>
+                <div
+                  v-if="activeProjectMenuId === project.id"
+                  class="project-card-context-menu"
+                  @click.stop
+                >
+                  <div
+                    class="project-card-context-item"
+                    @click="goToProject(project.id)"
+                  >
+                    <span>перейти</span>
+                  </div>
+                  <div
+                    class="project-card-context-item"
+                    @click="editProject(project.id)"
+                  >
+                    <span>изменить</span>
+                  </div>
+                  <div
+                    class="project-card-context-item delete"
+                    @click="deleteProject(project.id)"
+                  >
+                    <span>удалить</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
           <div class="project-card-description">{{ project.description }}</div>
@@ -382,16 +416,36 @@
           </div>
         </div>
         <div class="modal-actions">
-          <div class="modal-btn modal-btn-create" @click="submitCreateProject">
+                <div class="modal-btn modal-btn-create" @click="submitCreateProject">
             <div class="modal-btn-icon">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <svg
+                v-if="editingProjectId === null"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
                 <path
                   d="M11 20C11 20.2652 11.1054 20.5196 11.2929 20.7071C11.4804 20.8946 11.7348 21 12 21C12.2652 21 12.5196 20.8946 12.7071 20.7071C12.8946 20.5196 13 20.2652 13 20V13H20C20.2652 13 20.5196 12.8946 20.7071 12.7071C20.8946 12.5196 21 12.2652 21 12C21 11.7348 20.8946 11.4804 20.7071 11.2929C20.5196 11.1054 20.2652 11 20 11H13V4C13 3.73478 12.8946 3.48043 12.7071 3.29289C12.5196 3.10536 12.2652 3 12 3C11.7348 3 11.4804 3.10536 11.2929 3.29289C11.1054 3.48043 11 3.73478 11 4V11H4C3.73478 11 3.48043 11.1054 3.29289 11.2929C3.10536 11.4804 3 11.7348 3 12C3 12.2652 3.10536 12.5196 3.29289 12.7071C3.48043 12.8946 3.73478 13 4 13H11V20Z"
                   fill="#912138"
                 />
               </svg>
+              <svg
+                v-else
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M9 16.17L4.83 12L3.41 13.41L9 19L21 7L19.59 5.59L9 16.17Z"
+                  fill="#912138"
+                />
+              </svg>
             </div>
-            <span>создать проект</span>
+            <span>{{ editingProjectId === null ? 'создать проект' : 'сохранить' }}</span>
           </div>
           <div class="modal-btn modal-btn-cancel" @click="closeCreateProjectModal">
             <div class="modal-btn-icon">
@@ -556,6 +610,8 @@ const generatedDescription = ref('');
 const selectedIcon = ref('building');
 const selectedColor = ref('#c2c7f3');
 const scrollbarThumb = ref<HTMLElement | null>(null);
+const editingProjectId = ref<number | null>(null);
+const activeProjectMenuId = ref<number | null>(null);
 
 // Массив иконок для проектов (хранятся на фронте)
 const projectIcons: ProjectIcon[] = [
@@ -825,6 +881,7 @@ function resetFilters() {
 
 // Функции для работы с модальным окном создания проекта
 function openCreateProjectModal() {
+  editingProjectId.value = null;
   isCreateProjectModalOpen.value = true;
   projectName.value = '';
   projectDescription.value = '';
@@ -836,8 +893,22 @@ function openCreateProjectModal() {
   });
 }
 
+function openEditProjectModal(project: Project) {
+  editingProjectId.value = project.id;
+  isCreateProjectModalOpen.value = true;
+  projectName.value = project.name;
+  projectDescription.value = project.description;
+  generatedDescription.value = '';
+  selectedIcon.value = project.icon;
+  selectedColor.value = project.color;
+  nextTick(() => {
+    updateScrollbar();
+  });
+}
+
 function closeCreateProjectModal() {
   isCreateProjectModalOpen.value = false;
+  editingProjectId.value = null;
   projectName.value = '';
   projectDescription.value = '';
   generatedDescription.value = '';
@@ -973,40 +1044,102 @@ async function submitCreateProject() {
     return;
   }
 
-  // Заглушка API - здесь будет вызов реального API
+  // Если редактируем проект
+  if (editingProjectId.value !== null) {
+    const projectIndex = projects.value.findIndex((p) => p.id === editingProjectId.value);
+    if (projectIndex !== -1) {
+      projects.value[projectIndex] = {
+        ...projects.value[projectIndex],
+        name,
+        description: description || 'Описание не указано',
+        icon: selectedIcon.value,
+        color: selectedColor.value,
+        updatedAt: new Date().toISOString(),
+      };
+      console.log('Проект обновлен:', projects.value[projectIndex]);
+    }
+    closeCreateProjectModal();
+    return;
+  }
+
+  // Создаем новый проект
   try {
     // TODO: Заменить на реальный вызов API
-    // const response = await fetch('/api/projects', {
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify({
-    //     name,
-    //     description: description || 'Описание не указано',
-    //     icon: selectedIcon.value,
-    //     color: selectedColor.value,
-    //   }),
-    // });
-    // const newProject = await response.json();
-
-    // Заглушка
-    const newProject = {
+    const newProject: Project = {
       id: Date.now(),
       name,
       description: description || 'Описание не указано',
+      manager: 'Гриднева Наталья',
+      managerId: 1,
+      executor: [],
+      status: 'new',
       icon: selectedIcon.value,
       color: selectedColor.value,
       createdAt: new Date().toISOString(),
     };
 
+    projects.value.push(newProject);
     console.log('Проект создан (заглушка):', newProject);
     
     // Закрываем модальное окно
     closeCreateProjectModal();
-    
-    // TODO: Обновить список проектов после создания
   } catch (error) {
     console.error('Ошибка при создании проекта:', error);
     alert('Не удалось создать проект. Попробуйте еще раз.');
+  }
+}
+
+// Функции для работы с контекстным меню проектов
+function toggleProjectMenu(projectId: number) {
+  if (activeProjectMenuId.value === projectId) {
+    activeProjectMenuId.value = null;
+  } else {
+    activeProjectMenuId.value = projectId;
+  }
+}
+
+// Закрытие контекстного меню при клике вне его
+function handleClickOutsideProjectMenu(event: MouseEvent) {
+  const target = event.target as HTMLElement;
+  if (
+    !target.closest('.project-card-menu') &&
+    !target.closest('.project-card-context-menu')
+  ) {
+    activeProjectMenuId.value = null;
+  }
+}
+
+// Переход к проекту
+function goToProject(projectId: number) {
+  activeProjectMenuId.value = null;
+  // TODO: Реализовать переход к проекту
+  console.log('Переход к проекту:', projectId);
+  // window.location.href = `#project-${projectId}`;
+}
+
+// Редактирование проекта
+function editProject(projectId: number) {
+  activeProjectMenuId.value = null;
+  const project = projects.value.find((p) => p.id === projectId);
+  if (project) {
+    openEditProjectModal(project);
+  }
+}
+
+// Удаление проекта
+function deleteProject(projectId: number) {
+  activeProjectMenuId.value = null;
+  const project = projects.value.find((p) => p.id === projectId);
+  if (!project) return;
+
+  const confirmed = confirm(`Вы уверены, что хотите удалить проект "${project.name}"?`);
+  
+  if (confirmed) {
+    const index = projects.value.findIndex((p) => p.id === projectId);
+    if (index > -1) {
+      projects.value.splice(index, 1);
+      console.log('Проект удален:', project);
+    }
   }
 }
 
@@ -1028,10 +1161,12 @@ function handleClickOutside(event: MouseEvent) {
 
 onMounted(() => {
   document.addEventListener('click', handleClickOutside);
+  document.addEventListener('click', handleClickOutsideProjectMenu);
 });
 
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside);
+  document.removeEventListener('click', handleClickOutsideProjectMenu);
 });
 </script>
 
@@ -2160,6 +2295,73 @@ onUnmounted(() => {
   gap: 8px;
   flex: 1;
   min-width: 0;
+  position: relative;
+}
+
+.project-card-menu {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+  position: relative;
+}
+
+.project-card-menu:hover {
+  opacity: 1;
+}
+
+.project-card-menu svg {
+  width: 3px;
+  height: 15px;
+}
+
+.project-card-context-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 8px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 16px;
+  padding: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 160px;
+  z-index: 1000;
+}
+
+.project-card-context-item {
+  padding: 8px 12px;
+  color: #292d32;
+  font-size: 14px;
+  font-weight: 400;
+  font-family: 'Involve', Arial, sans-serif;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: background 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.project-card-context-item:hover {
+  background: rgba(145, 33, 56, 0.1);
+}
+
+.project-card-context-item.delete {
+  color: #d32f2f;
+}
+
+.project-card-context-item.delete:hover {
+  background: rgba(211, 47, 47, 0.1);
 }
 
 .project-card-title {
