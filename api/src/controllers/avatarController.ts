@@ -11,6 +11,8 @@ const __dirname = path.dirname(__filename);
 
 // Путь к папке с аватарами
 const AVATARS_DIR = path.join(__dirname, '../../uploads/avatars');
+// Путь к папке с временными файлами
+const TEMP_DIR = path.join(__dirname, '../../uploads/temp');
 
 // Создаем папку, если её нет
 async function ensureAvatarsDir() {
@@ -21,8 +23,18 @@ async function ensureAvatarsDir() {
   }
 }
 
-// Инициализируем папку при загрузке модуля
+// Создаем папку temp, если её нет
+async function ensureTempDir() {
+  try {
+    await fs.access(TEMP_DIR);
+  } catch {
+    await fs.mkdir(TEMP_DIR, { recursive: true });
+  }
+}
+
+// Инициализируем папки при загрузке модуля
 ensureAvatarsDir();
+ensureTempDir();
 
 export async function uploadAvatar(req: AuthRequest, res: Response): Promise<void> {
   const userId = req.user?.userId;
@@ -84,10 +96,22 @@ export async function uploadAvatar(req: AuthRequest, res: Response): Promise<voi
       return;
     }
 
-    // Удаляем старый аватар, если есть
-    if (user.avatar) {
-      const oldAvatarPath = path.join(AVATARS_DIR, user.avatar);
-      await fs.unlink(oldAvatarPath).catch(() => {});
+    // Удаляем все старые аватары пользователя
+    try {
+      const files = await fs.readdir(AVATARS_DIR);
+      const userAvatarPrefix = `${userId}-`;
+      
+      for (const file of files) {
+        if (file.startsWith(userAvatarPrefix)) {
+          const oldAvatarPath = path.join(AVATARS_DIR, file);
+          await fs.unlink(oldAvatarPath).catch((err) => {
+            console.error(`Ошибка удаления старого аватара ${file}:`, err);
+          });
+        }
+      }
+    } catch (error: any) {
+      // Игнорируем ошибки при чтении директории (директория может не существовать)
+      console.error('Ошибка при удалении старых аватаров:', error);
     }
 
     // Обрабатываем изображение: обрезаем до квадрата 1:1 и сжимаем
@@ -147,6 +171,24 @@ export async function uploadAvatar(req: AuthRequest, res: Response): Promise<voi
     // Удаляем временный файл
     await fs.unlink(req.file.path).catch(() => {});
 
+    // Удаляем все старые временные файлы пользователя из папки temp
+    try {
+      const tempFiles = await fs.readdir(TEMP_DIR);
+      const tempFilePrefix = 'avatar-';
+      
+      for (const file of tempFiles) {
+        if (file.startsWith(tempFilePrefix)) {
+          const tempFilePath = path.join(TEMP_DIR, file);
+          await fs.unlink(tempFilePath).catch((err) => {
+            console.error(`Ошибка удаления временного файла ${file}:`, err);
+          });
+        }
+      }
+    } catch (error: any) {
+      // Игнорируем ошибки при чтении директории temp
+      console.error('Ошибка при удалении временных файлов:', error);
+    }
+
     // Сохраняем путь к аватару в БД
     // Используем findByIdAndUpdate вместо save(), чтобы избежать валидации всех полей (включая пароль)
     await User.findByIdAndUpdate(
@@ -178,6 +220,24 @@ export async function uploadAvatar(req: AuthRequest, res: Response): Promise<voi
       const outputFilename = `${userId}-${Date.now()}.webp`;
       const outputPath = path.join(AVATARS_DIR, outputFilename);
       await fs.unlink(outputPath).catch(() => {});
+    }
+
+    // Очищаем старые временные файлы из temp при ошибке
+    try {
+      const tempFiles = await fs.readdir(TEMP_DIR);
+      const tempFilePrefix = 'avatar-';
+      
+      for (const file of tempFiles) {
+        if (file.startsWith(tempFilePrefix)) {
+          const tempFilePath = path.join(TEMP_DIR, file);
+          await fs.unlink(tempFilePath).catch((err) => {
+            console.error(`Ошибка удаления временного файла ${file}:`, err);
+          });
+        }
+      }
+    } catch (tempError: any) {
+      // Игнорируем ошибки при очистке temp
+      console.error('Ошибка при очистке временных файлов:', tempError);
     }
 
     // Форматируем ошибку валидации Mongoose, если это ошибка валидации
@@ -243,21 +303,33 @@ export async function deleteAvatar(req: AuthRequest, res: Response): Promise<voi
       return;
     }
 
-    // Удаляем файл аватара, если есть
-    if (user.avatar) {
-      const avatarPath = path.join(AVATARS_DIR, user.avatar);
-      await fs.unlink(avatarPath).catch(() => {});
+    // Удаляем все аватары пользователя
+    try {
+      const files = await fs.readdir(AVATARS_DIR);
+      const userAvatarPrefix = `${userId}-`;
       
-      // Используем findByIdAndUpdate вместо save(), чтобы избежать валидации всех полей
-      await User.findByIdAndUpdate(
-        userId,
-        { $unset: { avatar: '' } },
-        { 
-          runValidators: false, // Отключаем валидацию
-          new: false
+      for (const file of files) {
+        if (file.startsWith(userAvatarPrefix)) {
+          const avatarPath = path.join(AVATARS_DIR, file);
+          await fs.unlink(avatarPath).catch((err) => {
+            console.error(`Ошибка удаления аватара ${file}:`, err);
+          });
         }
-      );
+      }
+    } catch (error: any) {
+      // Игнорируем ошибки при чтении директории (директория может не существовать)
+      console.error('Ошибка при удалении аватаров:', error);
     }
+    
+    // Обновляем БД - удаляем информацию об аватаре
+    await User.findByIdAndUpdate(
+      userId,
+      { $unset: { avatar: '' } },
+      { 
+        runValidators: false, // Отключаем валидацию
+        new: false
+      }
+    );
 
     res.json({
       message: 'Аватар успешно удален',

@@ -64,12 +64,22 @@
             >
               <transition name="avatar-transition" mode="out-in">
                 <img
-                  v-if="!isProfileOpen"
+                  v-if="!isProfileOpen && avatarUrl"
                   key="avatar"
-                  src="/images/avatars/photo_2025-11-23_17-19-15.jpg"
+                  :src="avatarUrl"
                   alt="Аватар пользователя"
                   class="header__avatar-img"
                 />
+                <div
+                  v-else-if="!isProfileOpen && !avatarUrl"
+                  key="avatar-placeholder"
+                  class="header__avatar-placeholder"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 12C14.7614 12 17 9.76142 17 7C17 4.23858 14.7614 2 12 2C9.23858 2 7 4.23858 7 7C7 9.76142 9.23858 12 12 12Z" fill="#912138"/>
+                    <path d="M12.0002 14.5C6.99016 14.5 2.95016 17.86 2.95016 22C2.95016 22.28 3.17016 22.5 3.45016 22.5H20.5502C20.8302 22.5 21.0502 22.28 21.0502 22C21.0502 17.86 17.0102 14.5 12.0002 14.5Z" fill="#912138"/>
+                  </svg>
+                </div>
                 <svg
                   v-else
                   key="close"
@@ -101,12 +111,22 @@
           <div class="header__profile-content">
             <div class="header__profile-info">
               <img
+                v-if="avatarUrl"
                 class="header__profile-avatar"
-                src="/images/avatars/photo_2025-11-23_17-19-15.jpg"
+                :src="avatarUrl"
                 alt="Аватар пользователя"
               />
+              <div
+                v-else
+                class="header__profile-avatar-placeholder"
+              >
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 12C14.7614 12 17 9.76142 17 7C17 4.23858 14.7614 2 12 2C9.23858 2 7 4.23858 7 7C7 9.76142 9.23858 12 12 12Z" fill="#912138"/>
+                  <path d="M12.0002 14.5C6.99016 14.5 2.95016 17.86 2.95016 22C2.95016 22.28 3.17016 22.5 3.45016 22.5H20.5502C20.8302 22.5 21.0502 22.28 21.0502 22C21.0502 17.86 17.0102 14.5 12.0002 14.5Z" fill="#912138"/>
+                </svg>
+              </div>
               <div class="header__profile-details">
-                <h3 class="header__profile-name">Иван Иванов</h3>
+                <h3 class="header__profile-name">{{ displayName }}</h3>
                 <router-link
                   to="/profile"
                   class="header__profile-link"
@@ -157,13 +177,55 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { logout, clearTokens } from '../../api/auth';
+import { getProfile, type Profile } from '../../api/profile';
 
 const route = useRoute();
 const isProfileOpen = ref(false);
 const hasNotifications = ref(false); // Можно подключить к реальным уведомлениям
+const profile = ref<Profile | null>(null);
+const avatarUrl = ref<string | null>(null);
+const displayName = ref<string>('Пользователь');
+
+async function loadProfile(): Promise<void> {
+  try {
+    const profileData = await getProfile();
+    profile.value = profileData;
+    
+    // Устанавливаем отображаемое имя
+    displayName.value = profileData.displayName || profileData.firstName || profileData.login || 'Пользователь';
+    
+    // Формируем URL аватара
+    if (profileData.avatar) {
+      if (profileData.avatar.startsWith('http')) {
+        avatarUrl.value = profileData.avatar;
+      } else if (profileData.avatar.startsWith('/')) {
+        const baseUrl = import.meta.env.VITE_API_BASE_URL?.replace('/api/v1', '') || 'http://localhost:3000';
+        avatarUrl.value = `${baseUrl}${profileData.avatar}`;
+      } else {
+        const baseUrl = import.meta.env.VITE_API_BASE_URL?.replace('/api/v1', '') || 'http://localhost:3000';
+        avatarUrl.value = `${baseUrl}/api/v1/avatars/${profileData.avatar}`;
+      }
+    } else {
+      avatarUrl.value = null;
+    }
+  } catch (error) {
+    console.error('Ошибка загрузки профиля:', error);
+  }
+}
+
+onMounted(() => {
+  loadProfile();
+});
+
+// Перезагружаем профиль при изменении маршрута
+watch(() => route.path, () => {
+  if (route.path === '/profile') {
+    loadProfile();
+  }
+});
 
 const navItems = [
   { label: 'дашборд', path: '/dashboard' },
@@ -460,6 +522,20 @@ async function handleLogout(): Promise<void> {
   display: block;
 }
 
+.header__avatar-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(145, 33, 56, 0.3);
+}
+
+.header__avatar-placeholder svg {
+  width: 70%;
+  height: 70%;
+}
+
 .header__close-icon {
   width: clamp(18px, 2.5vw, 20px);
   height: clamp(18px, 2.5vw, 20px);
@@ -515,6 +591,24 @@ async function handleLogout(): Promise<void> {
   border: 2px solid rgba(145, 33, 56, 0.8);
   flex-shrink: 0;
   box-shadow: 0 2px 8px rgba(145, 33, 56, 0.3);
+}
+
+.header__profile-avatar-placeholder {
+  width: clamp(32px, 4vw, 40px);
+  height: clamp(32px, 4vw, 40px);
+  border-radius: 50%;
+  border: 2px solid rgba(145, 33, 56, 0.8);
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(145, 33, 56, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(145, 33, 56, 0.3);
+}
+
+.header__profile-avatar-placeholder svg {
+  width: 60%;
+  height: 60%;
 }
 
 .header__profile-details {

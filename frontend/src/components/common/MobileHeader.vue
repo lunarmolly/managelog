@@ -59,10 +59,20 @@
         >
           <div class="mobile-header__menu-avatar">
             <img
-              src="/images/avatars/photo_2025-11-23_17-19-15.jpg"
+              v-if="avatarUrl"
+              :src="avatarUrl"
               alt="Аватар пользователя"
               class="mobile-header__menu-avatar-img"
             />
+            <div
+              v-else
+              class="mobile-header__menu-avatar-placeholder"
+            >
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 12C14.7614 12 17 9.76142 17 7C17 4.23858 14.7614 2 12 2C9.23858 2 7 4.23858 7 7C7 9.76142 9.23858 12 12 12Z" fill="#912138"/>
+                <path d="M12.0002 14.5C6.99016 14.5 2.95016 17.86 2.95016 22C2.95016 22.28 3.17016 22.5 3.45016 22.5H20.5502C20.8302 22.5 21.0502 22.28 21.0502 22C21.0502 17.86 17.0102 14.5 12.0002 14.5Z" fill="#912138"/>
+              </svg>
+            </div>
           </div>
         </button>
       </div>
@@ -82,12 +92,22 @@
           <div class="mobile-header__profile-header">
             <div class="mobile-header__profile-info">
               <img
-                src="/images/avatars/photo_2025-11-23_17-19-15.jpg"
+                v-if="avatarUrl"
+                :src="avatarUrl"
                 alt="Аватар пользователя"
                 class="mobile-header__profile-avatar"
               />
+              <div
+                v-else
+                class="mobile-header__profile-avatar-placeholder"
+              >
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 12C14.7614 12 17 9.76142 17 7C17 4.23858 14.7614 2 12 2C9.23858 2 7 4.23858 7 7C7 9.76142 9.23858 12 12 12Z" fill="#912138"/>
+                  <path d="M12.0002 14.5C6.99016 14.5 2.95016 17.86 2.95016 22C2.95016 22.28 3.17016 22.5 3.45016 22.5H20.5502C20.8302 22.5 21.0502 22.28 21.0502 22C21.0502 17.86 17.0102 14.5 12.0002 14.5Z" fill="#912138"/>
+                </svg>
+              </div>
               <div class="mobile-header__profile-details">
-                <h3 class="mobile-header__profile-name">Иван Иванов</h3>
+                <h3 class="mobile-header__profile-name">{{ displayName }}</h3>
               </div>
             </div>
             <button
@@ -137,14 +157,56 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useSettingsStore } from '@/stores/settings';
 import { logout, clearTokens } from '../../api/auth';
+import { getProfile, type Profile } from '../../api/profile';
 
 const route = useRoute();
 const settingsStore = useSettingsStore();
 const isProfileOpen = ref(false);
+const profile = ref<Profile | null>(null);
+const avatarUrl = ref<string | null>(null);
+const displayName = ref<string>('Пользователь');
+
+async function loadProfile(): Promise<void> {
+  try {
+    const profileData = await getProfile();
+    profile.value = profileData;
+    
+    // Устанавливаем отображаемое имя
+    displayName.value = profileData.displayName || profileData.firstName || profileData.login || 'Пользователь';
+    
+    // Формируем URL аватара
+    if (profileData.avatar) {
+      if (profileData.avatar.startsWith('http')) {
+        avatarUrl.value = profileData.avatar;
+      } else if (profileData.avatar.startsWith('/')) {
+        const baseUrl = import.meta.env.VITE_API_BASE_URL?.replace('/api/v1', '') || 'http://localhost:3000';
+        avatarUrl.value = `${baseUrl}${profileData.avatar}`;
+      } else {
+        const baseUrl = import.meta.env.VITE_API_BASE_URL?.replace('/api/v1', '') || 'http://localhost:3000';
+        avatarUrl.value = `${baseUrl}/api/v1/avatars/${profileData.avatar}`;
+      }
+    } else {
+      avatarUrl.value = null;
+    }
+  } catch (error) {
+    console.error('Ошибка загрузки профиля:', error);
+  }
+}
+
+onMounted(() => {
+  loadProfile();
+});
+
+// Перезагружаем профиль при изменении маршрута
+watch(() => route.path, () => {
+  if (route.path === '/profile') {
+    loadProfile();
+  }
+});
 
 const navItems = [
   {
@@ -367,6 +429,23 @@ async function handleLogout(): Promise<void> {
   left: 0;
 }
 
+.mobile-header__menu-avatar-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(145, 33, 56, 0.3);
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.mobile-header__menu-avatar-placeholder svg {
+  width: 70%;
+  height: 70%;
+}
+
 
 /* Profile Panel */
 .mobile-header__profile-overlay {
@@ -421,6 +500,24 @@ async function handleLogout(): Promise<void> {
   border: 2px solid rgba(145, 33, 56, 0.8);
   flex-shrink: 0;
   box-shadow: 0 2px 8px rgba(145, 33, 56, 0.3);
+}
+
+.mobile-header__profile-avatar-placeholder {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 2px solid rgba(145, 33, 56, 0.8);
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(145, 33, 56, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(145, 33, 56, 0.3);
+}
+
+.mobile-header__profile-avatar-placeholder svg {
+  width: 60%;
+  height: 60%;
 }
 
 .mobile-header__profile-details {
