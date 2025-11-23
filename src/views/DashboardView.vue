@@ -1,34 +1,588 @@
 <template>
-  <div class="p-8">
-    <div class="flex justify-between items-center mb-4">
-      <h1 class="text-2xl font-bold">Dashboard</h1>
-      <button
-        @click="handleLogout"
-        class="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded text-sm"
-      >
-        Выйти
-      </button>
+  <div class="dashboard-view">
+    <div class="dashboard-container">
+      <!-- Карточка пользователя -->
+      <div class="user-card">
+        <div class="user-card-image">
+          <img :src="userData.avatar" :alt="userData.name" />
+          <div class="user-card-overlay"></div>
+        </div>
+        <div class="user-card-info">
+          <div class="user-card-name">{{ userData.name }}</div>
+          <div class="user-card-role">{{ userData.role }}</div>
+        </div>
+      </div>
+
+      <!-- Блоки метрик -->
+      <div class="metrics-container">
+        <!-- Верхний ряд: загруженность и активные проекты -->
+        <div class="metrics-row">
+          <!-- Блок загруженности -->
+          <div class="metric-card metric-card-dark">
+            <div class="metric-title">загруженность</div>
+            <div class="metric-values">
+              <div class="metric-value metric-value-positive">
+                <div class="metric-value-number">{{ workloadData.current }}%</div>
+                <div class="metric-value-label">к прошлому периоду</div>
+              </div>
+              <div class="metric-value">
+                <div class="metric-value-number">{{ workloadData.change > 0 ? '+' : '' }}{{ workloadData.change }}%</div>
+                <div class="metric-value-label">к прошлому периоду</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Блок активных проектов -->
+          <div class="metric-card metric-card-light">
+            <div class="metric-title metric-title-dark">активных проектов</div>
+            <div class="metric-value">
+              <div class="metric-value-number metric-value-number-dark">{{ activeProjects }}</div>
+              <div class="metric-value-label metric-value-label-dark">к прошлому периоду</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Блок соблюдения сроков -->
+        <div class="metric-card metric-card-dark metric-card-wide">
+          <div class="metric-title">соблюдение сроков</div>
+          <div class="deadline-compliance-content">
+            <!-- Прогресс-бар -->
+            <div class="progress-bar-container">
+              <div class="progress-bar">
+                <div
+                  class="progress-segment progress-segment-large"
+                  :style="{ width: `${deadlineData.large.percentage}%` }"
+                >
+                  <div class="progress-segment-label">{{ deadlineData.large.percentage }}%</div>
+                </div>
+                <div
+                  class="progress-segment progress-segment-medium"
+                  :style="{ width: `${deadlineData.medium.percentage}%` }"
+                >
+                  <div class="progress-segment-label">{{ deadlineData.medium.percentage }}%</div>
+                </div>
+                <div
+                  class="progress-segment progress-segment-small"
+                  :style="{ width: `${deadlineData.small.percentage}%` }"
+                >
+                </div>
+              </div>
+              <div class="progress-labels">
+                <div class="progress-label">большие</div>
+                <div class="progress-label">средние</div>
+                <div class="progress-label">малые</div>
+              </div>
+            </div>
+
+            <!-- Дополнительная информация -->
+            <div class="deadline-info">
+              <div class="deadline-info-text">
+                лучше всего даются <span class="highlight">{{ bestTaskType }}</span> задачи
+              </div>
+              <div class="deadline-stats">
+                <div class="deadline-stats-value">{{ deadlineData.closedOnTime }} / {{ deadlineData.total }}</div>
+                <div class="deadline-stats-label">закрыты в срок</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { useRouter } from 'vue-router';
-import { logout, clearTokens } from '../api/auth';
+import { ref, computed } from 'vue';
 
-const router = useRouter();
-
-async function handleLogout(): Promise<void> {
-  try {
-    await logout();
-  } catch (error) {
-    console.error('Logout failed:', error);
-  } finally {
-    // Убеждаемся, что токены очищены
-    clearTokens();
-    // Используем window.location для полной перезагрузки и обхода guard'а
-    window.location.href = '/auth';
-  }
+// Типы данных
+interface UserData {
+  name: string;
+  role: string;
+  avatar: string;
 }
+
+interface WorkloadData {
+  current: number;
+  change: number;
+}
+
+interface DeadlineSegment {
+  percentage: number;
+  label: string;
+}
+
+interface DeadlineData {
+  large: DeadlineSegment;
+  medium: DeadlineSegment;
+  small: DeadlineSegment;
+  closedOnTime: number;
+  total: number;
+}
+
+// Заглушки данных
+const userData = ref<UserData>({
+  name: 'Ковтун Кирилл',
+  role: 'Менеджер',
+  avatar: '/images/backgrounds/bg.jpg', // Временная заглушка, будет из API
+});
+
+const workloadData = ref<WorkloadData>({
+  current: 30,
+  change: 10,
+});
+
+const activeProjects = ref<number>(15);
+
+const deadlineData = ref<DeadlineData>({
+  large: {
+    percentage: 48,
+    label: 'большие',
+  },
+  medium: {
+    percentage: 25,
+    label: 'средние',
+  },
+  small: {
+    percentage: 27,
+    label: 'малые',
+  },
+  closedOnTime: 132,
+  total: 275,
+});
+
+// Вычисляемое свойство для лучшего типа задач
+const bestTaskType = computed(() => {
+  const segments = [
+    { type: 'большие', value: deadlineData.value.large.percentage },
+    { type: 'средние', value: deadlineData.value.medium.percentage },
+    { type: 'малые', value: deadlineData.value.small.percentage },
+  ];
+  return segments.reduce((max, current) => (current.value > max.value ? current : max)).type;
+});
 </script>
 
+<style scoped>
+@font-face {
+  font-family: 'Involve';
+  src: url('/fonts/Involve-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Involve';
+  src: url('/fonts/Involve-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+}
+
+.dashboard-view {
+  width: 95vw;
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 24px 0px;
+  font-family: 'Involve', Arial, sans-serif;
+  min-height: calc(100vh - 100px);
+  box-sizing: border-box;
+}
+
+.dashboard-container {
+  width: 100%;
+  width: 95vw;
+  margin: 0 auto;
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+  box-sizing: border-box;
+}
+
+/* Карточка пользователя */
+.user-card {
+  width: 324px;
+  min-width: 324px;
+  height: 324px;
+  border-radius: 40px;
+  overflow: hidden;
+  position: relative;
+  flex-shrink: 0;
+  box-shadow: inset 0 0 40.5px 7px rgba(4, 9, 16, 1);
+}
+
+.user-card-image {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.user-card-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 50%;
+}
+
+.user-card-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 89px;
+  background: linear-gradient(to bottom, rgba(145, 33, 56, 0.8), rgba(4, 9, 16, 0.8));
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.user-card-info {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 89px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #e1eaf8;
+  z-index: 1;
+}
+
+.user-card-name {
+  font-size: 24px;
+  font-weight: 500;
+  font-family: 'Inter', Arial, sans-serif;
+  margin-bottom: 4px;
+}
+
+.user-card-role {
+  font-size: 12px;
+  font-weight: 300;
+  font-family: 'Inter', Arial, sans-serif;
+}
+
+/* Контейнер метрик */
+.metrics-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-width: 0;
+  width: 1020px;
+}
+
+.metrics-row {
+  display: flex;
+  gap: 24px;
+  align-items: stretch;
+  width: 100%;
+}
+
+/* Карточки метрик */
+.metric-card {
+  border-radius: 40px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  height: 150px;
+  box-sizing: border-box;
+}
+
+.metric-card-dark {
+  background: rgba(145, 33, 56, 0.5);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+}
+
+.metric-card-light {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.metric-card-wide {
+  width: 100%;
+}
+
+/* Специфичные размеры из макета */
+.metrics-row .metric-card:first-child {
+  width: 672px;
+  flex-shrink: 0;
+}
+
+.metrics-row .metric-card:last-child {
+  width: 324px;
+  flex-shrink: 0;
+}
+
+.metric-title {
+  font-size: 24px;
+  font-weight: 500;
+  color: #e1eaf8;
+  line-height: 24px;
+}
+
+.metric-title-dark {
+  color: #292d32;
+}
+
+/* Значения метрик */
+.metric-values {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  flex: 1;
+}
+
+.metric-value {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.metric-value-positive {
+  color: #b1ff8a;
+}
+
+.metric-value-number {
+  font-size: 36px;
+  font-weight: 500;
+  line-height: 38px;
+  color: #e1eaf8;
+}
+
+.metric-value-positive .metric-value-number {
+  color: #b1ff8a;
+}
+
+.metric-value-number-dark {
+  color: #5d2233;
+}
+
+.metric-value-label {
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 20px;
+  color: #e1eaf8;
+}
+
+.metric-value-label-dark {
+  color: #292d32;
+}
+
+/* Блок соблюдения сроков */
+.deadline-compliance-content {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+  flex: 1;
+}
+
+.progress-bar-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.progress-bar {
+  display: flex;
+  height: 36px;
+  border-radius: 16px;
+  overflow: hidden;
+  position: relative;
+}
+
+.progress-segment {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  min-width: 0;
+}
+
+.progress-segment-large {
+  background: #d9d9d9;
+  border-radius: 16px 0 0 16px;
+}
+
+.progress-segment-medium {
+  background: rgba(255, 252, 252, 0.34);
+  border: 4.154px solid #d9d9d9;
+  border-left: none;
+  border-right: none;
+}
+
+.progress-segment-small {
+  background: transparent;
+  border: 4.154px solid #d9d9d9;
+  border-left: none;
+  border-radius: 0 16px 16px 0;
+}
+
+.progress-segment-label {
+  font-size: 36px;
+  font-weight: 400;
+  font-family: 'Involve', Arial, sans-serif;
+  color: #5d2233;
+  line-height: 36px;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  white-space: nowrap;
+  padding: 0 12px;
+}
+
+.progress-labels {
+  display: flex;
+  gap: 0;
+  position: relative;
+  height: 22px;
+}
+
+.progress-label {
+  font-size: 15px;
+  font-weight: 400;
+  font-family: 'Involve', Arial, sans-serif;
+  color: #e1eaf8;
+  line-height: 22px;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.progress-label:nth-child(1) {
+  left: 0;
+}
+
+.progress-label:nth-child(2) {
+  left: 312px;
+}
+
+.progress-label:nth-child(3) {
+  left: 476px;
+}
+
+/* Дополнительная информация о сроках */
+.deadline-info {
+  width: 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.deadline-info-text {
+  font-size: 15px;
+  font-weight: 500;
+  color: #e1eaf8;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.deadline-info-text .highlight {
+  color: #b1ff8a;
+}
+
+.deadline-stats {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.deadline-stats-value {
+  font-size: 36px;
+  font-weight: 500;
+  color: #e1eaf8;
+  line-height: 1.1;
+  white-space: pre;
+}
+
+.deadline-stats-label {
+  font-size: 15px;
+  font-weight: 500;
+  color: #e1eaf8;
+  line-height: 1.5;
+  white-space: pre;
+  text-align: right;
+}
+
+/* Адаптивность */
+@media (max-width: 1440px) {
+  .dashboard-container {
+    flex-wrap: wrap;
+  }
+
+  .user-card {
+    width: 100%;
+    max-width: 324px;
+  }
+
+  .metrics-container {
+    width: 100%;
+    max-width: 1020px;
+  }
+}
+
+@media (max-width: 1100px) {
+  .dashboard-container {
+    flex-direction: column;
+  }
+
+  .user-card {
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto;
+  }
+
+  .metrics-container {
+    width: 100%;
+  }
+
+  .metrics-row {
+    flex-direction: column;
+  }
+
+  .metrics-row .metric-card:first-child,
+  .metrics-row .metric-card:last-child {
+    width: 100%;
+  }
+
+  .deadline-compliance-content {
+    flex-direction: column;
+  }
+
+  .deadline-info {
+    width: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-view {
+    padding: 16px;
+  }
+
+  .metric-title {
+    font-size: 20px;
+  }
+
+  .metric-value-number {
+    font-size: 28px;
+  }
+
+  .progress-segment-label {
+    font-size: 24px;
+  }
+
+  .deadline-stats-value {
+    font-size: 28px;
+  }
+}
+</style>
