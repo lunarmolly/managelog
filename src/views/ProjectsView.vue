@@ -2297,28 +2297,66 @@ onUnmounted(() => {
     flex: 1;
     overflow-y: auto;
     overflow-x: hidden;
-    padding: clamp(0.75rem, 1.5vw, 1rem) 0;
+    padding: clamp(1rem, 2vw, 1.5rem) clamp(1rem, 2vw, 1.5rem);
     display: flex;
     flex-direction: column;
+    gap: 0;
+    padding-bottom: clamp(11rem, 22vw, 13rem);
   }
 
   .mobile-filter-content .dropdown-item {
-    margin: 0 clamp(0.75rem, 1.5vw, 1rem);
+    margin: 0 0 clamp(0.25rem, 0.5vw, 0.375rem);
+    padding: clamp(0.75rem, 1.5vw, 1rem) clamp(1rem, 2vw, 1.5rem);
   }
 
   .mobile-filter-content .filter-submenu {
     margin: 0;
-    padding: 0 clamp(0.75rem, 1.5vw, 1rem);
+    padding: 0;
+    margin-top: clamp(0.75rem, 1.5vw, 1rem);
+    padding-top: clamp(0.75rem, 1.5vw, 1rem);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .mobile-filter-content .filter-submenu.active {
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .mobile-filter-content .filter-search {
+    padding: clamp(0.75rem, 1.5vw, 1rem) clamp(1rem, 2vw, 1.5rem) clamp(0.75rem, 1.5vw, 1rem);
+    margin-bottom: clamp(0.5rem, 1vw, 0.75rem);
+    margin-top: 0;
+  }
+
+  .mobile-filter-content .filter-results {
+    padding: 0 clamp(1rem, 2vw, 1.5rem);
+    margin-bottom: clamp(0.5rem, 1vw, 0.75rem);
+  }
+
+  .mobile-filter-content .filter-status-list {
+    padding: 0 clamp(1rem, 2vw, 1.5rem);
+    margin-bottom: clamp(0.5rem, 1vw, 0.75rem);
+  }
+
+  .mobile-filter-content .filter-result-item {
+    margin-bottom: clamp(0.25rem, 0.5vw, 0.375rem);
   }
 
   .mobile-filter-content .filter-actions {
-    margin: clamp(0.75rem, 1.5vw, 1rem);
-    padding-top: clamp(0.75rem, 1.5vw, 1rem);
+    position: fixed;
+    bottom: max(env(safe-area-inset-bottom, 0px), clamp(4rem, 8vw, 5rem));
+    left: 0;
+    right: 0;
+    margin: 0;
+    padding: clamp(1rem, 2vw, 1.5rem);
+    padding-bottom: max(env(safe-area-inset-bottom, 0px), clamp(4rem, 8vw, 5rem));
     border-top: 1px solid rgba(255, 255, 255, 0.1);
-    position: sticky;
-    bottom: 0;
-    background: rgba(145, 33, 56, 0.98);
+    background: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
     z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: clamp(0.5rem, 1vw, 0.75rem);
   }
 
   .filter-submenu {
