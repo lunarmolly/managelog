@@ -41,7 +41,12 @@
       <div class="metric-card metric-card-primary">
         <div class="metric-header">
           <h3 class="metric-title">Загруженность команды</h3>
-          <div class="metric-tooltip" @mouseenter="showTooltip = 'workload'" @mouseleave="showTooltip = null">
+          <div 
+            class="metric-tooltip" 
+            @mouseenter="!isMobile && (showTooltip = 'workload')" 
+            @mouseleave="!isMobile && (showTooltip = null)"
+            @click.stop.prevent="isMobile && toggleTooltip('workload', $event)"
+          >
             <svg viewBox="0 0 24 24" fill="none" aria-label="Информация о метрике">
               <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
               <path d="M12 16v-4M12 8h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
@@ -72,7 +77,12 @@
       <div class="metric-card metric-card-secondary">
         <div class="metric-header">
           <h3 class="metric-title">Активные проекты</h3>
-          <div class="metric-tooltip" @mouseenter="showTooltip = 'projects'" @mouseleave="showTooltip = null">
+          <div 
+            class="metric-tooltip" 
+            @mouseenter="!isMobile && (showTooltip = 'projects')" 
+            @mouseleave="!isMobile && (showTooltip = null)"
+            @click.stop.prevent="isMobile && toggleTooltip('projects', $event)"
+          >
             <svg viewBox="0 0 24 24" fill="none" aria-label="Информация о метрике">
               <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
               <path d="M12 16v-4M12 8h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
@@ -95,7 +105,12 @@
       <div class="metric-card metric-card-accent">
         <div class="metric-header">
           <h3 class="metric-title">Завершенные задачи</h3>
-          <div class="metric-tooltip" @mouseenter="showTooltip = 'completed'" @mouseleave="showTooltip = null">
+          <div 
+            class="metric-tooltip" 
+            @mouseenter="!isMobile && (showTooltip = 'completed')" 
+            @mouseleave="!isMobile && (showTooltip = null)"
+            @click.stop.prevent="isMobile && toggleTooltip('completed', $event)"
+          >
             <svg viewBox="0 0 24 24" fill="none" aria-label="Информация о метрике">
               <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
               <path d="M12 16v-4M12 8h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
@@ -125,7 +140,12 @@
       <div class="metric-card metric-card-alert">
         <div class="metric-header">
           <h3 class="metric-title">Требуют внимания</h3>
-          <div class="metric-tooltip" @mouseenter="showTooltip = 'attention'" @mouseleave="showTooltip = null">
+          <div 
+            class="metric-tooltip" 
+            @mouseenter="!isMobile && (showTooltip = 'attention')" 
+            @mouseleave="!isMobile && (showTooltip = null)"
+            @click.stop.prevent="isMobile && toggleTooltip('attention', $event)"
+          >
             <svg viewBox="0 0 24 24" fill="none" aria-label="Информация о метрике">
               <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
               <path d="M12 16v-4M12 8h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
@@ -157,7 +177,12 @@
       <div class="analytics-card analytics-card-wide">
         <div class="analytics-header">
           <h3 class="analytics-title">Соблюдение сроков</h3>
-          <div class="metric-tooltip" @mouseenter="showTooltip = 'deadlines'" @mouseleave="showTooltip = null">
+          <div 
+            class="metric-tooltip" 
+            @mouseenter="!isMobile && (showTooltip = 'deadlines')" 
+            @mouseleave="!isMobile && (showTooltip = null)"
+            @click.stop.prevent="isMobile && toggleTooltip('deadlines', $event)"
+          >
             <svg viewBox="0 0 24 24" fill="none" aria-label="Информация о метрике">
               <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
               <path d="M12 16v-4M12 8h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
@@ -230,7 +255,12 @@
       <div class="analytics-card">
         <div class="analytics-header">
           <h3 class="analytics-title">Финансы</h3>
-          <div class="metric-tooltip" @mouseenter="showTooltip = 'finance'" @mouseleave="showTooltip = null">
+          <div 
+            class="metric-tooltip" 
+            @mouseenter="!isMobile && (showTooltip = 'finance')" 
+            @mouseleave="!isMobile && (showTooltip = null)"
+            @click.stop.prevent="isMobile && toggleTooltip('finance', $event)"
+          >
             <svg viewBox="0 0 24 24" fill="none" aria-label="Информация о метрике">
               <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
               <path d="M12 16v-4M12 8h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
@@ -314,7 +344,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue';
 
 // Типы данных
 interface UserData {
@@ -452,6 +482,54 @@ const progressLabelPositions = computed(() => {
 
 // Tooltip
 const showTooltip = ref<string | null>(null);
+
+// Определение мобильного устройства
+const windowWidth = ref(typeof window !== 'undefined' ? window.innerWidth : 1920);
+const isMobile = computed(() => windowWidth.value <= 768);
+
+if (typeof window !== 'undefined') {
+  const handleResizeWindow = () => {
+    windowWidth.value = window.innerWidth;
+  };
+  window.addEventListener('resize', handleResizeWindow);
+  onUnmounted(() => {
+    window.removeEventListener('resize', handleResizeWindow);
+  });
+}
+
+// Функция для переключения tooltip (для мобильных устройств)
+function toggleTooltip(tooltipId: string, event?: MouseEvent | TouchEvent) {
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation();
+  }
+  
+  if (showTooltip.value === tooltipId) {
+    showTooltip.value = null;
+  } else {
+    showTooltip.value = tooltipId;
+  }
+}
+
+// Закрытие tooltip при клике вне его
+function handleClickOutside(event: MouseEvent) {
+  const target = event.target as HTMLElement;
+  // Не закрываем, если клик был на tooltip или его содержимое
+  if (target.closest('.metric-tooltip') || target.closest('.tooltip-content')) {
+    return;
+  }
+  
+  showTooltip.value = null;
+}
+
+onMounted(() => {
+  document.addEventListener('click', handleClickOutside);
+});
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside);
+});
 
 // Вспомогательные функции
 const getItemIcon = (item: string): string => {
@@ -641,6 +719,11 @@ const getItemIcon = (item: string): string => {
   position: relative;
   cursor: help;
   flex-shrink: 0;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+  pointer-events: auto;
 }
 
 .metric-tooltip svg {
@@ -659,6 +742,7 @@ const getItemIcon = (item: string): string => {
   bottom: calc(100% + 0.5rem);
   right: 0;
   width: 240px;
+  max-width: calc(100vw - 2rem);
   background: rgba(20, 15, 25, 0.98);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
@@ -670,6 +754,19 @@ const getItemIcon = (item: string): string => {
   line-height: 1.5;
   z-index: 1000;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  pointer-events: auto;
+  animation: fadeInDown 0.2s ease-out;
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .tooltip-content::after {
@@ -1183,8 +1280,38 @@ const getItemIcon = (item: string): string => {
   }
 
   .tooltip-content {
-    width: 200px;
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    right: auto !important;
+    bottom: auto !important;
+    transform: translate(-50%, -50%) !important;
+    width: calc(100vw - 2rem);
+    max-width: 280px;
     font-size: 0.8125rem;
+    z-index: 10000 !important;
+    animation: tooltipFadeIn 0.2s ease-out;
+    pointer-events: auto;
+  }
+
+  .tooltip-content::after {
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+  }
+
+  .metric-tooltip {
+    cursor: pointer;
+  }
+
+  .metric-tooltip:active svg {
+    color: #e1eaf8;
+    transform: scale(1.1);
+  }
+
+  .metric-card {
+    user-select: none;
+    -webkit-user-select: none;
   }
 }
 
@@ -1197,6 +1324,17 @@ const getItemIcon = (item: string): string => {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes tooltipFadeIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
   }
 }
 
