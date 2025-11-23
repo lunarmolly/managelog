@@ -2968,12 +2968,9 @@ onUnmounted(() => {
 .modal-btn-create:hover {
   background: #a02a43;
   border-color: rgba(145, 33, 56, 0.7);
+  color: #ffffff;
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(145, 33, 56, 0.3);
-}
-
-.modal-btn-create:hover {
-  background: #c8e8a5;
 }
 
 .modal-btn-cancel {
