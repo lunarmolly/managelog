@@ -719,7 +719,7 @@ async function handleSaveProfile(): Promise<void> {
     passwordForm.confirmPassword = '';
 
     // Показываем сообщение об успехе на 5 секунд
-    saveSuccessMessage.value = 'всё сохранено! изменения применены';
+    saveSuccessMessage.value = 'изменения сохранены';
     setTimeout(() => {
       saveSuccessMessage.value = '';
     }, 5000);
@@ -808,7 +808,7 @@ async function handleAvatarUpload(file: File): Promise<void> {
       avatarUploaderRef.value.clearError();
     }
     
-    saveSuccessMessage.value = 'аватар обновлён! выглядите отлично';
+    saveSuccessMessage.value = 'аватар обновлён';
     setTimeout(() => {
       saveSuccessMessage.value = '';
     }, 5000);
@@ -885,7 +885,7 @@ async function handleAvatarDelete(): Promise<void> {
       avatarUploaderRef.value.clearError();
     }
     
-    saveSuccessMessage.value = 'аватар удалён. можно загрузить новый';
+    saveSuccessMessage.value = 'аватар удалён';
     setTimeout(() => {
       saveSuccessMessage.value = '';
     }, 5000);
@@ -1232,11 +1232,12 @@ onUnmounted(() => {
 .save-success-message {
   font-family: 'Involve', Arial, sans-serif;
   font-size: 14px;
-  color: #4CAF50;
+  font-weight: 500;
+  color: #ffffff;
   text-align: center;
   padding: 12px 16px;
-  background: rgba(76, 175, 80, 0.15);
-  border: 1px solid rgba(76, 175, 80, 0.3);
+  background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+  border: 1px solid rgba(76, 175, 80, 0.5);
   border-radius: 12px;
   display: flex;
   align-items: center;
@@ -1245,6 +1246,7 @@ onUnmounted(() => {
   animation: fadeIn 0.3s ease;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
 }
 
 .success-icon {
