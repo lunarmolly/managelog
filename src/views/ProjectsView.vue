@@ -933,6 +933,8 @@ function openCreateProjectModal() {
   generatedDescription.value = '';
   selectedIcon.value = 'building';
   selectedColor.value = '#c2c7f3';
+  // Блокируем скролл body при открытии модального окна
+  document.body.style.overflow = 'hidden';
   nextTick(() => {
     updateScrollbar();
   });
@@ -946,6 +948,8 @@ function openEditProjectModal(project: Project) {
   generatedDescription.value = '';
   selectedIcon.value = project.icon;
   selectedColor.value = project.color;
+  // Блокируем скролл body при открытии модального окна
+  document.body.style.overflow = 'hidden';
   nextTick(() => {
     updateScrollbar();
   });
@@ -957,6 +961,8 @@ function closeCreateProjectModal() {
   projectName.value = '';
   projectDescription.value = '';
   generatedDescription.value = '';
+  // Восстанавливаем скролл body при закрытии модального окна
+  document.body.style.overflow = '';
 }
 
 function closeModalOnOverlay(event: MouseEvent) {
@@ -1184,6 +1190,8 @@ function deleteProject(projectId: number) {
 
   projectToDelete.value = project;
   isDeleteConfirmModalOpen.value = true;
+  // Блокируем скролл body при открытии модального окна
+  document.body.style.overflow = 'hidden';
 }
 
 // Подтверждение удаления
@@ -1203,6 +1211,8 @@ function confirmDelete() {
 function closeDeleteConfirmModal() {
   isDeleteConfirmModalOpen.value = false;
   projectToDelete.value = null;
+  // Восстанавливаем скролл body при закрытии модального окна
+  document.body.style.overflow = '';
 }
 
 // Закрытие меню при клике вне
@@ -1888,6 +1898,7 @@ onUnmounted(() => {
   align-items: stretch;
   justify-content: flex-end;
   z-index: 1000;
+  overflow: hidden;
 }
 
 .create-project-modal {
@@ -1898,13 +1909,16 @@ onUnmounted(() => {
   border-radius: 0;
   width: 100%;
   max-width: 800px;
+  max-height: 100vh;
   height: 100vh;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 12px 24px;
   display: flex;
   flex-direction: column;
   gap: 24px;
   box-shadow: -10px 0 40px rgba(0, 0, 0, 0.5);
+  box-sizing: border-box;
 }
 
 .modal-header {
@@ -2528,5 +2542,91 @@ onUnmounted(() => {
   font-weight: 500;
   font-family: 'Involve', Arial, sans-serif;
   line-height: 20px;
+}
+
+/* Мобильная версия модального окна */
+@media (max-width: 768px) {
+  .modal-overlay {
+    align-items: flex-start;
+    justify-content: center;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .create-project-modal {
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    min-height: 100vh;
+    max-height: none;
+    border-left: none;
+    border-radius: 0;
+    padding: 12px 16px;
+    gap: 20px;
+    box-shadow: none;
+  }
+
+  .modal-field {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .modal-field-label {
+    width: 100%;
+    font-size: 1.125rem;
+  }
+
+  .modal-description-container {
+    min-height: 250px;
+    max-height: 300px;
+  }
+
+  .modal-description-textarea {
+    min-height: 220px;
+  }
+
+  .modal-actions {
+    flex-direction: column-reverse;
+    gap: 12px;
+  }
+
+  .modal-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 640px) {
+  .create-project-modal {
+    padding: 12px;
+    gap: 16px;
+  }
+
+  .modal-field-label {
+    font-size: 1rem;
+  }
+
+  .modal-field-input {
+    font-size: 0.875rem;
+  }
+
+  .modal-description-container {
+    min-height: 200px;
+    max-height: 250px;
+  }
+
+  .modal-description-textarea {
+    min-height: 180px;
+    font-size: 0.875rem;
+  }
+
+  .modal-generate-btn,
+  .modal-action-btn,
+  .modal-btn {
+    font-size: 0.875rem;
+    padding: 8px 12px;
+    height: 40px;
+  }
 }
 </style>
