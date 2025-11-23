@@ -3,7 +3,7 @@
     <!-- Заголовок -->
     <div class="profile-header">
       <h1 class="profile-title">профиль</h1>
-      <p class="profile-subtitle">вы сегодня так красивы! </p>
+      <p class="profile-subtitle">рады видеть вас</p>
     </div>
 
     <!-- Основной контент -->
@@ -107,14 +107,29 @@
             </div>
             <div class="form-field">
               <label class="form-label">роль</label>
-              <input
-                v-model="profileForm.role"
-                type="text"
-                maxlength="50"
-                class="form-input"
-                :class="{ 'form-input--error': profileErrors.role }"
-                placeholder="выберите или укажите свою роль"
-              />
+              <div class="role-input-wrapper">
+                <input
+                  v-model="profileForm.role"
+                  type="text"
+                  maxlength="50"
+                  class="form-input"
+                  :class="{ 'form-input--error': profileErrors.role }"
+                  placeholder="выберите или введите свою роль"
+                  @focus="showRoleDropdown = true"
+                  @blur="handleRoleBlur"
+                  @input="filterRoleOptions"
+                />
+                <div v-if="showRoleDropdown && filteredRoleOptions.length > 0" class="role-dropdown">
+                  <div
+                    v-for="option in filteredRoleOptions"
+                    :key="option"
+                    class="role-option"
+                    @mousedown.prevent="selectRole(option)"
+                  >
+                    {{ option }}
+                  </div>
+                </div>
+              </div>
               <span v-if="profileErrors.role" class="form-error">{{ profileErrors.role }}</span>
             </div>
           </div>
@@ -240,6 +255,7 @@ const profileForm = reactive<ProfileUpdateRequest & { login: string }>({
   login: '',
 });
 
+
 const passwordForm = reactive({
   currentPassword: '',
   newPassword: '',
@@ -250,6 +266,10 @@ const profileErrors = reactive<Record<string, string>>({});
 const passwordErrors = reactive<Record<string, string>>({});
 const isSaving = ref(false);
 const isLoading = ref(true);
+
+const roleOptions = ['менеджер', 'разработчик', 'дизайнер', 'аналитик'];
+const showRoleDropdown = ref(false);
+const filteredRoleOptions = ref<string[]>(roleOptions);
 
 const displayName = computed(() => {
   // Если displayName указан, используем его
@@ -290,6 +310,7 @@ async function loadProfile(): Promise<void> {
   }
 }
 
+
 function validatePasswordChange(): boolean {
   Object.keys(passwordErrors).forEach(key => delete passwordErrors[key]);
 
@@ -318,6 +339,31 @@ function validatePasswordChange(): boolean {
   }
 
   return true;
+}
+
+function filterRoleOptions(): void {
+  const searchValue = profileForm.role?.toLowerCase() || '';
+  if (searchValue === '') {
+    filteredRoleOptions.value = roleOptions;
+  } else {
+    filteredRoleOptions.value = roleOptions.filter(role => 
+      role.toLowerCase().includes(searchValue)
+    );
+  }
+  showRoleDropdown.value = true;
+}
+
+function selectRole(role: string): void {
+  profileForm.role = role;
+  showRoleDropdown.value = false;
+  filteredRoleOptions.value = roleOptions;
+}
+
+function handleRoleBlur(): void {
+  // Задержка, чтобы клик по опции успел сработать
+  setTimeout(() => {
+    showRoleDropdown.value = false;
+  }, 200);
 }
 
 async function handleSaveProfile(): Promise<void> {
@@ -378,10 +424,13 @@ async function handleSaveProfile(): Promise<void> {
       const trimmed = profileForm.middleName.trim();
       updateData.middleName = trimmed !== '' ? trimmed : undefined;
     }
-    if (profileForm.role !== undefined && profileForm.role !== null) {
-      const trimmed = profileForm.role.trim();
-      updateData.role = trimmed !== '' ? trimmed : undefined;
-    }
+    // Роль - ВСЕГДА отправляем, даже если пустая (для удаления)
+    // Если поле пустое, отправляем пустую строку, сервер обработает как null
+    const roleValue = profileForm.role !== undefined && profileForm.role !== null 
+      ? profileForm.role.trim() 
+      : '';
+    // Всегда отправляем role, даже если пустой - это нужно для удаления
+    updateData.role = roleValue;
     if (profileForm.phone !== undefined && profileForm.phone !== null) {
       const trimmed = profileForm.phone.trim();
       updateData.phone = trimmed !== '' ? trimmed : undefined;
@@ -688,6 +737,15 @@ onMounted(() => {
   transition: border-color 0.2s ease;
 }
 
+.role-select-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.role-select-wrapper input[list] {
+  width: 100%;
+}
+
 .form-input:focus {
   outline: none;
   border-color: #912138;
@@ -699,6 +757,89 @@ onMounted(() => {
 
 .form-input::placeholder {
   color: rgba(225, 234, 248, 0.5);
+}
+
+.role-select-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.form-select {
+  height: 36px;
+  border: 1px solid #e1eaf8;
+  border-radius: 55px;
+  background: transparent;
+  padding: 0 16px;
+  color: #e1eaf8;
+  font-family: 'Involve', Arial, sans-serif;
+  font-size: 16px;
+  transition: border-color 0.2s ease;
+  width: 100%;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23e1eaf8' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+  padding-right: 40px;
+}
+
+.form-select:focus {
+  outline: none;
+  border-color: #912138;
+}
+
+.form-select.form-input--error {
+  border-color: #ff4444;
+}
+
+.role-input-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.role-input-wrapper .form-input {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.role-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  width: 100%;
+  background: rgba(145, 33, 56, 0.95);
+  border: 1px solid rgba(225, 234, 248, 0.3);
+  border-radius: 12px;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 1000;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.role-option {
+  padding: 12px 16px;
+  color: #e1eaf8;
+  font-family: 'Involve', Arial, sans-serif;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  text-transform: lowercase;
+}
+
+.role-option:hover {
+  background-color: rgba(225, 234, 248, 0.1);
+}
+
+.role-option:first-child {
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+}
+
+.role-option:last-child {
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
 }
 
 .form-error {

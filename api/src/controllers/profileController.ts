@@ -145,9 +145,16 @@ export async function updateProfile(req: AuthRequest, res: Response): Promise<vo
     }
 
     // Роль - можно удалить (пустая строка = null в БД)
+    // Всегда обрабатываем role, даже если он пустой (для удаления)
     if (req.body.role !== undefined) {
-      const trimmed = req.body.role?.trim();
-      updateData.role = trimmed && trimmed !== '' ? trimmed : null;
+      if (req.body.role === null || req.body.role === '' || (typeof req.body.role === 'string' && req.body.role.trim() === '')) {
+        // Пустая строка или null - удаляем роль
+        updateData.role = null;
+      } else {
+        // Есть значение - сохраняем
+        const trimmed = req.body.role.trim();
+        updateData.role = trimmed;
+      }
     }
 
     // Телефон - можно удалить (пустая строка = null в БД)
