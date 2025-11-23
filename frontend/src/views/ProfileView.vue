@@ -10,45 +10,74 @@
     <div class="profile-content">
       <!-- Левая колонка: Аватар и информация -->
       <div class="profile-sidebar">
-        <div class="profile-avatar-section">
-          <AvatarUploader
-            ref="avatarUploaderRef"
-            :avatar-url="avatarUrl"
-            @upload="handleAvatarUpload"
-            @delete="handleAvatarDelete"
-            @error="handleAvatarError"
-          />
-          <div v-if="avatarError" class="avatar-error-message">{{ avatarError }}</div>
-          <div class="profile-name">{{ displayName }}</div>
-          <div class="profile-username">@{{ profileForm.login }}</div>
-          <div class="profile-role">{{ profileForm.role || 'роль пока не выбрана' }}</div>
+        <div class="profile-card">
+          <!-- Аватар -->
+          <div class="profile-avatar-wrapper">
+            <AvatarUploader
+              ref="avatarUploaderRef"
+              :avatar-url="avatarUrl"
+              @upload="handleAvatarUpload"
+              @delete="handleAvatarDelete"
+              @error="handleAvatarError"
+            />
+            <div v-if="avatarError" class="avatar-error-message">{{ avatarError }}</div>
+          </div>
+
+          <!-- Информация о пользователе -->
+          <div class="profile-info">
+            <div class="profile-name-wrapper">
+              <h2 class="profile-name">{{ displayName || 'пользователь' }}</h2>
+              <div class="profile-username">
+                @{{ profileForm.login || 'username' }}
+              </div>
+            </div>
+
+            <!-- Роль -->
+            <div class="profile-role-wrapper">
+              <div class="profile-role-badge" :class="{ 'profile-role-badge--empty': !profileForm.role }">
+                <svg v-if="profileForm.role" class="role-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span class="role-text">{{ profileForm.role || 'роль не выбрана' }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Разделитель -->
+          <div class="profile-divider"></div>
+
+          <!-- Кнопка сохранения -->
+          <button 
+            class="save-btn" 
+            @click="handleSaveProfile"
+            :disabled="isSaving || isLoading"
+          >
+            <span v-if="isSaving" class="save-btn-content">
+              <span class="save-btn-spinner"></span>
+              сохраняю...
+            </span>
+            <span v-else class="save-btn-content">
+              <svg class="save-btn-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H16L21 8V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M17 21V13H7V21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M7 3V8H15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              сохранить изменения
+            </span>
+          </button>
+
+          <!-- Сообщение об успехе -->
+          <transition name="fade">
+            <div v-if="saveSuccessMessage" class="save-success-message">
+              <svg class="success-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <span>{{ saveSuccessMessage }}</span>
+            </div>
+          </transition>
         </div>
-        <button 
-          class="save-btn" 
-          @click="handleSaveProfile"
-          :disabled="isSaving || isLoading"
-        >
-          <span v-if="isSaving" class="save-btn-content">
-            <span class="save-btn-spinner"></span>
-            сохраняю...
-          </span>
-          <span v-else class="save-btn-content">
-            <svg class="save-btn-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H16L21 8V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              <path d="M17 21V13H7V21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              <path d="M7 3V8H15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            сохранить изменения
-          </span>
-        </button>
-        <transition name="fade">
-          <p v-if="saveSuccessMessage" class="save-success-message">
-            <svg class="success-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            {{ saveSuccessMessage }}
-          </p>
-        </transition>
       </div>
 
       <!-- Правая колонка: Форма -->
@@ -956,25 +985,39 @@ onUnmounted(() => {
 .profile-sidebar {
   display: flex;
   flex-direction: column;
-  gap: 12px;
   flex-shrink: 0;
-  width: 283px;
+  width: 320px;
   position: sticky;
   top: 100px;
   align-self: flex-start;
   height: fit-content;
   z-index: 10;
-  will-change: transform;
 }
 
-.profile-avatar-section {
+.profile-card {
   background: rgba(225, 234, 248, 0.5);
-  border-radius: 40px;
-  padding: 24px;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 32px;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.profile-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+}
+
+.profile-avatar-wrapper {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
 }
 
 .profile-avatar-container {
@@ -1020,73 +1063,150 @@ onUnmounted(() => {
   background: rgba(41, 45, 50, 0.5);
 }
 
+.profile-info {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.profile-name-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+  text-align: center;
+}
+
 .profile-name {
   font-family: 'Involve', Arial, sans-serif;
-  font-size: 20px;
-  font-weight: 500;
+  font-size: 24px;
+  font-weight: 600;
   color: #292d32;
-  text-align: center;
+  margin: 0;
+  line-height: 1.3;
+  word-break: break-word;
+  letter-spacing: -0.01em;
 }
 
 .profile-username {
   font-family: 'Involve', Arial, sans-serif;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 400;
-  color: #292d32;
+  color: rgba(41, 45, 50, 0.7);
   text-align: center;
 }
 
-.profile-role {
+.profile-role-wrapper {
+  display: flex;
+  justify-content: center;
+}
+
+.profile-role-badge {
   background: rgba(41, 45, 50, 0.3);
-  border-radius: 40px;
-  padding: 12px 24px;
+  border-radius: 16px;
+  padding: 10px 20px;
   font-family: 'Involve', Arial, sans-serif;
-  font-size: 16px;
-  font-weight: 400;
+  font-size: 14px;
+  font-weight: 500;
   color: #e1eaf8;
-  text-align: center;
-  width: 100%;
-  min-height: 48px;
   display: flex;
   align-items: center;
+  gap: 8px;
   justify-content: center;
+  min-height: 40px;
+  width: 100%;
+  transition: all 0.2s ease;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.profile-role-badge:hover {
+  background: rgba(41, 45, 50, 0.4);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.profile-role-badge--empty {
+  opacity: 0.7;
+  font-style: italic;
+}
+
+.role-icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  opacity: 0.8;
+}
+
+.role-text {
+  text-transform: lowercase;
+}
+
+.profile-divider {
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    transparent,
+    rgba(41, 45, 50, 0.3),
+    transparent
+  );
+  margin: 4px 0;
 }
 
 .save-btn {
-  background: #912138;
+  background: linear-gradient(135deg, #912138 0%, #a82a42 100%);
   border: none;
-  border-radius: 40px;
-  padding: 12px 24px;
+  border-radius: 16px;
+  padding: 14px 24px;
   color: white;
   font-family: 'Involve', Arial, sans-serif;
-  font-size: 18px;
-  font-weight: 500;
+  font-size: 16px;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   text-transform: lowercase;
   width: 100%;
-  min-height: 48px;
+  min-height: 52px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  box-shadow: 0 4px 12px rgba(145, 33, 56, 0.3);
+  gap: 10px;
+  box-shadow: 0 4px 16px rgba(145, 33, 56, 0.3),
+              0 2px 4px rgba(145, 33, 56, 0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+.save-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+.save-btn:hover:not(:disabled)::before {
+  left: 100%;
 }
 
 .save-btn:hover:not(:disabled) {
-  background: #a82a42;
-  box-shadow: 0 6px 16px rgba(145, 33, 56, 0.4);
-  transform: translateY(-1px);
+  background: linear-gradient(135deg, #a82a42 0%, #bf3a52 100%);
+  box-shadow: 0 6px 20px rgba(145, 33, 56, 0.4),
+              0 4px 8px rgba(145, 33, 56, 0.3);
+  transform: translateY(-2px);
 }
 
 .save-btn:active:not(:disabled) {
   transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(145, 33, 56, 0.3);
 }
 
 .save-btn:disabled {
-  opacity: 0.6;
+  opacity: 0.5;
   cursor: not-allowed;
   transform: none;
+  background: #912138;
 }
 
 .save-btn-content {
@@ -1114,7 +1234,6 @@ onUnmounted(() => {
   font-size: 14px;
   color: #4CAF50;
   text-align: center;
-  margin-top: 12px;
   padding: 12px 16px;
   background: rgba(76, 175, 80, 0.15);
   border: 1px solid rgba(76, 175, 80, 0.3);
@@ -1124,6 +1243,8 @@ onUnmounted(() => {
   justify-content: center;
   gap: 8px;
   animation: fadeIn 0.3s ease;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
 .success-icon {
@@ -1580,6 +1701,10 @@ onUnmounted(() => {
     width: 100%;
     position: relative;
     top: 0;
+  }
+
+  .profile-card {
+    width: 100%;
   }
 
   .form-grid {
