@@ -1,53 +1,175 @@
 <template>
   <div class="dashboard-view">
-    <!-- Первый ряд: карточка пользователя и метрики -->
-    <div class="dashboard-first-row">
-      <!-- Карточка пользователя -->
-      <div class="user-card">
-        <div class="user-card-image">
-          <img :src="userData.avatar" :alt="userData.name" />
-          <div class="user-card-overlay"></div>
+    <!-- Приветственный блок с быстрыми действиями -->
+    <div class="dashboard-welcome">
+      <div class="welcome-content">
+        <div class="welcome-greeting">
+          <h1 class="welcome-title">Добро пожаловать, {{ userData.name }}!</h1>
+          <p class="welcome-subtitle">Вот краткий обзор вашей работы сегодня</p>
         </div>
-        <div class="user-card-info">
-          <div class="user-card-name">{{ userData.name }}</div>
-          <div class="user-card-role">{{ userData.role }}</div>
+        <div class="quick-actions">
+          <router-link to="/projects" class="quick-action-btn">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M9 11l3 3L22 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Проекты
+          </router-link>
+          <router-link to="/crm" class="quick-action-btn">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            CRM
+          </router-link>
+          <router-link to="/teams" class="quick-action-btn">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Команды
+          </router-link>
+        </div>
+      </div>
+    </div>
+
+    <!-- Основные метрики - первый ряд -->
+    <div class="metrics-grid">
+      <!-- Загруженность команды -->
+      <div class="metric-card metric-card-primary">
+        <div class="metric-header">
+          <h3 class="metric-title">Загруженность команды</h3>
+          <div class="metric-tooltip" @mouseenter="showTooltip = 'workload'" @mouseleave="showTooltip = null">
+            <svg viewBox="0 0 24 24" fill="none" aria-label="Информация о метрике">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+              <path d="M12 16v-4M12 8h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            <div v-if="showTooltip === 'workload'" class="tooltip-content">
+              Показывает текущую загруженность команды в процентах от максимальной производительности. 
+              Учитывает все активные задачи и проекты.
+            </div>
+          </div>
+        </div>
+        <div class="metric-body">
+          <div class="metric-main-value">
+            <span class="metric-number">{{ workloadData.current }}%</span>
+            <span class="metric-change" :class="{ 'metric-change-positive': workloadData.change > 0, 'metric-change-negative': workloadData.change < 0 }">
+              {{ workloadData.change > 0 ? '+' : '' }}{{ workloadData.change }}%
+            </span>
+          </div>
+          <div class="metric-progress">
+            <div class="progress-bar-bg">
+              <div class="progress-bar-fill" :style="{ width: `${workloadData.current}%` }"></div>
+            </div>
+          </div>
+          <p class="metric-description">к прошлому периоду</p>
         </div>
       </div>
 
-      <!-- Блоки метрик -->
-      <div class="metrics-container">
-        <!-- Верхний ряд: загруженность и активные проекты -->
-        <div class="metrics-row">
-          <!-- Блок загруженности -->
-          <div class="metric-card metric-card-dark">
-            <div class="metric-title">загруженность</div>
-            <div class="metric-values">
-              <div class="metric-value metric-value-positive">
-                <div class="metric-value-number">{{ workloadData.current }}%</div>
-                <div class="metric-value-label">к прошлому периоду</div>
-              </div>
-              <div class="metric-value">
-                <div class="metric-value-number">{{ workloadData.change > 0 ? '+' : '' }}{{ workloadData.change }}%</div>
-                <div class="metric-value-label">к прошлому периоду</div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Блок активных проектов -->
-          <div class="metric-card metric-card-light">
-            <div class="metric-title metric-title-dark">активных проектов</div>
-            <div class="metric-value">
-              <div class="metric-value-number metric-value-number-dark">{{ activeProjects }}</div>
-              <div class="metric-value-label metric-value-label-dark">к прошлому периоду</div>
+      <!-- Активные проекты -->
+      <div class="metric-card metric-card-secondary">
+        <div class="metric-header">
+          <h3 class="metric-title">Активные проекты</h3>
+          <div class="metric-tooltip" @mouseenter="showTooltip = 'projects'" @mouseleave="showTooltip = null">
+            <svg viewBox="0 0 24 24" fill="none" aria-label="Информация о метрике">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+              <path d="M12 16v-4M12 8h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            <div v-if="showTooltip === 'projects'" class="tooltip-content">
+              Общее количество проектов, находящихся в активной разработке. 
+              Включает проекты на всех стадиях: планирование, разработка, тестирование.
             </div>
           </div>
         </div>
+        <div class="metric-body">
+          <div class="metric-main-value">
+            <span class="metric-number">{{ activeProjects }}</span>
+          </div>
+          <router-link to="/projects" class="metric-link">Посмотреть все проекты →</router-link>
+        </div>
+      </div>
 
-        <!-- Блок соблюдения сроков -->
-        <div class="metric-card metric-card-dark metric-card-wide">
-          <div class="metric-title">соблюдение сроков</div>
-          <div class="deadline-compliance-content">
-            <!-- Прогресс-бар -->
+      <!-- Скорость выполнения -->
+      <div class="metric-card metric-card-accent">
+        <div class="metric-header">
+          <h3 class="metric-title">Скорость выполнения</h3>
+          <div class="metric-tooltip" @mouseenter="showTooltip = 'velocity'" @mouseleave="showTooltip = null">
+            <svg viewBox="0 0 24 24" fill="none" aria-label="Информация о метрике">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+              <path d="M12 16v-4M12 8h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            <div v-if="showTooltip === 'velocity'" class="tooltip-content">
+              Среднее количество задач, завершенных командой за последний спринт. 
+              Помогает планировать будущие спринты и оценивать производительность.
+            </div>
+          </div>
+        </div>
+        <div class="metric-body">
+          <div class="metric-main-value">
+            <span class="metric-number">{{ velocityData.tasks }}</span>
+            <span class="metric-unit">задач/спринт</span>
+          </div>
+          <div class="metric-trend">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <polyline points="17 6 23 6 23 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span>+{{ velocityData.change }}% к прошлому спринту</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Задачи требующие внимания -->
+      <div class="metric-card metric-card-alert">
+        <div class="metric-header">
+          <h3 class="metric-title">Требуют внимания</h3>
+          <div class="metric-tooltip" @mouseenter="showTooltip = 'attention'" @mouseleave="showTooltip = null">
+            <svg viewBox="0 0 24 24" fill="none" aria-label="Информация о метрике">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+              <path d="M12 16v-4M12 8h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            <div v-if="showTooltip === 'attention'" class="tooltip-content">
+              Количество задач и проектов, которые требуют немедленного внимания: 
+              просроченные дедлайны, блокеры, задачи с высоким приоритетом.
+            </div>
+          </div>
+        </div>
+        <div class="metric-body">
+          <div class="metric-main-value">
+            <span class="metric-number">{{ attentionNeeded.count }}</span>
+          </div>
+          <div class="attention-items">
+            <div v-for="(item, idx) in attentionNeeded.items.slice(0, 2)" :key="idx" class="attention-item">
+              <span class="attention-icon">{{ item.icon }}</span>
+              <span class="attention-text">{{ item.text }}</span>
+            </div>
+          </div>
+          <router-link to="/projects" class="metric-link">Посмотреть все →</router-link>
+        </div>
+      </div>
+    </div>
+
+    <!-- Второй ряд: детальная аналитика -->
+    <div class="analytics-grid">
+      <!-- Соблюдение сроков -->
+      <div class="analytics-card analytics-card-wide">
+        <div class="analytics-header">
+          <h3 class="analytics-title">Соблюдение сроков</h3>
+          <div class="metric-tooltip" @mouseenter="showTooltip = 'deadlines'" @mouseleave="showTooltip = null">
+            <svg viewBox="0 0 24 24" fill="none" aria-label="Информация о метрике">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+              <path d="M12 16v-4M12 8h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            <div v-if="showTooltip === 'deadlines'" class="tooltip-content">
+              Процент задач, закрытых в срок, разбитый по типам проектов. 
+              Показывает эффективность планирования и выполнения работ.
+            </div>
+          </div>
+        </div>
+        <div class="deadline-content">
+          <div class="deadline-progress">
             <div class="progress-bar-container">
               <div class="progress-bar">
                 <div
@@ -90,74 +212,108 @@
                 </div>
               </div>
             </div>
-
-            <!-- Дополнительная информация -->
-            <div class="deadline-info">
-              <div class="deadline-info-text">
-                лучше всего даются <span class="highlight">{{ bestTaskType }}</span> задачи
-              </div>
-              <div class="deadline-stats">
-                <div class="deadline-stats-value">{{ deadlineData.closedOnTime }} / {{ deadlineData.total }}</div>
-                <div class="deadline-stats-label">закрыты в срок</div>
-              </div>
+          </div>
+          <div class="deadline-stats">
+            <div class="deadline-stat">
+              <div class="deadline-stat-value">{{ deadlineData.closedOnTime }} / {{ deadlineData.total }}</div>
+              <div class="deadline-stat-label">закрыты в срок</div>
             </div>
+            <div class="deadline-stat">
+              <div class="deadline-stat-value highlight">{{ bestTaskType }}</div>
+              <div class="deadline-stat-label">лучше всего даются</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Финансовые показатели -->
+      <div class="analytics-card">
+        <div class="analytics-header">
+          <h3 class="analytics-title">Финансы</h3>
+          <div class="metric-tooltip" @mouseenter="showTooltip = 'finance'" @mouseleave="showTooltip = null">
+            <svg viewBox="0 0 24 24" fill="none" aria-label="Информация о метрике">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+              <path d="M12 16v-4M12 8h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            <div v-if="showTooltip === 'finance'" class="tooltip-content">
+              Общий доход от всех активных проектов и маржинальность портфеля. 
+              Маржинальность показывает процент прибыли от общей выручки.
+            </div>
+          </div>
+        </div>
+        <div class="finance-content">
+          <div class="finance-item">
+            <div class="finance-label">Общий доход</div>
+            <div class="finance-value">{{ portfolioData.totalIncome }} ₽</div>
+          </div>
+          <div class="finance-item">
+            <div class="finance-label">Маржинальность</div>
+            <div class="finance-value finance-value-accent">{{ portfolioData.marginality }}%</div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Второй ряд: доходы и важное/цели -->
-    <div class="dashboard-second-row">
-      <!-- Левая часть: доходы и важное -->
-      <div class="dashboard-left-section">
-        <!-- Блок доходов -->
-        <div class="metric-card metric-card-light metric-card-wide">
-          <div class="portfolio-header">
-            <div class="portfolio-title">общий доход портфеля</div>
-            <div class="portfolio-title">маржинальность портфеля</div>
-          </div>
-          <div class="portfolio-values">
-            <div class="portfolio-value">
-              <div class="portfolio-value-number">{{ portfolioData.totalIncome }} ₽</div>
-            </div>
-            <div class="portfolio-value">
-              <div class="portfolio-value-number">{{ portfolioData.marginality }} ₽</div>
-            </div>
-          </div>
+    <!-- Третий ряд: важное и цели -->
+    <div class="info-grid">
+      <!-- Важные уведомления -->
+      <div class="info-card info-card-important">
+        <div class="info-card-header">
+          <h3 class="info-card-title">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M13.73 21a2 2 0 01-3.46 0" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Важное
+          </h3>
         </div>
-
-        <!-- Блок важного -->
-        <div class="metric-card metric-card-dark metric-card-tall">
-          <div class="metric-title">важное</div>
-          <div class="important-items">
-            <div
-              v-for="(item, index) in displayedImportantItems"
-              :key="index"
-              class="important-item"
-            >
-              {{ item }}
-            </div>
-            <div
-              v-if="hasMoreImportantItems"
-              class="important-item important-item-more"
-              @click="toggleImportantItems"
-            >
-              {{ isImportantItemsExpanded ? 'меньше' : 'больше' }}
-            </div>
+        <div class="important-list">
+          <div
+            v-for="(item, index) in displayedImportantItems"
+            :key="index"
+            class="important-item"
+          >
+            <span class="important-icon">{{ getItemIcon(item) }}</span>
+            <span class="important-text">{{ item }}</span>
           </div>
+          <button
+            v-if="hasMoreImportantItems"
+            class="important-toggle"
+            @click="toggleImportantItems"
+          >
+            {{ isImportantItemsExpanded ? 'Свернуть' : 'Показать еще' }}
+          </button>
         </div>
       </div>
 
-      <!-- Правая часть: цели на месяц -->
-      <div class="metric-card metric-card-dark metric-card-goals">
-        <div class="metric-title">цели на месяц</div>
-        <div class="goals-items">
+      <!-- Цели на месяц -->
+      <div class="info-card info-card-goals">
+        <div class="info-card-header">
+          <h3 class="info-card-title">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M22 11.08V12a10 10 0 11-5.93-9.14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <polyline points="22 4 12 14.01 9 11.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Цели на месяц
+          </h3>
+        </div>
+        <div class="goals-list">
           <div
             v-for="(goal, index) in monthlyGoals"
             :key="index"
             class="goal-item"
+            :class="{ 'goal-item-completed': goal.completed }"
           >
-            {{ goal }}
+            <svg v-if="goal.completed" viewBox="0 0 24 24" fill="none" aria-hidden="true" class="goal-check">
+              <path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span class="goal-text">{{ goal.text }}</span>
+            <div v-if="goal.progress !== undefined" class="goal-progress">
+              <div class="goal-progress-bar">
+                <div class="goal-progress-fill" :style="{ width: `${goal.progress}%` }"></div>
+              </div>
+              <span class="goal-progress-text">{{ goal.progress }}%</span>
+            </div>
           </div>
         </div>
       </div>
@@ -193,19 +349,40 @@ interface DeadlineData {
   total: number;
 }
 
-// Заглушки данных
+interface Goal {
+  text: string;
+  completed?: boolean;
+  progress?: number;
+}
+
+// Данные пользователя
 const userData = ref<UserData>({
-  name: 'Наташа Гриднева',
+  name: 'Наташа',
   role: 'Менеджер',
-  avatar: '/images/avatars/photo_2025-11-23_17-19-15.jpg', // Временная заглушка, будет из API
+  avatar: '/images/avatars/photo_2025-11-23_17-19-15.jpg',
 });
 
+// Метрики
 const workloadData = ref<WorkloadData>({
-  current: 30,
+  current: 75,
   change: 10,
 });
 
 const activeProjects = ref<number>(15);
+
+const velocityData = ref({
+  tasks: 42,
+  change: 12,
+});
+
+const attentionNeeded = ref({
+  count: 7,
+  items: [
+    { icon: '⚠️', text: 'Проект "Редизайн" - дедлайн через 2 дня' },
+    { icon: '🔴', text: '3 задачи просрочены' },
+    { icon: '🟡', text: '2 проекта требуют одобрения' },
+  ],
+});
 
 const deadlineData = ref<DeadlineData>({
   large: {
@@ -224,13 +401,12 @@ const deadlineData = ref<DeadlineData>({
   total: 275,
 });
 
-// Данные портфеля
 const portfolioData = ref({
   totalIncome: '765 045',
-  marginality: '765 045',
+  marginality: '42',
 });
 
-// Важные элементы (уведомления и рекомендации)
+// Важные элементы
 const importantItems = ref<string[]>([
   '⚠️ Проект "Редизайн сайта" требует внимания: дедлайн через 3 дня',
   '💡 Рекомендация: увеличить загрузку на 15% для достижения месячного плана',
@@ -239,10 +415,8 @@ const importantItems = ref<string[]>([
   '✅ Все задачи по проекту "Корпоративный портал" выполнены в срок',
 ]);
 
-// Состояние развернутости списка важных элементов
 const isImportantItemsExpanded = ref<boolean>(false);
 
-// Вычисляемое свойство для отображаемых важных элементов
 const displayedImportantItems = computed(() => {
   if (importantItems.value.length <= 3) {
     return importantItems.value;
@@ -253,27 +427,25 @@ const displayedImportantItems = computed(() => {
   return importantItems.value.slice(0, 2);
 });
 
-// Есть ли еще элементы для показа
 const hasMoreImportantItems = computed(() => {
   return importantItems.value.length > 3;
 });
 
-// Переключение развернутости
 const toggleImportantItems = () => {
   isImportantItemsExpanded.value = !isImportantItemsExpanded.value;
 };
 
 // Цели на месяц
-const monthlyGoals = ref<string[]>([
-  'Завершить 5 крупных проектов',
-  'Достичь маржинальности портфеля 45%',
-  'Увеличить общий доход на 20%',
-  'Соблюсти дедлайны в 95% случаев',
-  'Привлечь 3 новых клиента',
-  'Провести 10 встреч с командой',
+const monthlyGoals = ref<Goal[]>([
+  { text: 'Завершить 5 крупных проектов', completed: false, progress: 60 },
+  { text: 'Достичь маржинальности портфеля 45%', completed: false, progress: 93 },
+  { text: 'Увеличить общий доход на 20%', completed: false, progress: 75 },
+  { text: 'Соблюсти дедлайны в 95% случаев', completed: true },
+  { text: 'Привлечь 3 новых клиента', completed: false, progress: 67 },
+  { text: 'Провести 10 встреч с командой', completed: false, progress: 80 },
 ]);
 
-// Вычисляемое свойство для лучшего типа задач
+// Вычисляемые свойства
 const bestTaskType = computed(() => {
   const segments = [
     { type: 'большие', value: deadlineData.value.large.percentage },
@@ -283,18 +455,30 @@ const bestTaskType = computed(() => {
   return segments.reduce((max, current) => (current.value > max.value ? current : max)).type;
 });
 
-// Вычисляемые позиции для подписей под прогресс-баром
 const progressLabelPositions = computed(() => {
   const large = deadlineData.value.large.percentage;
   const medium = deadlineData.value.medium.percentage;
   const small = deadlineData.value.small.percentage;
   
   return {
-    large: large / 2, // центр первого сегмента
-    medium: large + (medium / 2), // центр второго сегмента
-    small: large + medium + (small / 2), // центр третьего сегмента
+    large: large / 2,
+    medium: large + (medium / 2),
+    small: large + medium + (small / 2),
   };
 });
+
+// Tooltip
+const showTooltip = ref<string | null>(null);
+
+// Вспомогательные функции
+const getItemIcon = (item: string): string => {
+  if (item.includes('⚠️')) return '⚠️';
+  if (item.includes('💡')) return '💡';
+  if (item.includes('🔔')) return '🔔';
+  if (item.includes('📊')) return '📊';
+  if (item.includes('✅')) return '✅';
+  return '•';
+};
 </script>
 
 <style scoped>
@@ -303,6 +487,7 @@ const progressLabelPositions = computed(() => {
   src: url('/fonts/Involve-Regular.woff2') format('woff2');
   font-weight: 400;
   font-style: normal;
+  font-display: swap;
 }
 
 @font-face {
@@ -310,259 +495,385 @@ const progressLabelPositions = computed(() => {
   src: url('/fonts/Involve-Medium.woff2') format('woff2');
   font-weight: 500;
   font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Involve';
+  src: url('/fonts/Involve-SemiBold.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Involve';
+  src: url('/fonts/Involve-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
 }
 
 .dashboard-view {
-  width: 95vw;
-  max-width: 100%;
+  width: 100%;
+  max-width: 1440px;
   margin: 0 auto;
-  padding: 24px 0;
-  font-family: 'Involve', Arial, sans-serif;
+  padding: 2rem;
+  font-family: 'Involve', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
   min-height: calc(100vh - 100px);
-  box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 2rem;
 }
 
-/* Первый ряд: карточка пользователя и метрики */
-.dashboard-first-row {
-  width: 100%;
+/* Приветственный блок */
+.dashboard-welcome {
+  background: rgba(145, 33, 56, 0.5);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  border-radius: 2rem;
+  padding: 2rem;
+  border: 1px solid rgba(225, 234, 248, 0.1);
+}
+
+.welcome-content {
   display: flex;
-  gap: 24px;
-  align-items: flex-start;
-  box-sizing: border-box;
-}
-
-/* Карточка пользователя */
-.user-card {
-  width: 324px;
-  min-width: 324px;
-  height: 324px;
-  border-radius: 40px;
-  overflow: hidden;
-  position: relative;
-  flex-shrink: 0;
-  box-shadow: inset 0 0 40.5px 7px rgba(4, 9, 16, 1);
-}
-
-.user-card-image {
-  width: 100%;
-  height: 100%;
-  position: relative;
-}
-
-.user-card-image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: 50% 50%;
-}
-
-.user-card-overlay {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 89px;
-  background: linear-gradient(
-    180deg,
-    rgba(145, 33, 56, 0.98) 0%,
-    rgba(145, 33, 56, 0.92) 40%,
-    rgba(20, 15, 25, 0.98) 100%
-  );
-  backdrop-filter: blur(35px) saturate(200%);
-  -webkit-backdrop-filter: blur(35px) saturate(200%);
-  box-shadow: 
-    0 -8px 32px rgba(145, 33, 56, 0.5),
-    0 -2px 8px rgba(0, 0, 0, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.15),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.2);
-  display: flex;
+  justify-content: space-between;
   align-items: center;
-  justify-content: center;
+  gap: 2rem;
 }
 
-.user-card-info {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 89px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  color: #e1eaf8;
-  z-index: 1;
-  padding: 12px 20px 16px;
-  text-align: center;
-}
-
-.user-card-name {
-  font-size: 24px;
-  font-weight: 500;
-  font-family: 'Inter', Arial, sans-serif;
-  line-height: 1.25;
-  letter-spacing: -0.015em;
-  margin: 0 0 4px 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 100%;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-  color: #ffffff;
-}
-
-.user-card-role {
-  font-size: 12px;
-  font-weight: 300;
-  font-family: 'Inter', Arial, sans-serif;
-  line-height: 1.5;
-  letter-spacing: 0.02em;
-  margin: 0;
-  opacity: 0.85;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 100%;
-  text-transform: uppercase;
-  font-size: 11px;
-  letter-spacing: 0.05em;
-  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
-}
-
-/* Контейнер метрик */
-.metrics-container {
+.welcome-greeting {
   flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-  min-width: 0;
 }
 
-.metrics-row {
+.welcome-title {
+  font-size: clamp(1.5rem, 4vw, 2.5rem);
+  font-weight: 700;
+  color: #e1eaf8;
+  margin: 0 0 0.5rem 0;
+  line-height: 1.2;
+}
+
+.welcome-subtitle {
+  font-size: 1rem;
+  color: rgba(225, 234, 248, 0.8);
+  margin: 0;
+}
+
+.quick-actions {
   display: flex;
-  gap: 24px;
-  align-items: stretch;
-  width: 100%;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.quick-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: rgba(225, 234, 248, 0.1);
+  border: 1px solid rgba(225, 234, 248, 0.2);
+  border-radius: 0.75rem;
+  color: #e1eaf8;
+  text-decoration: none;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.quick-action-btn svg {
+  width: 1.25rem;
+  height: 1.25rem;
+  stroke: currentColor;
+}
+
+.quick-action-btn:hover {
+  background: rgba(225, 234, 248, 0.2);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(145, 33, 56, 0.3);
+}
+
+/* Сетка метрик */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
 }
 
 /* Карточки метрик */
 .metric-card {
-  border-radius: 40px;
-  padding: 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  height: 150px;
-  box-sizing: border-box;
-}
-
-.metric-card-dark {
   background: rgba(145, 33, 56, 0.5);
   backdrop-filter: blur(25px);
   -webkit-backdrop-filter: blur(25px);
+  border-radius: 1.5rem;
+  padding: 1.5rem;
+  border: 1px solid rgba(225, 234, 248, 0.1);
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
-.metric-card-light {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+.metric-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(145, 33, 56, 0.4);
+  border-color: rgba(225, 234, 248, 0.2);
 }
 
-.metric-card-wide {
-  width: 100%;
+.metric-card-primary {
+  background: rgba(145, 33, 56, 0.6);
 }
 
-/* Специфичные размеры из макета - пропорции */
-.metrics-row .metric-card:first-child {
-  flex: 2.07; /* 672 / 324 ≈ 2.07 */
-  min-width: 0;
+.metric-card-secondary {
+  background: rgba(255, 255, 255, 0.1);
 }
 
-.metrics-row .metric-card:last-child {
-  flex: 1; /* 324 / 324 = 1 */
-  min-width: 0;
+.metric-card-accent {
+  background: linear-gradient(135deg, rgba(145, 33, 56, 0.6) 0%, rgba(93, 34, 51, 0.6) 100%);
+}
+
+.metric-card-alert {
+  background: rgba(177, 255, 138, 0.1);
+  border-color: rgba(177, 255, 138, 0.2);
+}
+
+.metric-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.5rem;
 }
 
 .metric-title {
-  font-size: 24px;
-  font-weight: 500;
+  font-size: 1rem;
+  font-weight: 600;
   color: #e1eaf8;
-  line-height: 24px;
+  margin: 0;
+  text-transform: lowercase;
+  letter-spacing: 0.02em;
 }
 
-.metric-title-dark {
-  color: #292d32;
+.metric-tooltip {
+  position: relative;
+  cursor: help;
+  flex-shrink: 0;
 }
 
-/* Значения метрик */
-.metric-values {
-  display: flex;
-  gap: 10px;
-  align-items: flex-start;
-  flex: 1;
+.metric-tooltip svg {
+  width: 1.125rem;
+  height: 1.125rem;
+  color: rgba(225, 234, 248, 0.6);
+  transition: color 0.2s ease;
 }
 
-.metric-value {
+.metric-tooltip:hover svg {
+  color: #e1eaf8;
+}
+
+.tooltip-content {
+  position: absolute;
+  bottom: calc(100% + 0.5rem);
+  right: 0;
+  width: 240px;
+  background: rgba(20, 15, 25, 0.98);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(225, 234, 248, 0.2);
+  border-radius: 0.75rem;
+  padding: 0.75rem;
+  font-size: 0.875rem;
+  color: #e1eaf8;
+  line-height: 1.5;
+  z-index: 1000;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.tooltip-content::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  right: 1rem;
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 6px solid rgba(20, 15, 25, 0.98);
+}
+
+.metric-body {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 0.75rem;
   flex: 1;
-  min-width: 0;
 }
 
-.metric-value-positive {
-  color: #b1ff8a;
-}
-
-.metric-value-number {
-  font-size: 36px;
-  font-weight: 500;
-  line-height: 38px;
-  color: #e1eaf8;
-}
-
-.metric-value-positive .metric-value-number {
-  color: #b1ff8a;
-}
-
-.metric-value-number-dark {
-  color: #5d2233;
-}
-
-.metric-value-label {
-  font-size: 15px;
-  font-weight: 500;
-  line-height: 20px;
-  color: #e1eaf8;
-}
-
-.metric-value-label-dark {
-  color: #292d32;
-}
-
-/* Блок соблюдения сроков */
-.deadline-compliance-content {
+.metric-main-value {
   display: flex;
-  gap: 24px;
+  align-items: baseline;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.metric-number {
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 700;
+  color: #e1eaf8;
+  line-height: 1;
+}
+
+.metric-unit {
+  font-size: 1rem;
+  color: rgba(225, 234, 248, 0.7);
+  font-weight: 500;
+}
+
+.metric-change {
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.5rem;
+  background: rgba(225, 234, 248, 0.1);
+}
+
+.metric-change-positive {
+  color: #b1ff8a;
+  background: rgba(177, 255, 138, 0.2);
+}
+
+.metric-change-negative {
+  color: #ff6b6b;
+  background: rgba(255, 107, 107, 0.2);
+}
+
+.metric-progress {
+  width: 100%;
+}
+
+.progress-bar-bg {
+  width: 100%;
+  height: 8px;
+  background: rgba(225, 234, 248, 0.1);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #b1ff8a 0%, #e1eaf8 100%);
+  border-radius: 4px;
+  transition: width 0.6s ease;
+}
+
+.metric-description {
+  font-size: 0.875rem;
+  color: rgba(225, 234, 248, 0.7);
+  margin: 0;
+}
+
+.metric-link {
+  font-size: 0.875rem;
+  color: #b1ff8a;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+.metric-link:hover {
+  color: #e1eaf8;
+}
+
+.metric-trend {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: rgba(225, 234, 248, 0.8);
+}
+
+.metric-trend svg {
+  width: 1rem;
+  height: 1rem;
+  color: #b1ff8a;
+}
+
+.attention-items {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.attention-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: rgba(225, 234, 248, 0.9);
+}
+
+.attention-icon {
+  font-size: 1rem;
+}
+
+.attention-text {
+  flex: 1;
+}
+
+/* Аналитика */
+.analytics-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1.5rem;
+}
+
+.analytics-card {
+  background: rgba(145, 33, 56, 0.5);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  border-radius: 1.5rem;
+  padding: 1.5rem;
+  border: 1px solid rgba(225, 234, 248, 0.1);
+}
+
+.analytics-card-wide {
+  grid-column: 1;
+}
+
+.analytics-header {
+  display: flex;
+  justify-content: space-between;
   align-items: flex-start;
+  margin-bottom: 1.5rem;
+}
+
+.analytics-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #e1eaf8;
+  margin: 0;
+  text-transform: lowercase;
+}
+
+.deadline-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.deadline-progress {
   flex: 1;
 }
 
 .progress-bar-container {
-  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  min-width: 0;
+  gap: 0.5rem;
 }
 
 .progress-bar {
   display: flex;
-  height: 36px;
-  border-radius: 16px;
+  height: 48px;
+  border-radius: 1rem;
   overflow: hidden;
   position: relative;
 }
@@ -578,7 +889,7 @@ const progressLabelPositions = computed(() => {
 
 .progress-segment-large {
   background: #d9d9d9;
-  border-radius: 16px 0 0 16px;
+  border-radius: 1rem 0 0 1rem;
 }
 
 .progress-segment-medium {
@@ -590,468 +901,360 @@ const progressLabelPositions = computed(() => {
     rgba(217, 217, 217, 0.3) 4px,
     rgba(217, 217, 217, 0.3) 8px
   );
-  border: 4.154px solid #d9d9d9;
+  border: 4px solid #d9d9d9;
   border-left: none;
   border-right: none;
 }
 
 .progress-segment-small {
   background: rgba(255, 252, 252, 0.34);
-  border: 4.154px solid #d9d9d9;
+  border: 4px solid #d9d9d9;
   border-left: none;
-  border-radius: 0 16px 16px 0;
+  border-radius: 0 1rem 1rem 0;
 }
 
 .progress-segment-label {
-  font-size: 36px;
-  font-weight: 400;
-  font-family: 'Involve', Arial, sans-serif;
+  font-size: 1.5rem;
+  font-weight: 600;
   color: #5d2233;
-  line-height: 36px;
   position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
   white-space: nowrap;
-  padding: 0 12px;
-}
-
-.progress-segment-label-pattern {
-  background-image: repeating-linear-gradient(
-    45deg,
-    #d9d9d9,
-    #d9d9d9 2px,
-    transparent 2px,
-    transparent 4px
-  );
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-size: 8px 8px;
 }
 
 .progress-labels {
   display: flex;
-  gap: 0;
   position: relative;
-  height: 22px;
+  height: 1.5rem;
   width: 100%;
 }
 
 .progress-label {
-  font-size: 15px;
-  font-weight: 400;
-  font-family: 'Involve', Arial, sans-serif;
+  font-size: 0.875rem;
   color: #e1eaf8;
-  line-height: 22px;
   position: absolute;
   top: 50%;
   transform: translate(-50%, -50%);
-  text-align: center;
   white-space: nowrap;
 }
 
-/* Дополнительная информация о сроках */
-.deadline-info {
-  width: 300px;
+.deadline-stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+.deadline-stat {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  flex-shrink: 0;
+  gap: 0.25rem;
 }
 
-.deadline-info-text {
-  font-size: 15px;
-  font-weight: 500;
+.deadline-stat-value {
+  font-size: 1.75rem;
+  font-weight: 700;
   color: #e1eaf8;
-  line-height: 1.5;
-  text-align: center;
+  line-height: 1.2;
 }
 
-.deadline-info-text .highlight {
+.deadline-stat-value.highlight {
   color: #b1ff8a;
 }
 
-.deadline-stats {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 10px;
+.deadline-stat-label {
+  font-size: 0.875rem;
+  color: rgba(225, 234, 248, 0.7);
 }
 
-.deadline-stats-value {
-  font-size: 36px;
-  font-weight: 500;
-  color: #e1eaf8;
-  line-height: 1.1;
-  white-space: pre;
-}
-
-.deadline-stats-label {
-  font-size: 15px;
-  font-weight: 500;
-  color: #e1eaf8;
-  line-height: 1.5;
-  white-space: pre;
-  text-align: right;
-}
-
-/* Второй ряд дашборда */
-.dashboard-second-row {
-  width: 100%;
-  display: flex;
-  gap: 24px;
-  align-items: flex-start;
-  box-sizing: border-box;
-}
-
-.dashboard-left-section {
-  flex: 2.05; /* 904 / 440 ≈ 2.05 */
+.finance-content {
   display: flex;
   flex-direction: column;
-  gap: 24px;
-  min-width: 0;
+  gap: 1.5rem;
 }
 
-/* Блок доходов портфеля */
-.portfolio-header {
+.finance-item {
   display: flex;
-  gap: 10px;
-  width: 100%;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
-.portfolio-title {
-  flex: 1;
-  font-size: 24px;
-  font-weight: 500;
-  color: #292d32;
-  line-height: 24px;
+.finance-label {
+  font-size: 0.875rem;
+  color: rgba(225, 234, 248, 0.7);
 }
 
-.portfolio-values {
+.finance-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #e1eaf8;
+}
+
+.finance-value-accent {
+  color: #b1ff8a;
+}
+
+/* Информационные карточки */
+.info-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
-  width: 100%;
-  flex: 1;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 1.5rem;
 }
 
-.portfolio-value {
+.info-card {
+  background: rgba(145, 33, 56, 0.5);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  border-radius: 1.5rem;
+  padding: 1.5rem;
+  border: 1px solid rgba(225, 234, 248, 0.1);
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  min-width: 0;
+  gap: 1rem;
 }
 
-.portfolio-value-number {
-  font-size: 36px;
-  font-weight: 500;
-  color: #5d2233;
-  line-height: 38px;
+.info-card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
-/* Блок важного */
-.metric-card-tall {
-  min-height: 259px;
-  height: auto;
+.info-card-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #e1eaf8;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
-.important-items {
+.info-card-title svg {
+  width: 1.25rem;
+  height: 1.25rem;
+  stroke: currentColor;
+}
+
+.important-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  width: 100%;
-  min-height: 0;
+  gap: 0.75rem;
 }
 
 .important-item {
-  background: #912138;
-  min-height: 48px;
-  height: auto;
-  border-radius: 16px;
-  width: 100%;
-  display: flex;
-  align-items: center;
-  padding: 12px 16px;
-  color: #e1eaf8;
-  font-size: 15px;
-  font-weight: 400;
-  font-family: 'Involve', Arial, sans-serif;
-  word-wrap: break-word;
-  overflow-wrap: break-word;
-  box-sizing: border-box;
-}
-
-.important-item-more {
   background: rgba(145, 33, 56, 0.6);
-  cursor: pointer;
-  transition: background 0.2s ease;
-  justify-content: center;
-  font-weight: 500;
-  text-transform: lowercase;
+  border-radius: 0.75rem;
+  padding: 0.75rem 1rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  color: #e1eaf8;
+  font-size: 0.9375rem;
+  line-height: 1.5;
 }
 
-.important-item-more:hover {
+.important-icon {
+  font-size: 1.125rem;
+  flex-shrink: 0;
+}
+
+.important-text {
+  flex: 1;
+}
+
+.important-toggle {
+  background: rgba(145, 33, 56, 0.6);
+  border: 1px solid rgba(225, 234, 248, 0.2);
+  border-radius: 0.75rem;
+  padding: 0.75rem 1rem;
+  color: #e1eaf8;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+.important-toggle:hover {
   background: rgba(145, 33, 56, 0.8);
 }
 
-/* Блок целей на месяц */
-.metric-card-goals {
-  flex: 1; /* 440 / 440 = 1 */
-  height: 433px;
-  min-width: 0;
-}
-
-.goals-items {
+.goals-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  flex: 1;
-  width: 100%;
-  align-items: center;
+  gap: 0.75rem;
 }
 
 .goal-item {
-  background: #912138;
-  height: 48px;
-  border-radius: 16px;
-  width: 100%;
+  background: rgba(145, 33, 56, 0.6);
+  border-radius: 0.75rem;
+  padding: 1rem;
   display: flex;
   align-items: center;
-  padding: 0 16px;
+  gap: 0.75rem;
   color: #e1eaf8;
-  font-size: 15px;
-  font-weight: 400;
-  font-family: 'Involve', Arial, sans-serif;
+  font-size: 0.9375rem;
+  transition: all 0.2s ease;
+}
+
+.goal-item-completed {
+  opacity: 0.7;
+  background: rgba(177, 255, 138, 0.1);
+}
+
+.goal-check {
+  width: 1.25rem;
+  height: 1.25rem;
+  color: #b1ff8a;
+  flex-shrink: 0;
+}
+
+.goal-text {
+  flex: 1;
+}
+
+.goal-progress {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 80px;
+}
+
+.goal-progress-bar {
+  flex: 1;
+  height: 4px;
+  background: rgba(225, 234, 248, 0.1);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.goal-progress-fill {
+  height: 100%;
+  background: #b1ff8a;
+  border-radius: 2px;
+  transition: width 0.6s ease;
+}
+
+.goal-progress-text {
+  font-size: 0.75rem;
+  color: rgba(225, 234, 248, 0.7);
+  min-width: 2.5rem;
+  text-align: right;
 }
 
 /* Адаптивность */
-@media (max-width: 1440px) {
-  .dashboard-first-row {
-    flex-wrap: wrap;
+@media (max-width: 1024px) {
+  .dashboard-view {
+    padding: 1.5rem;
   }
 
-  .user-card {
-    width: 324px;
-    min-width: 324px;
+  .analytics-grid {
+    grid-template-columns: 1fr;
   }
 
-  .metrics-container {
-    width: 100%;
-  }
-}
-
-@media (max-width: 1100px) {
-  .dashboard-first-row {
-    flex-direction: column;
+  .analytics-card-wide {
+    grid-column: 1;
   }
 
-  .user-card {
-    width: 100%;
-    max-width: 400px;
-    margin: 0 auto;
-  }
-
-  .metrics-container {
-    width: 100%;
-  }
-
-  .metrics-row {
-    flex-direction: column;
-  }
-
-  .metrics-row .metric-card:first-child,
-  .metrics-row .metric-card:last-child {
-    width: 100%;
-  }
-
-  .deadline-compliance-content {
-    flex-direction: column;
-  }
-
-  .deadline-info {
-    width: 100%;
-  }
-
-  .dashboard-second-row {
-    flex-direction: column;
-  }
-
-  .dashboard-left-section {
-    width: 100%;
-  }
-
-  .metric-card-goals {
-    width: 100%;
-    height: auto;
+  .info-grid {
+    grid-template-columns: 1fr;
   }
 }
 
 @media (max-width: 768px) {
   .dashboard-view {
-    padding: 16px;
-    width: 100vw;
+    padding: 1rem;
+    gap: 1.5rem;
   }
 
-  .metric-title {
-    font-size: 20px;
+  .welcome-content {
+    flex-direction: column;
+    align-items: flex-start;
   }
 
-  .metric-value-number {
-    font-size: 28px;
+  .quick-actions {
+    width: 100%;
+  }
+
+  .quick-action-btn {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .metrics-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .deadline-content {
+    gap: 1rem;
+  }
+
+  .progress-bar {
+    height: 36px;
   }
 
   .progress-segment-label {
-    font-size: 24px;
-  }
-
-  .deadline-stats-value {
-    font-size: 28px;
-  }
-
-  /* Адаптивность для соблюдения сроков */
-  .deadline-compliance-content {
-    flex-direction: column;
-    gap: 16px;
-  }
-
-  /* Скрываем прогресс-бар на мобильных */
-  .progress-bar-container {
-    display: none;
-  }
-
-  .deadline-info {
-    width: 100%;
-    align-items: center;
-  }
-
-  .deadline-info-text {
-    font-size: 14px;
-    text-align: center;
+    font-size: 1.125rem;
   }
 
   .deadline-stats {
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-  }
-
-  .deadline-stats-value {
-    font-size: 24px;
-  }
-
-  .deadline-stats-label {
-    font-size: 13px;
-    text-align: center;
-  }
-
-  /* Адаптивность для дохода и маржи портфеля */
-  .metric-card-wide.metric-card-light {
-    display: flex;
-    flex-direction: column;
-  }
-
-  /* Убираем контейнеры на мобильных, чтобы order работал */
-  .portfolio-header {
-    display: contents;
-  }
-
-  .portfolio-values {
-    display: contents;
-  }
-
-  .portfolio-title {
-    font-size: 18px;
-    line-height: 22px;
-    width: 100%;
-  }
-
-  /* Первая подпись */
-  .portfolio-title:first-child {
-    order: 1;
-    margin-bottom: 8px;
-  }
-
-  /* Вторая подпись */
-  .portfolio-title:last-child {
-    order: 3;
-    margin-top: 16px;
-    margin-bottom: 8px;
-  }
-
-  .portfolio-value {
-    width: 100%;
-  }
-
-  /* Первое число */
-  .portfolio-value:first-child {
-    order: 2;
-    margin-bottom: 0;
-  }
-
-  /* Второе число */
-  .portfolio-value:last-child {
-    order: 4;
-    margin-top: 0;
-  }
-
-  .portfolio-value-number {
-    font-size: 28px;
-    line-height: 32px;
+    grid-template-columns: 1fr;
   }
 }
 
 @media (max-width: 480px) {
   .dashboard-view {
-    padding: 12px;
-    gap: 16px;
+    padding: 0.75rem;
   }
 
-  .metric-card {
-    padding: 16px;
-    height: auto;
-    min-height: 120px;
+  .metric-card,
+  .analytics-card,
+  .info-card {
+    padding: 1rem;
   }
 
-  .metric-title {
-    font-size: 18px;
-    line-height: 22px;
+  .welcome-title {
+    font-size: 1.5rem;
   }
 
-  .metric-value-number {
-    font-size: 24px;
-    line-height: 28px;
+  .metric-number {
+    font-size: 2rem;
   }
 
-  .metric-value-label {
-    font-size: 13px;
+  .tooltip-content {
+    width: 200px;
+    font-size: 0.8125rem;
+  }
+}
+
+/* Анимации */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.metric-card,
+.analytics-card,
+.info-card {
+  animation: fadeIn 0.6s ease-out;
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .metric-card,
+  .quick-action-btn,
+  .important-toggle,
+  .goal-item {
+    transition: none;
   }
 
-  /* Соблюдение сроков на очень маленьких экранах */
-  .deadline-info-text {
-    font-size: 13px;
-  }
-
-  .deadline-stats-value {
-    font-size: 20px;
-  }
-
-  .deadline-stats-label {
-    font-size: 12px;
-  }
-
-  /* Доход и маржа портфеля */
-  .portfolio-title {
-    font-size: 16px;
-    line-height: 20px;
-  }
-
-  .portfolio-value-number {
-    font-size: 24px;
-    line-height: 28px;
-  }
-
-  .portfolio-values {
-    gap: 12px;
+  .progress-bar-fill,
+  .goal-progress-fill {
+    transition: none;
   }
 }
 </style>
