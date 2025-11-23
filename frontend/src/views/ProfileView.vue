@@ -2,8 +2,8 @@
   <div class="profile-view">
     <!-- Заголовок -->
     <div class="profile-header">
-      <h1 class="profile-title">профиль</h1>
-
+      <h1 class="profile-title">мой профиль</h1>
+      <p class="profile-subtitle">расскажите о себе — это поможет коллегам лучше вас узнать</p>
     </div>
 
     <!-- Основной контент -->
@@ -21,27 +21,46 @@
           <div v-if="avatarError" class="avatar-error-message">{{ avatarError }}</div>
           <div class="profile-name">{{ displayName }}</div>
           <div class="profile-username">@{{ profileForm.login }}</div>
-          <div class="profile-role">{{ profileForm.role || 'роль не указана' }}</div>
+          <div class="profile-role">{{ profileForm.role || 'роль пока не выбрана' }}</div>
         </div>
         <button 
           class="save-btn" 
           @click="handleSaveProfile"
-          :disabled="isSaving"
+          :disabled="isSaving || isLoading"
         >
-          <span v-if="isSaving">Сохранение...</span>
-          <span v-else>сохранить</span>
+          <span v-if="isSaving" class="save-btn-content">
+            <span class="save-btn-spinner"></span>
+            сохраняю...
+          </span>
+          <span v-else class="save-btn-content">
+            <svg class="save-btn-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H16L21 8V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M17 21V13H7V21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M7 3V8H15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            сохранить изменения
+          </span>
         </button>
-        <p v-if="saveSuccessMessage" class="save-success-message">{{ saveSuccessMessage }}</p>
+        <transition name="fade">
+          <p v-if="saveSuccessMessage" class="save-success-message">
+            <svg class="success-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            {{ saveSuccessMessage }}
+          </p>
+        </transition>
       </div>
 
       <!-- Правая колонка: Форма -->
       <div class="profile-form-container">
         <!-- Основные данные -->
         <div class="form-section">
-          <h2 class="form-section-title">основные данные</h2>
-          <p class="form-section-description">вы так красивы сегодня! есть обновления?</p>
+          <div class="form-section-header">
+            <h2 class="form-section-title">личная информация</h2>
+            <p class="form-section-description">как вас зовут и как к вам обращаться</p>
+          </div>
           
-          <div class="form-row">
+          <div class="form-grid">
             <div class="form-field">
               <label class="form-label">имя</label>
               <input
@@ -49,7 +68,8 @@
                 type="text"
                 maxlength="24"
                 class="form-input"
-                :class="{ 'form-input--error': profileErrors.firstName }"
+                :class="{ 'form-input--error': profileErrors.firstName, 'form-input--filled': profileForm.firstName }"
+                placeholder="ваше имя"
               />
               <span v-if="profileErrors.firstName" class="form-error">{{ profileErrors.firstName }}</span>
             </div>
@@ -60,13 +80,11 @@
                 type="text"
                 maxlength="24"
                 class="form-input"
-                :class="{ 'form-input--error': profileErrors.lastName }"
+                :class="{ 'form-input--error': profileErrors.lastName, 'form-input--filled': profileForm.lastName }"
+                placeholder="ваша фамилия"
               />
               <span v-if="profileErrors.lastName" class="form-error">{{ profileErrors.lastName }}</span>
             </div>
-          </div>
-
-          <div class="form-row">
             <div class="form-field">
               <label class="form-label">отчество</label>
               <input
@@ -74,44 +92,53 @@
                 type="text"
                 maxlength="24"
                 class="form-input"
-                :class="{ 'form-input--error': profileErrors.middleName }"
+                :class="{ 'form-input--error': profileErrors.middleName, 'form-input--filled': profileForm.middleName }"
+                placeholder="если есть"
               />
               <span v-if="profileErrors.middleName" class="form-error">{{ profileErrors.middleName }}</span>
             </div>
-            <div class="form-field">
+            <div class="form-field form-field--full">
               <label class="form-label">как вас называть?</label>
               <input
                 v-model="profileForm.displayName"
                 type="text"
                 maxlength="56"
                 class="form-input"
-                :class="{ 'form-input--error': profileErrors.displayName }"
+                :class="{ 'form-input--error': profileErrors.displayName, 'form-input--filled': profileForm.displayName }"
+                placeholder="например: Саша, Александр или как угодно"
               />
               <span v-if="profileErrors.displayName" class="form-error">{{ profileErrors.displayName }}</span>
-              <p class="form-hint">так система будет обращаться к вам (ваши коллеги и руководители не увидят)</p>
+              <p class="form-hint">
+                <svg class="hint-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M12 16V12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M12 8H12.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                так система будет к вам обращаться. коллеги этого не увидят
+              </p>
             </div>
-          </div>
-
-          <div class="form-row">
             <div class="form-field">
               <label class="form-label">дата рождения</label>
               <input
                 v-model="profileForm.birthDate"
                 type="date"
                 class="form-input"
-                :class="{ 'form-input--error': profileErrors.birthDate }"
+                :class="{ 'form-input--error': profileErrors.birthDate, 'form-input--filled': profileForm.birthDate }"
               />
               <span v-if="profileErrors.birthDate" class="form-error">{{ profileErrors.birthDate }}</span>
             </div>
             <div class="form-field">
-              <label class="form-label">роль</label>
+              <label class="form-label">ваша роль</label>
               <div class="role-select-wrapper">
                 <div 
                   class="role-select-btn" 
-                  :class="{ active: isRoleMenuOpen, 'form-input--error': profileErrors.role }" 
+                  :class="{ active: isRoleMenuOpen, 'form-input--error': profileErrors.role, 'form-input--filled': profileForm.role }" 
                   @click.stop="toggleRoleMenu"
                 >
                   <span class="role-select-text">{{ roleButtonText }}</span>
+                  <svg class="role-select-arrow" :class="{ 'role-select-arrow--open': isRoleMenuOpen }" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
                 </div>
                 <div v-if="isRoleMenuOpen" class="role-dropdown-menu active" @click.stop>
                   <div
@@ -122,6 +149,9 @@
                     @click.stop="selectRole(option)"
                   >
                     <span>{{ option }}</span>
+                    <svg v-if="profileForm.role === option" class="role-check-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
                   </div>
                 </div>
               </div>
@@ -135,17 +165,21 @@
 
         <!-- Контакты -->
         <div class="form-section">
-          <h2 class="form-section-title">контакты</h2>
-          <p class="form-section-description">используются для уведомлений и связи при необходимости</p>
+          <div class="form-section-header">
+            <h2 class="form-section-title">контакты</h2>
+            <p class="form-section-description">куда отправлять уведомления и как с вами связаться</p>
+          </div>
           
-          <div class="form-row">
-            <div class="form-field">
-              <label class="form-label">почта</label>
+          <div class="form-grid">
+            <div class="form-field form-field--full">
+              <label class="form-label">электронная почта</label>
               <input
                 v-model="profileForm.email"
                 type="email"
                 class="form-input"
-                :class="{ 'form-input--error': profileErrors.email }"
+                :class="{ 'form-input--error': profileErrors.email, 'form-input--filled': profileForm.email }"
+                placeholder="ваш@email.com"
+                required
               />
               <span v-if="profileErrors.email" class="form-error">{{ profileErrors.email }}</span>
             </div>
@@ -155,7 +189,8 @@
                 v-model="profileForm.phone"
                 type="tel"
                 class="form-input"
-                :class="{ 'form-input--error': profileErrors.phone }"
+                :class="{ 'form-input--error': profileErrors.phone, 'form-input--filled': profileForm.phone }"
+                placeholder="+7 (999) 123-45-67"
               />
               <span v-if="profileErrors.phone" class="form-error">{{ profileErrors.phone }}</span>
             </div>
@@ -166,40 +201,67 @@
         <div class="form-divider"></div>
 
         <!-- Смена пароля -->
-        <div class="form-section">
-          <h2 class="form-section-title">сменить пароль</h2>
+        <div class="form-section form-section--collapsible">
+          <div class="form-section-header" @click="togglePasswordSection">
+            <div>
+              <h2 class="form-section-title">безопасность</h2>
+              <p class="form-section-description">смена пароля — на случай, если забыли или хотите усилить защиту</p>
+            </div>
+            <svg class="section-toggle-icon" :class="{ 'section-toggle-icon--open': isPasswordSectionOpen }" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
           
-          <div class="form-row">
-            <div class="form-field">
-              <label class="form-label">текущий пароль</label>
-              <input
-                v-model="passwordForm.currentPassword"
-                type="password"
-                class="form-input"
-                :class="{ 'form-input--error': passwordErrors.currentPassword }"
-              />
-              <span v-if="passwordErrors.currentPassword" class="form-error">{{ passwordErrors.currentPassword }}</span>
+          <div v-show="isPasswordSectionOpen" class="form-section-content">
+            <div class="form-grid">
+              <div class="form-field form-field--full">
+                <label class="form-label">текущий пароль</label>
+                <input
+                  v-model="passwordForm.currentPassword"
+                  type="password"
+                  class="form-input"
+                  :class="{ 'form-input--error': passwordErrors.currentPassword, 'form-input--filled': passwordForm.currentPassword }"
+                  placeholder="введите текущий пароль"
+                />
+                <span v-if="passwordErrors.currentPassword" class="form-error">{{ passwordErrors.currentPassword }}</span>
+              </div>
+              <div class="form-field">
+                <label class="form-label">новый пароль</label>
+                <input
+                  v-model="passwordForm.newPassword"
+                  type="password"
+                  class="form-input"
+                  :class="{ 'form-input--error': passwordErrors.newPassword, 'form-input--filled': passwordForm.newPassword }"
+                  placeholder="минимум 8 символов"
+                />
+                <span v-if="passwordErrors.newPassword" class="form-error">{{ passwordErrors.newPassword }}</span>
+                <p v-if="passwordForm.newPassword && !passwordErrors.newPassword" class="form-hint form-hint--success">
+                  <svg class="hint-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                  отличный пароль!
+                </p>
+              </div>
+              <div class="form-field">
+                <label class="form-label">повторите новый пароль</label>
+                <input
+                  v-model="passwordForm.confirmPassword"
+                  type="password"
+                  class="form-input"
+                  :class="{ 'form-input--error': passwordErrors.confirmPassword, 'form-input--filled': passwordForm.confirmPassword }"
+                  placeholder="для подтверждения"
+                />
+                <span v-if="passwordErrors.confirmPassword" class="form-error">{{ passwordErrors.confirmPassword }}</span>
+              </div>
             </div>
-            <div class="form-field">
-              <label class="form-label">новый пароль</label>
-              <input
-                v-model="passwordForm.newPassword"
-                type="password"
-                class="form-input"
-                :class="{ 'form-input--error': passwordErrors.newPassword }"
-              />
-              <span v-if="passwordErrors.newPassword" class="form-error">{{ passwordErrors.newPassword }}</span>
-            </div>
-            <div class="form-field">
-              <label class="form-label">повторите пароль</label>
-              <input
-                v-model="passwordForm.confirmPassword"
-                type="password"
-                class="form-input"
-                :class="{ 'form-input--error': passwordErrors.confirmPassword }"
-              />
-              <span v-if="passwordErrors.confirmPassword" class="form-error">{{ passwordErrors.confirmPassword }}</span>
-            </div>
+            <p class="form-section-note">
+              <svg class="note-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M12 16V12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M12 8H12.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              оставьте поля пустыми, если не хотите менять пароль
+            </p>
           </div>
         </div>
       </div>
@@ -247,9 +309,14 @@ const avatarUploaderRef = ref<ComponentPublicInstance & { clearError?: () => voi
 
 const roleOptions = ['менеджер', 'разработчик', 'дизайнер', 'аналитик'];
 const isRoleMenuOpen = ref(false);
+const isPasswordSectionOpen = ref(false);
+
+function togglePasswordSection(): void {
+  isPasswordSectionOpen.value = !isPasswordSectionOpen.value;
+}
 
 const roleButtonText = computed(() => {
-  return profileForm.role || 'не выбрано';
+  return profileForm.role || 'выберите роль';
 });
 
 const displayName = computed(() => {
@@ -494,7 +561,7 @@ async function handleSaveProfile(): Promise<void> {
     passwordForm.confirmPassword = '';
 
     // Показываем сообщение об успехе на 5 секунд
-    saveSuccessMessage.value = 'Профиль успешно обновлен';
+    saveSuccessMessage.value = 'всё сохранено! изменения применены';
     setTimeout(() => {
       saveSuccessMessage.value = '';
     }, 5000);
@@ -583,7 +650,7 @@ async function handleAvatarUpload(file: File): Promise<void> {
       avatarUploaderRef.value.clearError();
     }
     
-    saveSuccessMessage.value = 'Аватар успешно загружен';
+    saveSuccessMessage.value = 'аватар обновлён! выглядите отлично';
     setTimeout(() => {
       saveSuccessMessage.value = '';
     }, 5000);
@@ -660,7 +727,7 @@ async function handleAvatarDelete(): Promise<void> {
       avatarUploaderRef.value.clearError();
     }
     
-    saveSuccessMessage.value = 'Аватар успешно удален';
+    saveSuccessMessage.value = 'аватар удалён. можно загрузить новый';
     setTimeout(() => {
       saveSuccessMessage.value = '';
     }, 5000);
@@ -714,7 +781,10 @@ onUnmounted(() => {
 
 .profile-header {
   text-align: center;
-  margin-bottom: 40px;
+  margin-bottom: 48px;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .profile-title {
@@ -724,6 +794,16 @@ onUnmounted(() => {
   color: #e1eaf8;
   margin: 0 0 12px 0;
   text-transform: lowercase;
+  letter-spacing: -0.02em;
+}
+
+.profile-subtitle {
+  font-family: 'Involve', Arial, sans-serif;
+  font-size: 18px;
+  font-weight: 400;
+  color: rgba(225, 234, 248, 0.7);
+  margin: 0;
+  line-height: 1.5;
 }
 
 .profile-subtitle {
@@ -837,6 +917,10 @@ onUnmounted(() => {
   color: #e1eaf8;
   text-align: center;
   width: 100%;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .save-btn {
@@ -846,34 +930,88 @@ onUnmounted(() => {
   padding: 12px 24px;
   color: white;
   font-family: 'Involve', Arial, sans-serif;
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 500;
   cursor: pointer;
-  transition: opacity 0.2s ease;
+  transition: all 0.2s ease;
   text-transform: lowercase;
   width: 100%;
-  height: 48px;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 4px 12px rgba(145, 33, 56, 0.3);
 }
 
 .save-btn:hover:not(:disabled) {
-  opacity: 0.9;
+  background: #a82a42;
+  box-shadow: 0 6px 16px rgba(145, 33, 56, 0.4);
+  transform: translateY(-1px);
+}
+
+.save-btn:active:not(:disabled) {
+  transform: translateY(0);
 }
 
 .save-btn:disabled {
-  opacity: 0.5;
+  opacity: 0.6;
   cursor: not-allowed;
+  transform: none;
+}
+
+.save-btn-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.save-btn-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.save-btn-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
 }
 
 .save-success-message {
   font-family: 'Involve', Arial, sans-serif;
-  font-size: 16px;
+  font-size: 14px;
   color: #4CAF50;
   text-align: center;
   margin-top: 12px;
-  padding: 8px 16px;
-  background: rgba(76, 175, 80, 0.1);
-  border-radius: 8px;
+  padding: 12px 16px;
+  background: rgba(76, 175, 80, 0.15);
+  border: 1px solid rgba(76, 175, 80, 0.3);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   animation: fadeIn 0.3s ease;
+}
+
+.success-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: all 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
 }
 
 .avatar-error-message {
@@ -904,17 +1042,71 @@ onUnmounted(() => {
 .profile-form-container {
   flex: 1;
   background: rgba(145, 33, 56, 0.5);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   border-radius: 40px;
-  padding: 24px;
+  padding: 32px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 32px;
+  border: 1px solid rgba(225, 234, 248, 0.1);
 }
 
 .form-section {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 20px;
+}
+
+.form-section-header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.form-section--collapsible .form-section-header {
+  cursor: pointer;
+  padding: 8px;
+  margin: -8px;
+  border-radius: 12px;
+  transition: background 0.2s ease;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.form-section--collapsible .form-section-header:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.form-section-content {
+  margin-top: 8px;
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.section-toggle-icon {
+  width: 24px;
+  height: 24px;
+  color: #e1eaf8;
+  transition: transform 0.3s ease;
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+
+.section-toggle-icon--open {
+  transform: rotate(180deg);
 }
 
 .form-section-title {
@@ -924,59 +1116,131 @@ onUnmounted(() => {
   color: #e1eaf8;
   margin: 0;
   text-transform: lowercase;
+  letter-spacing: -0.01em;
 }
 
 .form-section-description {
   font-family: 'Involve', Arial, sans-serif;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 400;
-  color: #e1eaf8;
+  color: rgba(225, 234, 248, 0.7);
   margin: 0;
+  line-height: 1.5;
 }
 
-.form-row {
+.form-section-note {
+  font-family: 'Involve', Arial, sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  color: rgba(225, 234, 248, 0.6);
+  margin: 16px 0 0 0;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
   display: flex;
-  gap: 24px;
+  align-items: center;
+  gap: 8px;
+  line-height: 1.5;
+}
+
+.note-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
 }
 
 .form-field {
-  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
+}
+
+.form-field--full {
+  grid-column: 1 / -1;
 }
 
 .form-label {
   font-family: 'Involve', Arial, sans-serif;
-  font-size: 20px;
+  font-size: 16px;
   font-weight: 500;
   color: #e1eaf8;
+  text-transform: lowercase;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.form-label-required {
+  font-size: 12px;
+  font-weight: 400;
+  color: #ff6b6b;
+  text-transform: lowercase;
+}
+
+.form-label-optional {
+  font-size: 12px;
+  font-weight: 400;
+  color: rgba(225, 234, 248, 0.5);
+  text-transform: lowercase;
+}
+
+.form-label-hint {
+  font-size: 12px;
+  font-weight: 400;
+  color: rgba(225, 234, 248, 0.6);
   text-transform: lowercase;
 }
 
 .form-input {
-  height: 36px;
-  border: 1px solid #e1eaf8;
-  border-radius: 55px;
-  background: transparent;
-  padding: 0 16px;
+  height: 48px;
+  border: 1.5px solid rgba(225, 234, 248, 0.3);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 0 18px;
   color: #e1eaf8;
   font-family: 'Involve', Arial, sans-serif;
   font-size: 16px;
-  transition: border-color 0.2s ease;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.form-input:hover {
+  border-color: rgba(225, 234, 248, 0.5);
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .form-input:focus {
   outline: none;
   border-color: #912138;
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 0 0 3px rgba(145, 33, 56, 0.2);
+}
+
+.form-input--filled {
+  border-color: rgba(145, 33, 56, 0.5);
 }
 
 .form-input--error {
   border-color: #ff4444;
+  background: rgba(255, 68, 68, 0.1);
+}
+
+.form-input--error:focus {
+  box-shadow: 0 0 0 3px rgba(255, 68, 68, 0.2);
 }
 
 .form-input::placeholder {
-  color: rgba(225, 234, 248, 0.5);
+  color: rgba(225, 234, 248, 0.4);
+  font-style: italic;
 }
 
 .role-select-wrapper {
@@ -985,15 +1249,15 @@ onUnmounted(() => {
 }
 
 .role-select-btn {
-  height: 36px;
-  border: 1px solid #e1eaf8;
-  border-radius: 55px;
-  background: transparent;
-  padding: 0 16px;
+  height: 48px;
+  border: 1.5px solid rgba(225, 234, 248, 0.3);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 0 18px;
   color: #e1eaf8;
   font-family: 'Involve', Arial, sans-serif;
   font-size: 16px;
-  transition: border-color 0.2s ease;
+  transition: all 0.2s ease;
   width: 100%;
   cursor: pointer;
   display: flex;
@@ -1001,6 +1265,25 @@ onUnmounted(() => {
   justify-content: space-between;
   gap: 8px;
   box-sizing: border-box;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.role-select-btn:hover {
+  border-color: rgba(225, 234, 248, 0.5);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.role-select-arrow {
+  width: 20px;
+  height: 20px;
+  color: rgba(225, 234, 248, 0.6);
+  transition: transform 0.3s ease;
+  flex-shrink: 0;
+}
+
+.role-select-arrow--open {
+  transform: rotate(180deg);
 }
 
 .role-select-btn:hover {
@@ -1106,20 +1389,50 @@ onUnmounted(() => {
   color: #ffffff;
 }
 
+.role-check-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
 
 .form-error {
   font-family: 'Involve', Arial, sans-serif;
+  font-size: 13px;
+  color: #ff6b6b;
+  margin-top: 2px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  line-height: 1.4;
+}
+
+.form-error::before {
+  content: '⚠';
   font-size: 14px;
-  color: #ff4444;
-  margin-top: -4px;
 }
 
 .form-hint {
   font-family: 'Involve', Arial, sans-serif;
-  font-size: 16px;
+  font-size: 13px;
   font-weight: 400;
-  color: #e1eaf8;
-  margin: 0;
+  color: rgba(225, 234, 248, 0.6);
+  margin: 4px 0 0 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  line-height: 1.4;
+}
+
+.form-hint--success {
+  color: #4CAF50;
+}
+
+.hint-icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  opacity: 0.7;
 }
 
 .form-divider {
@@ -1140,8 +1453,8 @@ onUnmounted(() => {
     top: 0;
   }
 
-  .form-row {
-    flex-direction: column;
+  .form-grid {
+    grid-template-columns: 1fr;
   }
 }
 

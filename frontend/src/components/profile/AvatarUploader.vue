@@ -288,9 +288,9 @@ function handleDelete() {
 
 function confirmDelete() {
   showDeleteConfirm.value = false;
-  clearError();
-  emit('delete');
-}
+    clearError();
+    emit('delete');
+  }
 
 function cancelDelete() {
   showDeleteConfirm.value = false;
