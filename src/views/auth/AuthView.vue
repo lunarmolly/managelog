@@ -20,7 +20,7 @@
             :class="[
               'h-12 px-6 bg-[rgba(255,255,255,0.3)] border-none rounded-full transition-all box-border flex items-center justify-center w-fit whitespace-nowrap text-2xl font-medium leading-none m-0',
               activeTab === 'login'
-                ? 'bg-[url(\'/images/backgrounds/bg.jpg\')] bg-cover bg-center bg-no-repeat text-white'
+                ? 'bg-[#1a161c] bg-[url(\'/images/backgrounds/bg.jpg\')] bg-cover bg-center bg-no-repeat text-white'
                 : 'text-[#040910] hover:opacity-90',
             ]"
             @click="activeTab = 'login'"
@@ -31,7 +31,7 @@
             :class="[
               'h-12 px-6 bg-[rgba(255,255,255,0.3)] border-none rounded-full transition-all box-border flex items-center justify-center w-fit whitespace-nowrap text-2xl font-medium leading-none m-0',
               activeTab === 'register'
-                ? 'bg-[url(\'/images/backgrounds/bg.jpg\')] bg-cover bg-center bg-no-repeat text-white'
+                ? 'bg-[#1a161c] bg-[url(\'/images/backgrounds/bg.jpg\')] bg-cover bg-center bg-no-repeat text-white'
                 : 'text-[#040910] hover:opacity-90',
             ]"
             @click="activeTab = 'register'"
@@ -114,7 +114,7 @@
               <button
                 type="submit"
                 :disabled="isLoginLoading"
-                class="w-full h-12 p-0 bg-[url('/images/backgrounds/bg.jpg')] bg-cover bg-center bg-no-repeat border-none rounded-full text-white  text-2xl font-medium cursor-pointer col-span-1 md:col-span-2 transition-opacity box-border flex items-center justify-center hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+                class="w-full h-12 p-0 bg-[#1a161c] bg-[url('/images/backgrounds/bg.jpg')] bg-cover bg-center bg-no-repeat border-none rounded-full text-white  text-2xl font-medium cursor-pointer col-span-1 md:col-span-2 transition-opacity box-border flex items-center justify-center hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <span v-if="isLoginLoading">Загрузка...</span>
                 <span v-else>войти</span>
@@ -379,7 +379,7 @@
             <button
               type="submit"
               :disabled="isRegisterLoading"
-              class="w-full h-12 p-0 bg-[url('/images/backgrounds/bg.jpg')] bg-cover bg-center bg-no-repeat border-none rounded-full text-white  text-2xl font-medium cursor-pointer transition-opacity box-border flex items-center justify-center hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+              class="w-full h-12 p-0 bg-[#1a161c] bg-[url('/images/backgrounds/bg.jpg')] bg-cover bg-center bg-no-repeat border-none rounded-full text-white  text-2xl font-medium cursor-pointer transition-opacity box-border flex items-center justify-center hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
             >
               <span v-if="isRegisterLoading">Загрузка...</span>
               <span v-else>зарегистрироваться</span>

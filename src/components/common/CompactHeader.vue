@@ -335,6 +335,7 @@ async function handleLogout(): Promise<void> {
 }
 
 .nav__item--active {
+  background-color: #1a161c;
   background-image: url('/images/backgrounds/bg.jpg');
   background-size: cover;
   background-position: center;
