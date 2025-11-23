@@ -538,67 +538,91 @@
     >
       <div class="create-project-modal" @click.stop>
         <div class="modal-header">
-          <div class="modal-back-btn" @click="closeCreateProjectModal">
+          <button class="modal-close-btn" @click="closeCreateProjectModal" aria-label="Закрыть">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path
-                d="M3.29279 10.9377C3.10532 11.1252 3 11.3795 3 11.6447C3 11.9099 3.10532 12.1642 3.29279 12.3517L8.94979 18.0087C9.13839 18.1909 9.39099 18.2917 9.65319 18.2894C9.91538 18.2871 10.1662 18.1819 10.3516 17.9965C10.537 17.8111 10.6422 17.5603 10.6445 17.2981C10.6467 17.0359 10.5459 16.7833 10.3638 16.5947L6.41379 12.6447H19.6568C19.922 12.6447 20.1764 12.5394 20.3639 12.3518C20.5514 12.1643 20.6568 11.9099 20.6568 11.6447C20.6568 11.3795 20.5514 11.1251 20.3639 10.9376C20.1764 10.7501 19.922 10.6447 19.6568 10.6447H6.41379L10.3638 6.69471C10.5459 6.50611 10.6467 6.25351 10.6445 5.99131C10.6422 5.72911 10.537 5.4783 10.3516 5.29289C10.1662 5.10748 9.91538 5.00232 9.65319 5.00004C9.39099 4.99776 9.13839 5.09855 8.94979 5.28071L3.29279 10.9377Z"
-                fill="#E1EAF8"
+                d="M18 6L6 18M6 6L18 18"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
               />
             </svg>
-          </div>
-          <div class="modal-title">к проектам</div>
+          </button>
+          <h2 class="modal-title">{{ editingProjectId === null ? 'Создать проект' : 'Редактировать проект' }}</h2>
+          <div class="modal-subtitle">Заполните информацию о проекте</div>
         </div>
         <div class="modal-field">
-          <div class="modal-field-label">название:</div>
-          <input
-            v-model="projectName"
-            type="text"
-            class="modal-field-input"
-            placeholder="введите название"
-          />
-        </div>
-        <div class="modal-field">
-          <div class="modal-field-label">иконка:</div>
-          <div class="modal-icons-list-container">
-            <div class="modal-icons-list">
-              <div
-                v-for="icon in iconsWithSvg"
-                :key="`${icon.id}-${iconColor}`"
-                class="modal-icon-option"
-                :class="{ selected: selectedIcon === icon.id }"
-                @click="selectIcon(icon.id)"
-                v-html="icon.svgHtml"
-              />
-            </div>
-          </div>
-        </div>
-        <div class="modal-field">
-          <div class="modal-field-label">цвет:</div>
-          <div class="modal-colors-list-container">
-            <div class="modal-colors-list">
-              <div
-                v-for="color in projectColors"
-                :key="color.id"
-                class="modal-color-option"
-                :class="{ selected: selectedColor === color.hex }"
-                :style="{ backgroundColor: color.hex }"
-                @click="selectColor(color.hex)"
-              />
-            </div>
-          </div>
-        </div>
-        <div class="modal-description-container">
-          <textarea
-            v-model="projectDescription"
-            class="modal-description-textarea"
-            placeholder="описание проекта:"
-            @scroll="updateScrollbar"
-          />
-          <div class="modal-description-scrollbar">
-            <div
-              ref="scrollbarThumb"
-              class="modal-description-scrollbar-thumb"
+          <label class="modal-field-label" for="project-name">
+            Название проекта
+            <span class="modal-field-required">*</span>
+          </label>
+          <div class="modal-input-wrapper">
+            <input
+              id="project-name"
+              v-model="projectName"
+              type="text"
+              class="modal-field-input"
+              placeholder="Введите название проекта"
+              required
             />
+          </div>
+        </div>
+        <div class="modal-field-group">
+          <div class="modal-field">
+            <label class="modal-field-label">Иконка</label>
+            <div class="modal-icons-list-container">
+              <div class="modal-icons-list">
+                <button
+                  v-for="icon in iconsWithSvg"
+                  :key="`${icon.id}-${iconColor}`"
+                  type="button"
+                  class="modal-icon-option"
+                  :class="{ selected: selectedIcon === icon.id }"
+                  @click="selectIcon(icon.id)"
+                  :aria-label="`Выбрать иконку ${icon.name}`"
+                  v-html="icon.svgHtml"
+                />
+              </div>
+            </div>
+          </div>
+          <div class="modal-field">
+            <label class="modal-field-label">Цвет</label>
+            <div class="modal-colors-list-container">
+              <div class="modal-colors-list">
+                <button
+                  v-for="color in projectColors"
+                  :key="color.id"
+                  type="button"
+                  class="modal-color-option"
+                  :class="{ selected: selectedColor === color.hex }"
+                  :style="{ backgroundColor: color.hex }"
+                  @click="selectColor(color.hex)"
+                  :aria-label="`Выбрать цвет ${color.name}`"
+                >
+                  <svg v-if="selectedColor === color.hex" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M16.667 5L7.5 14.167 3.333 10" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-field">
+          <label class="modal-field-label" for="project-description">
+            Описание проекта
+          </label>
+          <div class="modal-textarea-wrapper">
+            <textarea
+              id="project-description"
+              v-model="projectDescription"
+              class="modal-description-textarea"
+              placeholder="Опишите цели, задачи и особенности проекта..."
+              rows="6"
+            />
+            <div class="modal-textarea-footer">
+              <span class="modal-char-count">{{ projectDescription.length }} символов</span>
+            </div>
           </div>
         </div>
         <div class="modal-generate-section">
@@ -2403,83 +2427,152 @@ onUnmounted(() => {
 }
 
 .create-project-modal {
-  background: rgba(4, 9, 16, 0.6);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-left: 1px solid #000000;
+  background: rgba(4, 9, 16, 0.95);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 0;
   width: 100%;
-  max-width: 800px;
+  max-width: 720px;
   max-height: 100vh;
   height: 100vh;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 12px 24px;
+  padding: clamp(1.5rem, 3vw, 2rem) clamp(1.5rem, 3vw, 2.5rem);
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: clamp(1.5rem, 3vw, 2rem);
   box-shadow: -10px 0 40px rgba(0, 0, 0, 0.5);
   box-sizing: border-box;
+  animation: slideInRight 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }
 
 .modal-header {
   display: flex;
-  gap: 8px;
-  align-items: center;
-  height: 24px;
+  flex-direction: column;
+  gap: clamp(0.5rem, 1vw, 0.75rem);
+  padding-bottom: clamp(1rem, 2vw, 1.5rem);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  position: relative;
 }
 
-.modal-back-btn {
-  width: 24px;
-  height: 24px;
-  cursor: pointer;
+.modal-close-btn {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: clamp(2rem, 4vw, 2.5rem);
+  height: clamp(2rem, 4vw, 2.5rem);
   display: flex;
   align-items: center;
   justify-content: center;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: clamp(0.5rem, 1vw, 0.75rem);
+  color: #e1eaf8;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   flex-shrink: 0;
 }
 
-.modal-back-btn svg {
-  width: 100%;
-  height: 100%;
+.modal-close-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: scale(1.05);
+}
+
+.modal-close-btn svg {
+  width: 1.25rem;
+  height: 1.25rem;
 }
 
 .modal-title {
-  color: #e1eaf8;
-  font-size: 1.25rem;
+  color: #ffffff;
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-weight: 600;
+  font-family: 'Involve', Arial, sans-serif;
+  margin: 0;
+  line-height: 1.3;
+  letter-spacing: -0.02em;
+}
+
+.modal-subtitle {
+  color: rgba(225, 234, 248, 0.7);
+  font-size: clamp(0.875rem, 1.5vw, 1rem);
   font-weight: 400;
   font-family: 'Involve', Arial, sans-serif;
-  flex: 1;
+  line-height: 1.5;
+  margin: 0;
 }
 
 .modal-field {
   display: flex;
-  gap: 24px;
-  align-items: center;
-  color: #e1eaf8;
+  flex-direction: column;
+  gap: clamp(0.5rem, 1vw, 0.75rem);
+}
+
+.modal-field-group {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(1rem, 2vw, 1.5rem);
 }
 
 .modal-field-label {
-  font-size: 1.25rem;
-  font-weight: 400;
+  font-size: clamp(0.875rem, 1.5vw, 1rem);
+  font-weight: 500;
   font-family: 'Involve', Arial, sans-serif;
-  width: 168px;
-  flex-shrink: 0;
+  color: #e1eaf8;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  line-height: 1.5;
+}
+
+.modal-field-required {
+  color: #912138;
+  font-weight: 600;
+}
+
+.modal-input-wrapper {
+  position: relative;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: clamp(0.75rem, 1.5vw, 1rem);
+  padding: clamp(0.75rem, 1.5vw, 1rem) clamp(1rem, 2vw, 1.25rem);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.modal-input-wrapper:focus-within {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(145, 33, 56, 0.5);
+  box-shadow: 0 0 0 3px rgba(145, 33, 56, 0.1);
 }
 
 .modal-field-input {
-  flex: 1;
-  font-size: 0.9375rem;
-  font-weight: 500;
+  width: 100%;
+  font-size: clamp(0.9375rem, 1.5vw, 1.125rem);
+  font-weight: 400;
   font-family: 'Involve', Arial, sans-serif;
   color: #ffffff;
   background: transparent;
   border: none;
   outline: none;
+  padding: 0;
+  line-height: 1.5;
 }
 
 .modal-field-input::placeholder {
-  color: rgba(225, 234, 248, 0.6);
+  color: rgba(225, 234, 248, 0.5);
 }
 
 .modal-icons-list-container,
@@ -2515,32 +2608,39 @@ onUnmounted(() => {
 .modal-icons-list,
 .modal-colors-list {
   display: flex;
-  gap: 12px;
+  gap: clamp(0.75rem, 1.5vw, 1rem);
   align-items: center;
-  padding: 8px 0;
+  padding: clamp(0.5rem, 1vw, 0.75rem) 0;
+  flex-wrap: wrap;
 }
 
 .modal-icon-option {
-  width: 52px;
-  height: 52px;
-  background: rgba(225, 234, 248, 0.1);
-  border-radius: 12px;
+  width: clamp(3rem, 6vw, 3.5rem);
+  height: clamp(3rem, 6vw, 3.5rem);
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: clamp(0.75rem, 1.5vw, 1rem);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.2s;
-  border: 2px solid transparent;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   flex-shrink: 0;
+  padding: 0;
+  margin: 0;
 }
 
 .modal-icon-option:hover {
-  background: rgba(225, 234, 248, 0.2);
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .modal-icon-option.selected {
   border-color: #912138;
   background: rgba(145, 33, 56, 0.2);
+  box-shadow: 0 0 0 3px rgba(145, 33, 56, 0.2);
 }
 
 .modal-icon-option svg {
@@ -2549,97 +2649,123 @@ onUnmounted(() => {
 }
 
 .modal-color-option {
-  width: 52px;
-  height: 52px;
-  border-radius: 12px;
+  width: clamp(3rem, 6vw, 3.5rem);
+  height: clamp(3rem, 6vw, 3.5rem);
+  border-radius: clamp(0.75rem, 1.5vw, 1rem);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   border: 3px solid transparent;
   position: relative;
   flex-shrink: 0;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .modal-color-option:hover {
-  transform: scale(1.05);
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
 }
 
 .modal-color-option.selected {
-  border-color: #912138;
+  border-color: #ffffff;
+  box-shadow: 0 0 0 3px rgba(145, 33, 56, 0.5), 0 4px 16px rgba(0, 0, 0, 0.3);
 }
 
-.modal-description-container {
-  background: #292d32;
-  border-radius: 16px;
-  padding: 12px;
-  display: flex;
-  gap: 6px;
-  min-height: 327px;
-  max-height: 400px;
+.modal-textarea-wrapper {
+  position: relative;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: clamp(0.75rem, 1.5vw, 1rem);
+  padding: clamp(0.75rem, 1.5vw, 1rem) clamp(1rem, 2vw, 1.25rem);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  min-height: clamp(8rem, 16vw, 10rem);
+}
+
+.modal-textarea-wrapper:focus-within {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(145, 33, 56, 0.5);
+  box-shadow: 0 0 0 3px rgba(145, 33, 56, 0.1);
 }
 
 .modal-description-textarea {
-  flex: 1;
+  width: 100%;
   background: transparent;
   border: none;
   outline: none;
   color: #ffffff;
-  font-size: 1rem;
+  font-size: clamp(0.9375rem, 1.5vw, 1.125rem);
   font-weight: 400;
   font-family: 'Involve', Arial, sans-serif;
-  resize: none;
-  min-height: 300px;
+  resize: vertical;
+  min-height: clamp(6rem, 12vw, 8rem);
+  max-height: clamp(12rem, 24vw, 16rem);
   overflow-y: auto;
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE and Edge */
+  line-height: 1.6;
+  padding: 0;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(225, 234, 248, 0.3) transparent;
 }
 
 .modal-description-textarea::-webkit-scrollbar {
-  display: none; /* Chrome, Safari, Opera */
+  width: 6px;
+}
+
+.modal-description-textarea::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.modal-description-textarea::-webkit-scrollbar-thumb {
+  background: rgba(225, 234, 248, 0.3);
+  border-radius: 3px;
+}
+
+.modal-description-textarea::-webkit-scrollbar-thumb:hover {
+  background: rgba(225, 234, 248, 0.5);
 }
 
 .modal-description-textarea::placeholder {
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(225, 234, 248, 0.5);
 }
 
-.modal-description-scrollbar {
-  width: 8px;
-  background: rgba(225, 234, 248, 0.25);
-  border-radius: 100px;
-  position: relative;
-  flex-shrink: 0;
-  cursor: pointer;
+.modal-textarea-footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: clamp(0.5rem, 1vw, 0.75rem);
+  padding-top: clamp(0.5rem, 1vw, 0.75rem);
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-.modal-description-scrollbar-thumb {
-  width: 100%;
-  min-height: 48px;
-  background: #e1eaf8;
-  border-radius: 100px;
-  position: absolute;
-  top: 0;
-  left: 0;
-  transition: top 0.1s ease, height 0.1s ease;
-  cursor: pointer;
-}
-
-.modal-description-scrollbar-thumb:hover {
-  background: #c8d3e5;
+.modal-char-count {
+  font-size: clamp(0.75rem, 1.25vw, 0.875rem);
+  color: rgba(225, 234, 248, 0.6);
+  font-family: 'Involve', Arial, sans-serif;
 }
 
 .modal-generate-btn {
-  background: #912138;
-  border-radius: 16px;
-  padding: 6px 12px;
-  height: 36px;
+  background: rgba(145, 33, 56, 0.8);
+  border: 1px solid rgba(145, 33, 56, 0.5);
+  border-radius: clamp(0.75rem, 1.5vw, 1rem);
+  padding: clamp(0.625rem, 1.25vw, 0.875rem) clamp(1rem, 2vw, 1.5rem);
+  height: auto;
+  min-height: clamp(2.5rem, 5vw, 3rem);
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: clamp(0.5rem, 1vw, 0.75rem);
   cursor: pointer;
-  transition: background 0.2s;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  width: 100%;
+  justify-content: center;
 }
 
 .modal-generate-btn:hover {
-  background: #a02a43;
+  background: rgba(145, 33, 56, 1);
+  border-color: rgba(145, 33, 56, 0.7);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(145, 33, 56, 0.3);
 }
 
 .modal-generate-btn-icon {
@@ -2669,13 +2795,25 @@ onUnmounted(() => {
 }
 
 .modal-generated-description {
-  background: #292d32;
-  border: 3px solid #912138;
-  border-radius: 16px;
-  padding: 12px;
+  background: rgba(145, 33, 56, 0.1);
+  border: 2px solid rgba(145, 33, 56, 0.3);
+  border-radius: clamp(0.75rem, 1.5vw, 1rem);
+  padding: clamp(1rem, 2vw, 1.5rem);
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: clamp(0.75rem, 1.5vw, 1rem);
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .modal-generated-content {
@@ -2695,49 +2833,63 @@ onUnmounted(() => {
 
 .modal-generated-actions {
   display: flex;
-  gap: 24px;
+  gap: clamp(0.75rem, 1.5vw, 1rem);
+  flex-wrap: wrap;
 }
 
 .modal-action-btn {
-  border-radius: 16px;
-  padding: 6px 12px;
-  height: 36px;
+  border-radius: clamp(0.5rem, 1vw, 0.75rem);
+  padding: clamp(0.5rem, 1vw, 0.75rem) clamp(0.75rem, 1.5vw, 1rem);
+  height: auto;
+  min-height: clamp(2.25rem, 4.5vw, 2.75rem);
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
+  gap: clamp(0.5rem, 1vw, 0.75rem);
   cursor: pointer;
-  transition: background 0.2s;
-  font-size: 0.9375rem;
-  font-weight: 400;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  font-size: clamp(0.875rem, 1.5vw, 1rem);
+  font-weight: 500;
   font-family: 'Involve', Arial, sans-serif;
   flex: 1;
+  border: 1px solid transparent;
 }
 
 .modal-action-accept {
-  background: #dbf3c2;
-  color: #292d32;
+  background: rgba(145, 33, 56, 0.8);
+  color: #ffffff;
+  border-color: rgba(145, 33, 56, 0.5);
 }
 
 .modal-action-accept:hover {
-  background: #c8e8a5;
+  background: rgba(145, 33, 56, 1);
+  border-color: rgba(145, 33, 56, 0.7);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(145, 33, 56, 0.3);
 }
 
 .modal-action-refine {
-  background: #f3dbc2;
-  color: #292d32;
+  background: rgba(255, 255, 255, 0.1);
+  color: #e1eaf8;
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 .modal-action-refine:hover {
-  background: #f0d0a8;
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
 }
 
 .modal-action-delete {
-  background: #f3c2c3;
-  color: #292d32;
+  background: rgba(255, 107, 107, 0.15);
+  color: #ff6b6b;
+  border-color: rgba(255, 107, 107, 0.3);
 }
 
 .modal-action-delete:hover {
-  background: #f0a8aa;
+  background: rgba(255, 107, 107, 0.2);
+  border-color: rgba(255, 107, 107, 0.4);
+  transform: translateY(-1px);
 }
 
 .modal-action-btn-icon {
@@ -2756,26 +2908,41 @@ onUnmounted(() => {
 
 .modal-actions {
   display: flex;
-  gap: 24px;
+  gap: clamp(0.75rem, 1.5vw, 1rem);
+  padding-top: clamp(1rem, 2vw, 1.5rem);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  margin-top: auto;
 }
 
 .modal-btn {
-  border-radius: 16px;
-  padding: 6px 12px;
-  height: 36px;
+  border-radius: clamp(0.75rem, 1.5vw, 1rem);
+  padding: clamp(0.75rem, 1.5vw, 1rem) clamp(1.5rem, 3vw, 2rem);
+  height: auto;
+  min-height: clamp(2.75rem, 5.5vw, 3.5rem);
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
+  gap: clamp(0.5rem, 1vw, 0.75rem);
   cursor: pointer;
-  transition: background 0.2s;
-  font-size: 0.9375rem;
-  font-weight: 400;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  font-size: clamp(0.9375rem, 1.5vw, 1.125rem);
+  font-weight: 500;
   font-family: 'Involve', Arial, sans-serif;
+  border: 1px solid transparent;
+  flex: 1;
 }
 
 .modal-btn-create {
-  background: #dbf3c2;
-  color: #912138;
+  background: #912138;
+  color: #ffffff;
+  border-color: rgba(145, 33, 56, 0.5);
+}
+
+.modal-btn-create:hover {
+  background: #a02a43;
+  border-color: rgba(145, 33, 56, 0.7);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(145, 33, 56, 0.3);
 }
 
 .modal-btn-create:hover {
@@ -2783,12 +2950,15 @@ onUnmounted(() => {
 }
 
 .modal-btn-cancel {
-  background: #f3c2c3;
-  color: #912138;
+  background: rgba(255, 255, 255, 0.05);
+  color: #e1eaf8;
+  border-color: rgba(255, 255, 255, 0.1);
 }
 
 .modal-btn-cancel:hover {
-  background: #f0a8aa;
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
 }
 
 .modal-btn-icon {
@@ -3134,27 +3304,29 @@ onUnmounted(() => {
   }
 
   .modal-field {
-    flex-direction: column;
-    gap: 12px;
-    align-items: flex-start;
+    gap: clamp(0.5rem, 1vw, 0.75rem);
+  }
+
+  .modal-field-group {
+    grid-template-columns: 1fr;
+    gap: clamp(1rem, 2vw, 1.5rem);
   }
 
   .modal-field-label {
-    width: 100%;
-    font-size: 1.125rem;
+    font-size: clamp(0.875rem, 1.5vw, 1rem);
   }
 
-  .modal-description-container {
-    min-height: 250px;
-    max-height: 300px;
+  .modal-textarea-wrapper {
+    min-height: clamp(8rem, 16vw, 10rem);
   }
 
   .modal-description-textarea {
-    min-height: 220px;
+    min-height: clamp(6rem, 12vw, 8rem);
   }
 
   .modal-actions {
-    flex-direction: column-reverse;
+    flex-direction: column;
+    gap: clamp(0.75rem, 1.5vw, 1rem);
     gap: 12px;
   }
 
@@ -3166,26 +3338,21 @@ onUnmounted(() => {
 
 @media (max-width: 640px) {
   .create-project-modal {
-    padding: 12px;
-    gap: 16px;
+    padding: clamp(1rem, 2vw, 1.5rem);
+    gap: clamp(1.25rem, 2.5vw, 1.75rem);
   }
 
-  .modal-field-label {
-    font-size: 1rem;
+  .modal-header {
+    gap: clamp(0.5rem, 1vw, 0.75rem);
+    padding-bottom: clamp(0.75rem, 1.5vw, 1rem);
   }
 
-  .modal-field-input {
-    font-size: 0.875rem;
+  .modal-title {
+    font-size: clamp(1.25rem, 2.5vw, 1.75rem);
   }
 
-  .modal-description-container {
-    min-height: 200px;
-    max-height: 250px;
-  }
-
-  .modal-description-textarea {
-    min-height: 180px;
-    font-size: 0.875rem;
+  .modal-subtitle {
+    font-size: clamp(0.8125rem, 1.5vw, 0.9375rem);
   }
 
   .modal-generate-btn,
