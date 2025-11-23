@@ -436,9 +436,13 @@ async function handleSaveProfile(): Promise<void> {
       ? profileForm.phone.trim() 
       : '';
     updateData.phone = phoneValue;
-    if (profileForm.birthDate !== undefined && profileForm.birthDate !== null) {
-      updateData.birthDate = profileForm.birthDate !== '' ? profileForm.birthDate : undefined;
-    }
+    
+    // Дата рождения - всегда отправляем, даже если пустая (для удаления)
+    // Отправляем пустую строку, сервер обработает как null
+    const birthDateValue = profileForm.birthDate !== undefined && profileForm.birthDate !== null 
+      ? profileForm.birthDate.trim() 
+      : '';
+    updateData.birthDate = birthDateValue;
     // displayName - если пустой, отправляем undefined, сервер установит из firstName
     if (profileForm.displayName !== undefined && profileForm.displayName !== null) {
       const trimmed = profileForm.displayName.trim();
