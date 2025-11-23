@@ -838,6 +838,7 @@ const progressLabelPositions = computed(() => {
 @media (max-width: 768px) {
   .dashboard-view {
     padding: 16px;
+    width: 100vw;
   }
 
   .metric-title {
@@ -854,6 +855,152 @@ const progressLabelPositions = computed(() => {
 
   .deadline-stats-value {
     font-size: 28px;
+  }
+
+  /* Адаптивность для соблюдения сроков */
+  .deadline-compliance-content {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  /* Скрываем прогресс-бар на мобильных */
+  .progress-bar-container {
+    display: none;
+  }
+
+  .deadline-info {
+    width: 100%;
+    align-items: center;
+  }
+
+  .deadline-info-text {
+    font-size: 14px;
+    text-align: center;
+  }
+
+  .deadline-stats {
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .deadline-stats-value {
+    font-size: 24px;
+  }
+
+  .deadline-stats-label {
+    font-size: 13px;
+    text-align: center;
+  }
+
+  /* Адаптивность для дохода и маржи портфеля */
+  .metric-card-wide.metric-card-light {
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Убираем контейнеры на мобильных, чтобы order работал */
+  .portfolio-header {
+    display: contents;
+  }
+
+  .portfolio-values {
+    display: contents;
+  }
+
+  .portfolio-title {
+    font-size: 18px;
+    line-height: 22px;
+    width: 100%;
+  }
+
+  /* Первая подпись */
+  .portfolio-title:first-child {
+    order: 1;
+    margin-bottom: 8px;
+  }
+
+  /* Вторая подпись */
+  .portfolio-title:last-child {
+    order: 3;
+    margin-top: 16px;
+    margin-bottom: 8px;
+  }
+
+  .portfolio-value {
+    width: 100%;
+  }
+
+  /* Первое число */
+  .portfolio-value:first-child {
+    order: 2;
+    margin-bottom: 0;
+  }
+
+  /* Второе число */
+  .portfolio-value:last-child {
+    order: 4;
+    margin-top: 0;
+  }
+
+  .portfolio-value-number {
+    font-size: 28px;
+    line-height: 32px;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-view {
+    padding: 12px;
+    gap: 16px;
+  }
+
+  .metric-card {
+    padding: 16px;
+    height: auto;
+    min-height: 120px;
+  }
+
+  .metric-title {
+    font-size: 18px;
+    line-height: 22px;
+  }
+
+  .metric-value-number {
+    font-size: 24px;
+    line-height: 28px;
+  }
+
+  .metric-value-label {
+    font-size: 13px;
+  }
+
+  /* Соблюдение сроков на очень маленьких экранах */
+  .deadline-info-text {
+    font-size: 13px;
+  }
+
+  .deadline-stats-value {
+    font-size: 20px;
+  }
+
+  .deadline-stats-label {
+    font-size: 12px;
+  }
+
+  /* Доход и маржа портфеля */
+  .portfolio-title {
+    font-size: 16px;
+    line-height: 20px;
+  }
+
+  .portfolio-value-number {
+    font-size: 24px;
+    line-height: 28px;
+  }
+
+  .portfolio-values {
+    gap: 12px;
   }
 }
 </style>
