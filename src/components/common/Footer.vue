@@ -544,6 +544,7 @@ onUnmounted(() => {
   .footer__content {
     padding: 2rem 1.25rem;
     gap: 2.5rem;
+    padding-bottom: calc(2rem + 4.5rem); /* Добавляем отступ снизу для кнопки "вверх" */
   }
 
   .footer__logo-circle {
@@ -656,6 +657,10 @@ onUnmounted(() => {
   .footer__scroll-top svg {
     width: 1.25rem;
     height: 1.25rem;
+  }
+
+  .footer__content {
+    padding-bottom: calc(2.5rem + 4.5rem); /* Добавляем отступ снизу для кнопки "вверх" */
   }
 }
 
