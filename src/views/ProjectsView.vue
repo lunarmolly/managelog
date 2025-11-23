@@ -1059,7 +1059,7 @@ onUnmounted(() => {
 /* Секция фильтров и сортировки */
 .filters-container {
   max-width: 95vw;
-  margin: 0 auto 24px;
+  margin: 0 auto 12px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -2095,7 +2095,7 @@ onUnmounted(() => {
 
 /* Секция проектов */
 .projects-section {
-  margin-top: 40px;
+  margin-top: 24px;
   padding: 0 20px;
   position: relative;
   z-index: 1;
@@ -2164,18 +2164,18 @@ onUnmounted(() => {
 
 .project-card-title {
   color: #292d32;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 500;
   font-family: 'Involve', Arial, sans-serif;
   letter-spacing: -0.01em;
-  line-height: 24px;
+  line-height: 22px;
   flex: 1;
   min-width: 0;
 }
 
 .project-card-description {
   color: #292d32;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 400;
   font-family: 'Involve', Arial, sans-serif;
   line-height: 1.5;
@@ -2196,17 +2196,17 @@ onUnmounted(() => {
 
 .project-card-manager-label {
   color: #292d32;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 500;
   font-family: 'Involve', Arial, sans-serif;
-  line-height: 24px;
+  line-height: 20px;
 }
 
 .project-card-manager-name {
   color: #292d32;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 500;
   font-family: 'Involve', Arial, sans-serif;
-  line-height: 24px;
+  line-height: 20px;
 }
 </style>
