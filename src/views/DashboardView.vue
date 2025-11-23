@@ -5,7 +5,7 @@
       <div class="welcome-content">
         <div class="welcome-greeting">
           <h1 class="welcome-title">Добро пожаловать, {{ userData.name }}!</h1>
-          <p class="welcome-subtitle">Вот краткий обзор вашей работы сегодня</p>
+          <p class="welcome-subtitle">Вот краткий обзор вашей работы за этот месяц</p>
         </div>
         <div class="quick-actions">
           <router-link to="/projects" class="quick-action-btn">
@@ -91,32 +91,32 @@
         </div>
       </div>
 
-      <!-- Скорость выполнения -->
+      <!-- Завершенные задачи -->
       <div class="metric-card metric-card-accent">
         <div class="metric-header">
-          <h3 class="metric-title">Скорость выполнения</h3>
-          <div class="metric-tooltip" @mouseenter="showTooltip = 'velocity'" @mouseleave="showTooltip = null">
+          <h3 class="metric-title">Завершенные задачи</h3>
+          <div class="metric-tooltip" @mouseenter="showTooltip = 'completed'" @mouseleave="showTooltip = null">
             <svg viewBox="0 0 24 24" fill="none" aria-label="Информация о метрике">
               <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
               <path d="M12 16v-4M12 8h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
             </svg>
-            <div v-if="showTooltip === 'velocity'" class="tooltip-content">
-              Среднее количество задач, завершенных командой за последний спринт. 
-              Помогает планировать будущие спринты и оценивать производительность.
+            <div v-if="showTooltip === 'completed'" class="tooltip-content">
+              Количество задач, завершенных за текущий период. 
+              Показывает продуктивность команды и прогресс по проектам.
             </div>
           </div>
         </div>
         <div class="metric-body">
           <div class="metric-main-value">
-            <span class="metric-number">{{ velocityData.tasks }}</span>
-            <span class="metric-unit">задач/спринт</span>
+            <span class="metric-number">{{ completedTasks.count }}</span>
+            <span class="metric-unit">задач</span>
           </div>
           <div class="metric-trend">
             <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
               <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
               <polyline points="17 6 23 6 23 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
-            <span>+{{ velocityData.change }}% к прошлому спринту</span>
+            <span>+{{ completedTasks.change }}% к прошлому периоду</span>
           </div>
         </div>
       </div>
@@ -163,7 +163,7 @@
               <path d="M12 16v-4M12 8h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
             </svg>
             <div v-if="showTooltip === 'deadlines'" class="tooltip-content">
-              Процент задач, закрытых в срок, разбитый по типам проектов. 
+              Процент проектов, закрытых в срок, разбитый по типам проектов. 
               Показывает эффективность планирования и выполнения работ.
             </div>
           </div>
@@ -220,7 +220,7 @@
             </div>
             <div class="deadline-stat">
               <div class="deadline-stat-value highlight">{{ bestTaskType }}</div>
-              <div class="deadline-stat-label">лучше всего даются</div>
+              <div class="deadline-stat-label">лучше всего удаются</div>
             </div>
           </div>
         </div>
@@ -264,7 +264,7 @@
               <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
               <path d="M13.73 21a2 2 0 01-3.46 0" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
-            Важное
+            важное
           </h3>
         </div>
         <div class="important-list">
@@ -273,16 +273,8 @@
             :key="index"
             class="important-item"
           >
-            <span class="important-icon">{{ getItemIcon(item) }}</span>
             <span class="important-text">{{ item }}</span>
           </div>
-          <button
-            v-if="hasMoreImportantItems"
-            class="important-toggle"
-            @click="toggleImportantItems"
-          >
-            {{ isImportantItemsExpanded ? 'Свернуть' : 'Показать еще' }}
-          </button>
         </div>
       </div>
 
@@ -294,12 +286,12 @@
               <path d="M22 11.08V12a10 10 0 11-5.93-9.14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
               <polyline points="22 4 12 14.01 9 11.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
-            Цели на месяц
+            цели на месяц
           </h3>
         </div>
         <div class="goals-list">
           <div
-            v-for="(goal, index) in monthlyGoals"
+            v-for="(goal, index) in displayedMonthlyGoals"
             :key="index"
             class="goal-item"
             :class="{ 'goal-item-completed': goal.completed }"
@@ -370,9 +362,9 @@ const workloadData = ref<WorkloadData>({
 
 const activeProjects = ref<number>(15);
 
-const velocityData = ref({
-  tasks: 42,
-  change: 12,
+const completedTasks = ref({
+  count: 127,
+  change: 15,
 });
 
 const attentionNeeded = ref({
@@ -408,32 +400,19 @@ const portfolioData = ref({
 
 // Важные элементы
 const importantItems = ref<string[]>([
-  '⚠️ Проект "Редизайн сайта" требует внимания: дедлайн через 3 дня',
-  '💡 Рекомендация: увеличить загрузку на 15% для достижения месячного плана',
-  '🔔 Новое уведомление: клиент запросил изменения в проекте "Мобильное приложение"',
-  '📊 Отчет за прошлую неделю готов к просмотру',
-  '✅ Все задачи по проекту "Корпоративный портал" выполнены в срок',
+  'Проект "Редизайн сайта" требует внимания: дедлайн через 3 дня',
+  'Рекомендация: увеличить загрузку на 15% для достижения месячного плана',
+  'Клиент запросил изменения в проекте "Мобильное приложение"',
+  'Отчет за прошлую неделю готов к просмотру',
+  'Все задачи по проекту "Корпоративный портал" выполнены в срок',
+  'Новый проект "Разработка мобильного приложения" требует утверждения бюджета и сроков',
+  'Аналитика показывает рост эффективности команды на 12% по сравнению с прошлым месяцем',
+  'Проект "Внедрение CRM-системы" имеет риск срыва дедлайна из-за задержки поставки оборудования',
 ]);
 
-const isImportantItemsExpanded = ref<boolean>(false);
-
 const displayedImportantItems = computed(() => {
-  if (importantItems.value.length <= 3) {
-    return importantItems.value;
-  }
-  if (isImportantItemsExpanded.value) {
-    return importantItems.value;
-  }
-  return importantItems.value.slice(0, 2);
+  return importantItems.value.slice(0, 5);
 });
-
-const hasMoreImportantItems = computed(() => {
-  return importantItems.value.length > 3;
-});
-
-const toggleImportantItems = () => {
-  isImportantItemsExpanded.value = !isImportantItemsExpanded.value;
-};
 
 // Цели на месяц
 const monthlyGoals = ref<Goal[]>([
@@ -444,6 +423,10 @@ const monthlyGoals = ref<Goal[]>([
   { text: 'Привлечь 3 новых клиента', completed: false, progress: 67 },
   { text: 'Провести 10 встреч с командой', completed: false, progress: 80 },
 ]);
+
+const displayedMonthlyGoals = computed(() => {
+  return monthlyGoals.value.slice(0, 5);
+});
 
 // Вычисляемые свойства
 const bestTaskType = computed(() => {
@@ -626,7 +609,7 @@ const getItemIcon = (item: string): string => {
 }
 
 .metric-card-secondary {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.25);
 }
 
 .metric-card-accent {
@@ -1042,39 +1025,18 @@ const getItemIcon = (item: string): string => {
 .important-item {
   background: rgba(145, 33, 56, 0.6);
   border-radius: 0.75rem;
-  padding: 0.75rem 1rem;
-  display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
+  padding: 1rem;
   color: #e1eaf8;
   font-size: 0.9375rem;
   line-height: 1.5;
-}
-
-.important-icon {
-  font-size: 1.125rem;
-  flex-shrink: 0;
+  min-height: 3rem;
+  display: flex;
+  align-items: center;
 }
 
 .important-text {
-  flex: 1;
-}
-
-.important-toggle {
-  background: rgba(145, 33, 56, 0.6);
-  border: 1px solid rgba(225, 234, 248, 0.2);
-  border-radius: 0.75rem;
-  padding: 0.75rem 1rem;
-  color: #e1eaf8;
-  font-size: 0.9375rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  text-align: center;
-}
-
-.important-toggle:hover {
-  background: rgba(145, 33, 56, 0.8);
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 .goals-list {
@@ -1093,6 +1055,7 @@ const getItemIcon = (item: string): string => {
   color: #e1eaf8;
   font-size: 0.9375rem;
   transition: all 0.2s ease;
+  min-height: 3rem;
 }
 
 .goal-item-completed {
@@ -1247,7 +1210,6 @@ const getItemIcon = (item: string): string => {
 @media (prefers-reduced-motion: reduce) {
   .metric-card,
   .quick-action-btn,
-  .important-toggle,
   .goal-item {
     transition: none;
   }
