@@ -30,6 +30,34 @@
           </label>
         </div>
       </div>
+
+      <div class="settings__section">
+        <h2 class="settings__section-title">мобильная панель</h2>
+        <div class="settings__options">
+          <label class="settings__option">
+            <input
+              type="radio"
+              name="mobileHeaderPosition"
+              value="top"
+              :checked="settingsStore.mobileHeaderPosition === 'top'"
+              @change="settingsStore.setMobileHeaderPosition('top')"
+              class="settings__radio"
+            />
+            <span class="settings__option-label">сверху</span>
+          </label>
+          <label class="settings__option">
+            <input
+              type="radio"
+              name="mobileHeaderPosition"
+              value="bottom"
+              :checked="settingsStore.mobileHeaderPosition === 'bottom'"
+              @change="settingsStore.setMobileHeaderPosition('bottom')"
+              class="settings__radio"
+            />
+            <span class="settings__option-label">снизу</span>
+          </label>
+        </div>
+      </div>
     </div>
   </div>
 </template>

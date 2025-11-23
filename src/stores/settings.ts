@@ -2,17 +2,25 @@ import { defineStore } from 'pinia';
 import { ref } from 'vue';
 
 export type HeaderType = 'brand' | 'compact';
+export type MobileHeaderPosition = 'top' | 'bottom';
 
 export const useSettingsStore = defineStore('settings', () => {
   // По умолчанию компактная версия
   const headerType = ref<HeaderType>('compact');
+  // По умолчанию header снизу
+  const mobileHeaderPosition = ref<MobileHeaderPosition>('bottom');
 
   // Загружаем настройки из localStorage при инициализации
   const loadSettings = () => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('headerType');
-      if (saved === 'brand' || saved === 'compact') {
-        headerType.value = saved;
+      const savedHeaderType = localStorage.getItem('headerType');
+      if (savedHeaderType === 'brand' || savedHeaderType === 'compact') {
+        headerType.value = savedHeaderType;
+      }
+
+      const savedPosition = localStorage.getItem('mobileHeaderPosition');
+      if (savedPosition === 'top' || savedPosition === 'bottom') {
+        mobileHeaderPosition.value = savedPosition;
       }
     }
   };
@@ -25,12 +33,21 @@ export const useSettingsStore = defineStore('settings', () => {
     }
   };
 
+  const setMobileHeaderPosition = (position: MobileHeaderPosition) => {
+    mobileHeaderPosition.value = position;
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('mobileHeaderPosition', position);
+    }
+  };
+
   // Инициализация при создании store
   loadSettings();
 
   return {
     headerType,
+    mobileHeaderPosition,
     setHeaderType,
+    setMobileHeaderPosition,
   };
 });
 
