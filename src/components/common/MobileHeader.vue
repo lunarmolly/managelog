@@ -34,7 +34,7 @@
                 v-else
                 :d="item.iconPath"
                 stroke="currentColor"
-                stroke-width="2"
+                stroke-width="1.5"
                 fill="none"
                 stroke-linecap="round"
                 stroke-linejoin="round"
@@ -285,8 +285,8 @@ async function handleLogout(): Promise<void> {
 }
 
 .mobile-header__nav-item {
-  width: 28px;
-  height: 28px;
+  width: 48px;
+  height: 48px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -309,8 +309,6 @@ async function handleLogout(): Promise<void> {
   width: 100%;
   height: 100%;
   color: inherit;
-  stroke: currentColor;
-  stroke-width: 2;
 }
 
 .mobile-header__nav-icon--active {
