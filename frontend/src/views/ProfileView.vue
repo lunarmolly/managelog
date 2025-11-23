@@ -548,7 +548,12 @@ onUnmounted(() => {
 <style scoped>
 .profile-view {
   min-height: 100vh;
-  background: #040910;
+  background-color: #1a161c;
+  background-image: url('/images/backgrounds/bg.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
   padding: 36px;
   position: relative;
   overflow: visible;
