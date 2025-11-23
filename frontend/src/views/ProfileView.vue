@@ -155,6 +155,29 @@
         <!-- Разделитель -->
         <div class="form-divider"></div>
 
+        <!-- Учетные данные -->
+        <div class="form-section">
+          <h2 class="form-section-title">учетные данные</h2>
+          <p class="form-section-description">никнейм используется для входа в аккаунт и не может быть изменен</p>
+          
+          <div class="form-row">
+            <div class="form-field">
+              <label class="form-label">никнейм</label>
+              <input
+                :value="profileForm.login"
+                type="text"
+                class="form-input form-input--readonly"
+                readonly
+                disabled
+              />
+              <p class="form-hint">нельзя изменить</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Разделитель -->
+        <div class="form-divider"></div>
+
         <!-- Смена пароля -->
         <div class="form-section">
           <h2 class="form-section-title">сменить пароль</h2>
@@ -229,11 +252,11 @@ const isSaving = ref(false);
 const isLoading = ref(true);
 
 const displayName = computed(() => {
+  // Если displayName указан, используем его
   if (profileForm.displayName) return profileForm.displayName;
-  if (profileForm.firstName && profileForm.lastName) {
-    return `${profileForm.firstName} ${profileForm.lastName}`;
-  }
+  // Если не указан, используем имя (firstName)
   if (profileForm.firstName) return profileForm.firstName;
+  // Если и имя нет, используем логин
   if (profileForm.login) return profileForm.login;
   return 'Пользователь';
 });
@@ -243,15 +266,20 @@ async function loadProfile(): Promise<void> {
     isLoading.value = true;
     const profile = await getProfile();
     
+    // Обязательные поля
     profileForm.email = profile.email || '';
     profileForm.firstName = profile.firstName || '';
     profileForm.lastName = profile.lastName || '';
-    profileForm.middleName = profile.middleName || '';
+    profileForm.login = profile.login || '';
+    
+    // displayName: если не указан, используем firstName
     profileForm.displayName = profile.displayName || profile.firstName || '';
-    profileForm.birthDate = profile.birthDate ? profile.birthDate.split('T')[0] : '';
+    
+    // Необязательные поля (только если указаны)
+    profileForm.middleName = profile.middleName || '';
     profileForm.role = profile.role || '';
     profileForm.phone = profile.phone || '';
-    profileForm.login = profile.login || '';
+    profileForm.birthDate = profile.birthDate ? profile.birthDate.split('T')[0] : '';
   } catch (error: any) {
     console.error('Ошибка загрузки профиля:', error);
     if (error.status === 401) {
@@ -341,11 +369,13 @@ async function handleSaveProfile(): Promise<void> {
     profileForm.email = updatedProfile.email || '';
     profileForm.firstName = updatedProfile.firstName || '';
     profileForm.lastName = updatedProfile.lastName || '';
-    profileForm.middleName = updatedProfile.middleName || '';
+    // displayName: если не указан, используем firstName
     profileForm.displayName = updatedProfile.displayName || updatedProfile.firstName || '';
-    profileForm.birthDate = updatedProfile.birthDate ? updatedProfile.birthDate.split('T')[0] : '';
+    // Необязательные поля
+    profileForm.middleName = updatedProfile.middleName || '';
     profileForm.role = updatedProfile.role || '';
     profileForm.phone = updatedProfile.phone || '';
+    profileForm.birthDate = updatedProfile.birthDate ? updatedProfile.birthDate.split('T')[0] : '';
 
     // Очищаем форму пароля
     passwordForm.currentPassword = '';

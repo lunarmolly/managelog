@@ -28,7 +28,8 @@ export async function getProfile(req: AuthRequest, res: Response): Promise<void>
       firstName: user.firstName,
       lastName: user.lastName,
       middleName: user.middleName,
-      displayName: user.displayName || user.firstName || user.login,
+      // displayName: если не указан, используем firstName
+      displayName: user.displayName || user.firstName || undefined,
       birthDate: user.birthDate,
       role: user.role,
       phone: user.phone,
