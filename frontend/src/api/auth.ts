@@ -46,25 +46,75 @@ async function handleResponse<T>(response: Response): Promise<T> {
 
 async function handleRequest<T>(url: string, options: RequestInit): Promise<T> {
   try {
-    const response = await fetch(url, options);
+    console.log('Отправка запроса:', { 
+      url, 
+      method: options.method, 
+      headers: options.headers,
+      hasBody: !!options.body 
+    });
+    
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // Таймаут 10 секунд
+    
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal,
+      mode: 'cors',
+      cache: 'no-cache',
+    });
+    
+    clearTimeout(timeoutId);
+    
+    console.log('Получен ответ:', { 
+      status: response.status, 
+      statusText: response.statusText, 
+      url,
+      headers: Object.fromEntries(response.headers.entries())
+    });
+    
     return await handleResponse<T>(response);
   } catch (error: any) {
+    console.error('Ошибка запроса:', error);
+    console.error('Тип ошибки:', error.name);
+    console.error('Сообщение ошибки:', error.message);
+    
     // Обработка сетевых ошибок
-    if (error.name === 'TypeError' && error.message.includes('fetch')) {
+    if (error.name === 'TypeError' && (error.message.includes('fetch') || error.message.includes('Failed to fetch') || error.message.includes('NetworkError'))) {
+      const errorMessage = `Не удалось подключиться к серверу API (${url}). 
+Проверьте:
+1. Запущен ли API сервер на порту 3000 (http://localhost:3000/health)
+2. Правильно ли настроен VITE_API_BASE_URL в .env файле (текущее значение: ${API_BASE_URL})
+3. Нет ли проблем с CORS
+4. Не блокирует ли браузер запрос`;
+      
       throw {
         status: 0,
         data: {
-          detail: 'Не удалось подключиться к серверу. Убедитесь, что API сервер запущен на http://localhost:3000',
+          detail: errorMessage,
         },
         message: 'Ошибка подключения к серверу',
       };
     }
+    
+    // Обработка таймаута
+    if (error.name === 'AbortError' || error.name === 'TimeoutError') {
+      throw {
+        status: 0,
+        data: {
+          detail: 'Превышено время ожидания ответа от сервера. Проверьте, что API сервер запущен и доступен.',
+        },
+        message: 'Таймаут запроса',
+      };
+    }
+    
     throw error;
   }
 }
 
 export async function login(credentials: LoginRequest): Promise<LoginResponse> {
-  return handleRequest<LoginResponse>(`${API_BASE_URL}/auth/login/`, {
+  const url = `${API_BASE_URL}/auth/login/`;
+  console.log('Вход: отправка запроса на', url);
+  return handleRequest<LoginResponse>(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -74,7 +124,12 @@ export async function login(credentials: LoginRequest): Promise<LoginResponse> {
 }
 
 export async function register(data: RegisterRequest): Promise<RegisterResponse> {
-  return handleRequest<RegisterResponse>(`${API_BASE_URL}/auth/register/`, {
+  const url = `${API_BASE_URL}/auth/register/`;
+  console.log('Регистрация: отправка запроса на', url);
+  console.log('Данные регистрации:', { ...data, password: '***' });
+  console.log('API_BASE_URL:', API_BASE_URL);
+  
+  return handleRequest<RegisterResponse>(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

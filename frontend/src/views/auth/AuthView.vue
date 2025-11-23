@@ -372,7 +372,14 @@
                 <span v-if="registerErrors.companyName" class=" text-[15px] font-normal text-[#912138] mt-1 mb-0" role="alert">
                   {{ registerErrors.companyName }}
                 </span>
+                </div>
               </div>
+              
+              <!-- Общая ошибка подключения -->
+              <div v-if="registerGeneralError" class="col-span-1 md:col-span-2 mt-4 p-4 bg-red-900/20 border border-red-500 rounded-lg">
+                <p class="text-[15px] font-normal text-red-400" role="alert">
+                  {{ registerGeneralError }}
+                </p>
               </div>
             </div>
             <!-- Кнопка отправки -->
@@ -433,6 +440,7 @@ const registerForm = reactive({
 
 const registerErrors = reactive<Record<string, string>>({});
 const isRegisterLoading = ref(false);
+const registerGeneralError = ref<string>('');
 
 // Валидация
 function validateName(value: string): boolean {
@@ -699,6 +707,7 @@ onMounted(() => {
 async function handleRegister(): Promise<void> {
   // Очистка ошибок
   Object.keys(registerErrors).forEach(key => delete registerErrors[key]);
+  registerGeneralError.value = '';
 
   // Валидация всех полей
   validateField('firstName');
@@ -737,6 +746,13 @@ async function handleRegister(): Promise<void> {
 
   try {
     // Регистрация
+    console.log('Начало регистрации:', {
+      email: registerForm.email,
+      login: registerForm.username,
+      firstName: registerForm.firstName,
+      lastName: registerForm.lastName,
+    });
+    
     await register({
       email: registerForm.email,
       login: registerForm.username,
@@ -744,6 +760,8 @@ async function handleRegister(): Promise<void> {
       firstName: registerForm.firstName,
       lastName: registerForm.lastName,
     });
+    
+    console.log('Регистрация успешна');
 
     // Автоматический вход после регистрации
     try {
@@ -774,10 +792,19 @@ async function handleRegister(): Promise<void> {
       }
     }
   } catch (error: any) {
+    console.error('Ошибка регистрации:', error);
+    console.error('Детали ошибки:', {
+      status: error.status,
+      message: error.message,
+      data: error.data,
+    });
+    
     // Обработка ошибок API при регистрации
     if (error.status === 0) {
-      // Ошибка подключения к серверу
-      registerErrors.email = error.data?.detail || error.message || 'Не удалось подключиться к серверу. Убедитесь, что API запущен.';
+      // Ошибка подключения к серверу - показываем в общем блоке, а не под полем email
+      const errorMessage = error.data?.detail || error.message || 'Не удалось подключиться к серверу. Убедитесь, что API сервер запущен на http://localhost:3000';
+      registerGeneralError.value = errorMessage;
+      console.error('Сетевая ошибка при регистрации:', errorMessage);
     } else if (error.status === 422) {
       // Ошибки валидации - показываем под полями
       const errorData = error.data;

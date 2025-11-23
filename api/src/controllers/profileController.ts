@@ -21,20 +21,38 @@ export async function getProfile(req: AuthRequest, res: Response): Promise<void>
       return;
     }
 
+    // Email обязателен в модели, поэтому он всегда должен быть
+    if (!user.email) {
+      console.error('Ошибка: у пользователя отсутствует email', { userId: user._id });
+      res.status(500).json({
+        detail: 'Ошибка: у пользователя отсутствует email',
+      });
+      return;
+    }
+    
+    // Форматируем birthDate в строку формата YYYY-MM-DD, если она есть
+    let birthDateFormatted: string | null = null;
+    if (user.birthDate) {
+      const date = new Date(user.birthDate);
+      if (!isNaN(date.getTime())) {
+        birthDateFormatted = date.toISOString().split('T')[0];
+      }
+    }
+    
     res.json({
-      id: user._id,
+      id: user._id.toString(),
       email: user.email,
-      login: user.login,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      middleName: user.middleName,
+      login: user.login || '',
+      firstName: user.firstName || null,
+      lastName: user.lastName || null,
+      middleName: user.middleName || null,
       // displayName: если не указан, используем firstName
-      displayName: user.displayName || user.firstName || undefined,
-      birthDate: user.birthDate,
-      role: user.role,
-      phone: user.phone,
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt,
+      displayName: user.displayName || user.firstName || null,
+      birthDate: birthDateFormatted,
+      role: user.role || null,
+      phone: user.phone || null,
+      createdAt: user.createdAt ? user.createdAt.toISOString() : null,
+      updatedAt: user.updatedAt ? user.updatedAt.toISOString() : null,
     });
   } catch (error: any) {
     console.error('Get profile error:', error);
@@ -190,37 +208,56 @@ export async function updateProfile(req: AuthRequest, res: Response): Promise<vo
       }
     }
 
-    // Используем findByIdAndUpdate вместо save, чтобы не валидировать все поля
-    // Это позволяет обновлять только указанные поля без проверки пароля, если он не меняется
-    const updatedUser = await User.findByIdAndUpdate(
-      userId,
-      { $set: updateData },
-      { 
-        new: true, 
-        runValidators: false, // Отключаем валидацию для обновления (валидация уже была в контроллере)
-        select: '-password' // Исключаем пароль из результата
-      }
-    );
-
-    if (!updatedUser) {
-      res.status(404).json({
-        detail: 'Пользователь не найден после обновления',
-      });
-      return;
-    }
-
-    // Если пароль был изменен, нужно его захешировать отдельно
-    if (updateData.password) {
-      const userForPasswordUpdate = await User.findById(userId);
-      if (userForPasswordUpdate) {
-        userForPasswordUpdate.password = updateData.password;
-        await userForPasswordUpdate.save(); // Здесь сработает pre-save hook для хеширования
-      }
-    }
-
-    // Получаем финальную версию пользователя без пароля
-    const finalUser = await User.findById(userId).select('-password');
+    // Если пароль был изменен, нужно его захешировать через save() (pre-save hook)
+    // Для остальных полей используем findByIdAndUpdate
+    let finalUser;
     
+    if (updateData.password) {
+      // Обновляем пароль через save(), чтобы сработал pre-save hook для хеширования
+      const userForUpdate = await User.findById(userId);
+      if (!userForUpdate) {
+        res.status(404).json({
+          detail: 'Пользователь не найден',
+        });
+        return;
+      }
+      
+      // Устанавливаем все поля для обновления (кроме пароля)
+      const passwordToUpdate = updateData.password;
+      delete updateData.password;
+      
+      // Обновляем все поля кроме пароля через findByIdAndUpdate
+      if (Object.keys(updateData).length > 0) {
+        await User.findByIdAndUpdate(
+          userId,
+          { $set: updateData },
+          { 
+            runValidators: false
+          }
+        );
+      }
+      
+      // Устанавливаем пароль - pre-save hook захеширует его
+      userForUpdate.password = passwordToUpdate;
+      
+      // Сохраняем - сработает pre-save hook для хеширования пароля
+      await userForUpdate.save();
+      
+      // Получаем обновленного пользователя без пароля
+      finalUser = await User.findById(userId).select('-password');
+    } else {
+      // Если пароль не меняется, используем findByIdAndUpdate для всех полей
+      finalUser = await User.findByIdAndUpdate(
+        userId,
+        { $set: updateData },
+        { 
+          new: true, 
+          runValidators: false, // Отключаем валидацию для обновления (валидация уже была в контроллере)
+          select: '-password' // Исключаем пароль из результата
+        }
+      );
+    }
+
     if (!finalUser) {
       res.status(404).json({
         detail: 'Пользователь не найден после обновления',
@@ -228,19 +265,37 @@ export async function updateProfile(req: AuthRequest, res: Response): Promise<vo
       return;
     }
 
+    // Email обязателен в модели, поэтому он всегда должен быть
+    if (!finalUser.email) {
+      console.error('Ошибка: у пользователя отсутствует email после обновления', { userId: finalUser._id });
+      res.status(500).json({
+        detail: 'Ошибка: у пользователя отсутствует email',
+      });
+      return;
+    }
+    
+    // Форматируем birthDate в строку формата YYYY-MM-DD, если она есть
+    let birthDateFormatted: string | null = null;
+    if (finalUser.birthDate) {
+      const date = new Date(finalUser.birthDate);
+      if (!isNaN(date.getTime())) {
+        birthDateFormatted = date.toISOString().split('T')[0];
+      }
+    }
+    
     res.json({
-      id: finalUser._id,
+      id: finalUser._id.toString(),
       email: finalUser.email,
-      login: finalUser.login,
-      firstName: finalUser.firstName,
-      lastName: finalUser.lastName,
-      middleName: finalUser.middleName,
-      displayName: finalUser.displayName || finalUser.firstName || undefined,
-      birthDate: finalUser.birthDate ? finalUser.birthDate.toISOString().split('T')[0] : undefined,
-      role: finalUser.role,
-      phone: finalUser.phone,
-      createdAt: finalUser.createdAt,
-      updatedAt: finalUser.updatedAt,
+      login: finalUser.login || '',
+      firstName: finalUser.firstName || null,
+      lastName: finalUser.lastName || null,
+      middleName: finalUser.middleName || null,
+      displayName: finalUser.displayName || finalUser.firstName || null,
+      birthDate: birthDateFormatted,
+      role: finalUser.role || null,
+      phone: finalUser.phone || null,
+      createdAt: finalUser.createdAt ? finalUser.createdAt.toISOString() : null,
+      updatedAt: finalUser.updatedAt ? finalUser.updatedAt.toISOString() : null,
     });
   } catch (error: any) {
     console.error('Update profile error:', error);

@@ -93,12 +93,33 @@ UserSchema.pre('save', async function (next) {
     this.displayName = this.firstName;
   }
 
-  // Хеширование пароля только если он изменен
+  // Хеширование пароля только если он изменен и еще не захеширован
   if (this.isModified('password')) {
     try {
-      const salt = await bcrypt.genSalt(10);
-      this.password = await bcrypt.hash(this.password, salt);
+      // Проверяем, не захеширован ли уже пароль (bcrypt hash начинается с $2a$, $2b$ или $2y$)
+      const isAlreadyHashed = /^\$2[ayb]\$.{56}$/.test(this.password);
+      
+      if (!isAlreadyHashed) {
+        const salt = await bcrypt.genSalt(10);
+        this.password = await bcrypt.hash(this.password, salt);
+        
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Пароль захеширован для пользователя:', {
+            userId: this._id,
+            login: this.login,
+            email: this.email,
+          });
+        }
+      } else {
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Пароль уже захеширован, пропускаем хеширование:', {
+            userId: this._id,
+            login: this.login,
+          });
+        }
+      }
     } catch (error: any) {
+      console.error('Ошибка хеширования пароля:', error);
       return next(error);
     }
   }

@@ -3,7 +3,7 @@
     <!-- Заголовок -->
     <div class="profile-header">
       <h1 class="profile-title">профиль</h1>
-      <p class="profile-subtitle">рады видеть вас</p>
+
     </div>
 
     <!-- Основной контент -->
@@ -34,6 +34,7 @@
           <span v-if="isSaving">Сохранение...</span>
           <span v-else>сохранить</span>
         </button>
+        <p v-if="saveSuccessMessage" class="save-success-message">{{ saveSuccessMessage }}</p>
       </div>
 
       <!-- Правая колонка: Форма -->
@@ -107,26 +108,23 @@
             </div>
             <div class="form-field">
               <label class="form-label">роль</label>
-              <div class="role-input-wrapper">
-                <input
-                  v-model="profileForm.role"
-                  type="text"
-                  maxlength="50"
-                  class="form-input"
-                  :class="{ 'form-input--error': profileErrors.role }"
-                  placeholder="выберите или введите свою роль"
-                  @focus="showRoleDropdown = true"
-                  @blur="handleRoleBlur"
-                  @input="filterRoleOptions"
-                />
-                <div v-if="showRoleDropdown && filteredRoleOptions.length > 0" class="role-dropdown">
+              <div class="role-select-wrapper">
+                <div 
+                  class="role-select-btn" 
+                  :class="{ active: isRoleMenuOpen, 'form-input--error': profileErrors.role }" 
+                  @click.stop="toggleRoleMenu"
+                >
+                  <span class="role-select-text">{{ roleButtonText }}</span>
+                </div>
+                <div v-if="isRoleMenuOpen" class="role-dropdown-menu active" @click.stop>
                   <div
-                    v-for="option in filteredRoleOptions"
+                    v-for="option in roleOptions"
                     :key="option"
-                    class="role-option"
-                    @mousedown.prevent="selectRole(option)"
+                    class="role-dropdown-item"
+                    :class="{ active: profileForm.role === option }"
+                    @click.stop="selectRole(option)"
                   >
-                    {{ option }}
+                    <span>{{ option }}</span>
                   </div>
                 </div>
               </div>
@@ -163,29 +161,6 @@
                 :class="{ 'form-input--error': profileErrors.phone }"
               />
               <span v-if="profileErrors.phone" class="form-error">{{ profileErrors.phone }}</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Разделитель -->
-        <div class="form-divider"></div>
-
-        <!-- Учетные данные -->
-        <div class="form-section">
-          <h2 class="form-section-title">учетные данные</h2>
-          <p class="form-section-description">никнейм используется для входа в аккаунт и не может быть изменен</p>
-          
-          <div class="form-row">
-            <div class="form-field">
-              <label class="form-label">никнейм</label>
-              <input
-                :value="profileForm.login"
-                type="text"
-                class="form-input form-input--readonly"
-                readonly
-                disabled
-              />
-              <p class="form-hint">нельзя изменить</p>
             </div>
           </div>
         </div>
@@ -236,7 +211,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue';
+import { ref, reactive, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { getProfile, updateProfile, type Profile, type ProfileUpdateRequest } from '@/api/profile';
 import { login, type LoginRequest } from '@/api/auth';
@@ -266,10 +241,14 @@ const profileErrors = reactive<Record<string, string>>({});
 const passwordErrors = reactive<Record<string, string>>({});
 const isSaving = ref(false);
 const isLoading = ref(true);
+const saveSuccessMessage = ref<string>('');
 
 const roleOptions = ['менеджер', 'разработчик', 'дизайнер', 'аналитик'];
-const showRoleDropdown = ref(false);
-const filteredRoleOptions = ref<string[]>(roleOptions);
+const isRoleMenuOpen = ref(false);
+
+const roleButtonText = computed(() => {
+  return profileForm.role || 'не выбрано';
+});
 
 const displayName = computed(() => {
   // Если displayName указан, используем его
@@ -286,24 +265,63 @@ async function loadProfile(): Promise<void> {
     isLoading.value = true;
     const profile = await getProfile();
     
-    // Обязательные поля
-    profileForm.email = profile.email || '';
-    profileForm.firstName = profile.firstName || '';
-    profileForm.lastName = profile.lastName || '';
-    profileForm.login = profile.login || '';
+    console.log('Получен профиль из API:', profile);
+    
+    // Обязательные поля - обрабатываем null и undefined
+    profileForm.email = (profile.email && profile.email.trim()) || '';
+    profileForm.firstName = (profile.firstName && profile.firstName.trim()) || '';
+    profileForm.lastName = (profile.lastName && profile.lastName.trim()) || '';
+    profileForm.login = (profile.login && profile.login.trim()) || '';
     
     // displayName: если не указан, используем firstName
-    profileForm.displayName = profile.displayName || profile.firstName || '';
+    const displayNameValue = profile.displayName || profile.firstName || '';
+    profileForm.displayName = (displayNameValue && displayNameValue.trim()) || '';
     
-    // Необязательные поля (только если указаны)
-    profileForm.middleName = profile.middleName || '';
-    profileForm.role = profile.role || '';
-    profileForm.phone = profile.phone || '';
-    profileForm.birthDate = profile.birthDate ? profile.birthDate.split('T')[0] : '';
+    // Необязательные поля - обрабатываем null и undefined
+    profileForm.middleName = (profile.middleName && profile.middleName.trim()) || '';
+    profileForm.role = (profile.role && profile.role.trim()) || '';
+    profileForm.phone = (profile.phone && profile.phone.trim()) || '';
+    
+    // birthDate: если приходит строка, используем её; если Date, форматируем
+    if (profile.birthDate) {
+      if (typeof profile.birthDate === 'string') {
+        // Если уже в формате YYYY-MM-DD, используем как есть
+        profileForm.birthDate = profile.birthDate.split('T')[0];
+      } else {
+        // Если Date объект, форматируем
+        const date = new Date(profile.birthDate);
+        if (!isNaN(date.getTime())) {
+          profileForm.birthDate = date.toISOString().split('T')[0];
+        } else {
+          profileForm.birthDate = '';
+        }
+      }
+    } else {
+      profileForm.birthDate = '';
+    }
+    
+    console.log('Данные установлены в форму:', {
+      email: profileForm.email,
+      firstName: profileForm.firstName,
+      lastName: profileForm.lastName,
+      login: profileForm.login,
+      displayName: profileForm.displayName,
+      middleName: profileForm.middleName,
+      role: profileForm.role,
+      phone: profileForm.phone,
+      birthDate: profileForm.birthDate,
+    });
   } catch (error: any) {
     console.error('Ошибка загрузки профиля:', error);
+    console.error('Детали ошибки:', {
+      status: error.status,
+      message: error.message,
+      data: error.data,
+    });
     if (error.status === 401) {
       router.push('/auth');
+    } else {
+      alert('Не удалось загрузить профиль. Проверьте консоль для деталей.');
     }
   } finally {
     isLoading.value = false;
@@ -341,35 +359,12 @@ function validatePasswordChange(): boolean {
   return true;
 }
 
-function filterRoleOptions(): void {
-  const searchValue = profileForm.role?.toLowerCase() || '';
-  if (searchValue === '') {
-    filteredRoleOptions.value = roleOptions;
-  } else {
-    filteredRoleOptions.value = roleOptions.filter(role => 
-      role.toLowerCase().includes(searchValue)
-    );
-  }
-  showRoleDropdown.value = true;
-}
-
-function selectRole(role: string): void {
-  profileForm.role = role;
-  showRoleDropdown.value = false;
-  filteredRoleOptions.value = roleOptions;
-}
-
-function handleRoleBlur(): void {
-  // Задержка, чтобы клик по опции успел сработать
-  setTimeout(() => {
-    showRoleDropdown.value = false;
-  }, 200);
-}
 
 async function handleSaveProfile(): Promise<void> {
-  // Очистка ошибок
+  // Очистка ошибок и сообщения об успехе
   Object.keys(profileErrors).forEach(key => delete profileErrors[key]);
   Object.keys(passwordErrors).forEach(key => delete passwordErrors[key]);
+  saveSuccessMessage.value = '';
 
   // Валидация смены пароля только если пароль меняется
   const isPasswordChanging = passwordForm.newPassword && passwordForm.newPassword.trim() !== '';
@@ -445,9 +440,12 @@ async function handleSaveProfile(): Promise<void> {
     }
 
     const updatedProfile = await updateProfile(updateData);
-    
+
     // Обновляем форму с данными с сервера
-    profileForm.email = updatedProfile.email || '';
+    // Email всегда должен быть, так как он обязателен
+    if (updatedProfile.email) {
+      profileForm.email = updatedProfile.email;
+    }
     profileForm.firstName = updatedProfile.firstName || '';
     profileForm.lastName = updatedProfile.lastName || '';
     // displayName: если не указан, используем firstName
@@ -463,7 +461,11 @@ async function handleSaveProfile(): Promise<void> {
     passwordForm.newPassword = '';
     passwordForm.confirmPassword = '';
 
-    alert('Профиль успешно обновлен');
+    // Показываем сообщение об успехе на 5 секунд
+    saveSuccessMessage.value = 'Профиль успешно обновлен';
+    setTimeout(() => {
+      saveSuccessMessage.value = '';
+    }, 5000);
   } catch (error: any) {
     console.error('Ошибка обновления профиля:', error);
     
@@ -501,13 +503,35 @@ async function handleSaveProfile(): Promise<void> {
   }
 }
 
+function toggleRoleMenu(): void {
+  isRoleMenuOpen.value = !isRoleMenuOpen.value;
+}
+
+function selectRole(role: string): void {
+  profileForm.role = role;
+  isRoleMenuOpen.value = false;
+}
+
 function handleChangePhoto(): void {
   // TODO: Реализовать загрузку фото
   alert('Функция загрузки фото будет реализована позже');
 }
 
+// Закрытие меню роли при клике вне его
+function handleClickOutsideRoleMenu(event: MouseEvent): void {
+  const target = event.target as HTMLElement;
+  if (!target.closest('.role-select-wrapper')) {
+    isRoleMenuOpen.value = false;
+  }
+}
+
 onMounted(() => {
   loadProfile();
+  document.addEventListener('click', handleClickOutsideRoleMenu);
+});
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutsideRoleMenu);
 });
 </script>
 
@@ -672,6 +696,29 @@ onMounted(() => {
   cursor: not-allowed;
 }
 
+.save-success-message {
+  font-family: 'Involve', Arial, sans-serif;
+  font-size: 16px;
+  color: #4CAF50;
+  text-align: center;
+  margin-top: 12px;
+  padding: 8px 16px;
+  background: rgba(76, 175, 80, 0.1);
+  border-radius: 8px;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .profile-form-container {
   flex: 1;
   background: rgba(145, 33, 56, 0.5);
@@ -737,15 +784,6 @@ onMounted(() => {
   transition: border-color 0.2s ease;
 }
 
-.role-select-wrapper {
-  position: relative;
-  width: 100%;
-}
-
-.role-select-wrapper input[list] {
-  width: 100%;
-}
-
 .form-input:focus {
   outline: none;
   border-color: #912138;
@@ -764,7 +802,7 @@ onMounted(() => {
   width: 100%;
 }
 
-.form-select {
+.role-select-btn {
   height: 36px;
   border: 1px solid #e1eaf8;
   border-radius: 55px;
@@ -776,71 +814,116 @@ onMounted(() => {
   transition: border-color 0.2s ease;
   width: 100%;
   cursor: pointer;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23e1eaf8' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 16px center;
-  padding-right: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  box-sizing: border-box;
 }
 
-.form-select:focus {
+.role-select-btn:hover {
+  border-color: rgba(225, 234, 248, 0.8);
+}
+
+.role-select-btn:focus {
   outline: none;
   border-color: #912138;
 }
 
-.form-select.form-input--error {
+.role-select-btn.active {
+  border-color: #912138;
+}
+
+.role-select-btn.form-input--error {
   border-color: #ff4444;
 }
 
-.role-input-wrapper {
-  position: relative;
-  width: 100%;
+.role-select-text {
+  flex: 1;
+  text-align: left;
+  color: #e1eaf8;
 }
 
-.role-input-wrapper .form-input {
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.role-dropdown {
+.role-dropdown-menu {
   position: absolute;
-  top: calc(100% + 4px);
+  top: calc(100% + clamp(0.5rem, 1vw, 0.75rem));
   left: 0;
   right: 0;
-  width: 100%;
-  background: rgba(145, 33, 56, 0.95);
-  border: 1px solid rgba(225, 234, 248, 0.3);
-  border-radius: 12px;
-  max-height: 200px;
+  background: rgba(145, 33, 56, 0.98);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: clamp(0.875rem, 1.5vw, 1.25rem);
+  padding: clamp(0.75rem, 1.5vw, 1rem) 0;
+  min-width: 100%;
+  z-index: 10001;
+  display: none;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+  animation: fadeInDown 0.2s ease-out;
+  max-height: calc(100vh - 200px);
   overflow-y: auto;
-  z-index: 1000;
-  backdrop-filter: blur(10px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  overflow-x: hidden;
 }
 
-.role-option {
-  padding: 12px 16px;
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.role-dropdown-menu.active {
+  display: block;
+}
+
+.role-dropdown-menu::-webkit-scrollbar {
+  width: 6px;
+}
+
+.role-dropdown-menu::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.role-dropdown-menu::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 3px;
+}
+
+.role-dropdown-menu::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.role-dropdown-item {
+  padding: clamp(0.75rem, 1.5vw, 1rem) clamp(1.25rem, 2.5vw, 1.75rem);
   color: #e1eaf8;
-  font-family: 'Involve', Arial, sans-serif;
-  font-size: 16px;
+  font-size: clamp(0.875rem, 1.25vw, 0.9375rem);
+  font-weight: 500;
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: clamp(0.75rem, 1.5vw, 1rem);
+  border-radius: clamp(0.5rem, 1vw, 0.625rem);
+  margin: 0 clamp(0.5rem, 1vw, 0.75rem) clamp(0.25rem, 0.5vw, 0.375rem);
+  min-height: clamp(2.5rem, 5vw, 3rem);
   text-transform: lowercase;
 }
 
-.role-option:hover {
-  background-color: rgba(225, 234, 248, 0.1);
+.role-dropdown-item:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
 }
 
-.role-option:first-child {
-  border-top-left-radius: 12px;
-  border-top-right-radius: 12px;
+.role-dropdown-item.active {
+  background: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
 }
 
-.role-option:last-child {
-  border-bottom-left-radius: 12px;
-  border-bottom-right-radius: 12px;
-}
 
 .form-error {
   font-family: 'Involve', Arial, sans-serif;

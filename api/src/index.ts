@@ -12,49 +12,60 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware CORS - разрешаем все источники в режиме разработки
+// Упрощенная настройка CORS - разрешаем все в режиме разработки
+const isDevelopment = !process.env.NODE_ENV || process.env.NODE_ENV === 'development';
+
 const corsOptions = {
-  origin: function (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) {
-    // В режиме разработки разрешаем все источники
-    if (process.env.NODE_ENV === 'development' || !origin) {
-      callback(null, true);
-    } else {
-      const allowedOrigins = [
-        'http://localhost:5173',
-        'http://127.0.0.1:5173',
-        'http://localhost:3000',
-        'http://127.0.0.1:3000',
-      ];
-      if (allowedOrigins.indexOf(origin) !== -1) {
-        callback(null, true);
-      } else {
-        callback(new Error('Not allowed by CORS'));
-      }
-    }
-  },
+  origin: isDevelopment ? true : [
+    'http://localhost:5173',
+    'http://127.0.0.1:5173',
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+  ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
   exposedHeaders: ['Authorization'],
-  preflightContinue: false,
   optionsSuccessStatus: 204,
 };
 
-// Обработка preflight OPTIONS запросов ДО CORS
-app.options('*', cors(corsOptions));
-
+// Применяем CORS ПЕРВЫМ middleware
 app.use(cors(corsOptions));
 
+// Обработка preflight OPTIONS запросов
+app.options('*', cors(corsOptions));
+
+// Дополнительная обработка для всех маршрутов
+app.use((req, res, next) => {
+  // Логирование всех входящих запросов в режиме разработки
+  if (isDevelopment) {
+    console.log(`[CORS] ${req.method} ${req.path} - Origin: ${req.headers.origin || 'не указан'}`);
+  }
+  next();
+});
+
+// Парсинг JSON и URL-encoded данных ДО логирования
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
 // Логирование запросов в режиме разработки
-if (process.env.NODE_ENV === 'development') {
-  app.use((req, res, next) => {
-    console.log(`${req.method} ${req.path}`, req.body ? JSON.stringify(req.body) : '');
+if (isDevelopment) {
+  app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
+    if (req.body && Object.keys(req.body).length > 0) {
+      // Не логируем пароль в открытом виде
+      const logBody = { ...req.body };
+      if (logBody.password) {
+        logBody.password = '***';
+      }
+      console.log('Body:', JSON.stringify(logBody, null, 2));
+    }
+    if (req.headers.authorization) {
+      console.log('Authorization:', req.headers.authorization.substring(0, 20) + '...');
+    }
     next();
   });
 }
-
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
 // Swagger документация
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
@@ -112,7 +123,7 @@ app.use((err: Error, req: Request, res: Response, next: express.NextFunction) =>
   console.error('Ошибка:', err);
   res.status(500).json({
     error: 'Внутренняя ошибка сервера',
-    message: process.env.NODE_ENV === 'development' ? err.message : undefined,
+    message: isDevelopment ? err.message : undefined,
   });
 });
 

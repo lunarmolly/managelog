@@ -47,6 +47,8 @@ const router = Router();
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
+// Поддержка маршрутов с завершающим слэшем и без
+router.post('/login', login);
 router.post('/login/', login);
 
 /**
@@ -91,6 +93,7 @@ router.post('/login/', login);
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
+router.post('/register', register);
 router.post('/register/', register);
 
 /**
@@ -125,6 +128,7 @@ router.post('/register/', register);
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
+router.post('/logout', authenticateToken, logout);
 router.post('/logout/', authenticateToken, logout);
 
 export default router;

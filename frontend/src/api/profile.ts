@@ -4,15 +4,15 @@ export interface Profile {
   id: string;
   email: string;
   login: string;
-  firstName?: string;
-  lastName?: string;
-  middleName?: string;
-  displayName?: string;
-  birthDate?: string;
-  role?: string;
-  phone?: string;
-  createdAt: string;
-  updatedAt: string;
+  firstName?: string | null;
+  lastName?: string | null;
+  middleName?: string | null;
+  displayName?: string | null;
+  birthDate?: string | null;
+  role?: string | null;
+  phone?: string | null;
+  createdAt: string | null;
+  updatedAt: string | null;
 }
 
 export interface ProfileUpdateRequest {

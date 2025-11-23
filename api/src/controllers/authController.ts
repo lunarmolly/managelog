@@ -35,6 +35,20 @@ export async function login(req: Request, res: Response): Promise<void> {
 
     // Проверка пароля
     const isPasswordValid = await user.comparePassword(password);
+    
+    // Логирование для отладки (только в режиме разработки)
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Проверка пароля:', {
+        userId: user._id,
+        login: user.login,
+        email: user.email,
+        passwordProvided: password ? 'да' : 'нет',
+        passwordLength: password?.length || 0,
+        isPasswordValid,
+        storedPasswordHash: user.password ? `${user.password.substring(0, 20)}...` : 'отсутствует',
+      });
+    }
+    
     if (!isPasswordValid) {
       res.status(422).json({
         detail: 'Неверный логин или пароль',
