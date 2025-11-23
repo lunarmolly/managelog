@@ -225,6 +225,33 @@
       </div>
     </div>
 
+    <!-- Секция проектов -->
+    <div v-else class="projects-section">
+      <div class="projects-grid">
+        <div
+          v-for="project in filteredAndSortedProjects"
+          :key="project.id"
+          class="project-card"
+        >
+          <div class="project-card-header">
+            <div
+              class="project-card-icon"
+              :style="{ backgroundColor: project.color }"
+              v-html="getProjectIconHtml(project)"
+            />
+            <div class="project-card-title-wrapper">
+              <div class="project-card-title">{{ project.name }}</div>
+            </div>
+          </div>
+          <div class="project-card-description">{{ project.description }}</div>
+          <div class="project-card-footer">
+            <span class="project-card-manager-label">руководит:</span>
+            <span class="project-card-manager-name">{{ project.manager }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Модальное окно создания проекта -->
     <div
       v-if="isCreateProjectModalOpen"
@@ -404,6 +431,20 @@ interface SelectedFilters {
   actions: boolean;
 }
 
+interface Project {
+  id: number;
+  name: string;
+  description: string;
+  manager: string;
+  executor?: (string | number)[];
+  managerId?: string | number;
+  status?: string;
+  icon: string;
+  color: string;
+  createdAt: string;
+  updatedAt?: string;
+}
+
 interface ProjectIcon {
   id: string;
   name: string;
@@ -438,8 +479,74 @@ const managerSearchQuery = ref('');
 // Сортировка
 const selectedSort = ref<string>('activity');
 
-// Проекты (заглушка - пока пустой массив)
-const projects = ref<any[]>([]);
+// Проекты (заглушки для примера)
+const projects = ref<Project[]>([
+  {
+    id: 1,
+    name: 'Разработка мобильного приложения',
+    description:
+      'Создание кроссплатформенного мобильного приложения для управления задачами. Включает разработку UI/UX дизайна, интеграцию с backend API, тестирование на различных устройствах и публикацию в app stores.',
+    manager: 'Гриднева Наталья',
+    managerId: 1,
+    executor: [1, 2],
+    status: 'in_progress',
+    icon: 'building',
+    color: '#c2c7f3',
+    createdAt: '2024-01-15T10:00:00.000Z',
+  },
+  {
+    id: 2,
+    name: 'Внедрение системы аналитики',
+    description:
+      'Настройка и интеграция системы аналитики для отслеживания поведения пользователей на сайте. Настройка дашбордов, создание отчетов и обучение команды работе с новыми инструментами.',
+    manager: 'Иванов Иван',
+    managerId: 2,
+    executor: [3, 4],
+    status: 'new',
+    icon: 'chart',
+    color: '#c2f3d5',
+    createdAt: '2024-01-20T14:30:00.000Z',
+  },
+  {
+    id: 3,
+    name: 'Оптимизация базы данных',
+    description:
+      'Проведение аудита производительности базы данных, оптимизация медленных запросов, индексирование критических таблиц и настройка репликации для повышения отказоустойчивости системы.',
+    manager: 'Петров Петр',
+    managerId: 3,
+    executor: [5],
+    status: 'completed',
+    icon: 'folder',
+    color: '#f3c2c3',
+    createdAt: '2024-01-25T09:15:00.000Z',
+  },
+  {
+    id: 4,
+    name: 'Разработка API для интеграции',
+    description:
+      'Создание RESTful API для интеграции с внешними сервисами. Разработка документации, реализация аутентификации и авторизации, написание unit-тестов и нагрузочное тестирование.',
+    manager: 'Сидорова Анна',
+    managerId: 4,
+    executor: [6, 1],
+    status: 'in_progress',
+    icon: 'target',
+    color: '#efc2f3',
+    createdAt: '2024-02-01T11:45:00.000Z',
+  },
+  {
+    id: 5,
+    name: 'Обновление дизайна сайта',
+    description:
+      'Редизайн основного сайта компании с учетом современных трендов и улучшением пользовательского опыта. Адаптация под мобильные устройства и обеспечение быстрой загрузки страниц.',
+    manager: 'Гриднева Наталья',
+    managerId: 1,
+    executor: [2, 3],
+    status: 'on_hold',
+    icon: 'star',
+    color: '#f3dbc2',
+    createdAt: '2024-02-10T16:20:00.000Z',
+  },
+]);
 
 // Состояние модального окна создания проекта
 const isCreateProjectModalOpen = ref(false);
@@ -567,6 +674,65 @@ const sortButtonText = computed(() => {
   return option?.name || 'сортировка';
 });
 
+// Фильтрация и сортировка проектов
+const filteredAndSortedProjects = computed(() => {
+  let filtered = [...projects.value];
+
+  // Применяем фильтры
+  if (selectedFilters.value.executor.length > 0) {
+    filtered = filtered.filter((project) => {
+      if (!project.executor) return false;
+      return selectedFilters.value.executor.some((executorId) =>
+        project.executor?.includes(executorId)
+      );
+    });
+  }
+
+  if (selectedFilters.value.manager.length > 0) {
+    filtered = filtered.filter((project) => {
+      if (!project.managerId) return false;
+      return selectedFilters.value.manager.includes(project.managerId);
+    });
+  }
+
+  if (selectedFilters.value.status.length > 0) {
+    filtered = filtered.filter((project) => {
+      if (!project.status) return false;
+      return selectedFilters.value.status.includes(project.status);
+    });
+  }
+
+  // Применяем сортировку
+  if (selectedSort.value === 'activity') {
+    // Сортировка по активности (пока по дате обновления или создания)
+    filtered.sort((a, b) => {
+      const dateA = new Date(a.updatedAt || a.createdAt).getTime();
+      const dateB = new Date(b.updatedAt || b.createdAt).getTime();
+      return dateB - dateA;
+    });
+  } else if (selectedSort.value === 'created') {
+    // Сортировка по дате создания
+    filtered.sort((a, b) => {
+      const dateA = new Date(a.createdAt).getTime();
+      const dateB = new Date(b.createdAt).getTime();
+      return dateB - dateA;
+    });
+  } else if (selectedSort.value === 'alphabet') {
+    // Сортировка по алфавиту
+    filtered.sort((a, b) => a.name.localeCompare(b.name, 'ru'));
+  }
+
+  return filtered;
+});
+
+// Получение HTML для иконки проекта
+function getProjectIconHtml(project: Project): string {
+  const icon = projectIcons.find((i) => i.id === project.icon);
+  const iconSvg = icon?.svg || projectIcons[0].svg;
+  const iconColor = darkenColor(project.color);
+  return `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="stroke: ${iconColor}; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; width: 100%; height: 100%; max-width: 40px; max-height: 40px; object-fit: contain;">${iconSvg}</svg>`;
+}
+
 // Методы
 function toggleFiltersMenu() {
   isFiltersMenuOpen.value = !isFiltersMenuOpen.value;
@@ -632,6 +798,7 @@ function toggleFilter(type: 'actions') {
 function selectSort(sortId: string) {
   selectedSort.value = sortId;
   isSortMenuOpen.value = false;
+  // Сортировка происходит автоматически через computed filteredAndSortedProjects
 }
 
 function applyFilters() {
@@ -639,6 +806,7 @@ function applyFilters() {
   isExecutorSubmenuOpen.value = false;
   isManagerSubmenuOpen.value = false;
   isStatusSubmenuOpen.value = false;
+  // Фильтрация происходит автоматически через computed filteredAndSortedProjects
   console.log('Применены фильтры:', selectedFilters.value);
   console.log('Выбрана сортировка:', selectedSort.value);
 }
@@ -1923,5 +2091,122 @@ onUnmounted(() => {
 .modal-btn-icon svg {
   width: 100%;
   height: 100%;
+}
+
+/* Секция проектов */
+.projects-section {
+  margin-top: 40px;
+  padding: 0 20px;
+  position: relative;
+  z-index: 1;
+}
+
+.projects-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 24px;
+}
+
+.project-card {
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 40px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  cursor: pointer;
+  transition: background 0.2s;
+  position: relative;
+  z-index: 1;
+}
+
+.project-card:hover {
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.project-card-header {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.project-card-icon {
+  width: 68px;
+  height: 68px;
+  background: #c2c7f3;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 14px;
+  box-sizing: border-box;
+}
+
+.project-card-icon svg {
+  width: 100%;
+  height: 100%;
+  max-width: 40px;
+  max-height: 40px;
+  object-fit: contain;
+}
+
+.project-card-title-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.project-card-title {
+  color: #292d32;
+  font-size: 18px;
+  font-weight: 500;
+  font-family: 'Involve', Arial, sans-serif;
+  letter-spacing: -0.01em;
+  line-height: 24px;
+  flex: 1;
+  min-width: 0;
+}
+
+.project-card-description {
+  color: #292d32;
+  font-size: 16px;
+  font-weight: 400;
+  font-family: 'Involve', Arial, sans-serif;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  width: 100%;
+}
+
+.project-card-footer {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.project-card-manager-label {
+  color: #292d32;
+  font-size: 12px;
+  font-weight: 500;
+  font-family: 'Involve', Arial, sans-serif;
+  line-height: 24px;
+}
+
+.project-card-manager-name {
+  color: #292d32;
+  font-size: 12px;
+  font-weight: 500;
+  font-family: 'Involve', Arial, sans-serif;
+  line-height: 24px;
 }
 </style>
