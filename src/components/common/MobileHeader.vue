@@ -31,7 +31,7 @@
                 fill="currentColor"
               />
               <path
-                v-else-if="item.path === '/crm'"
+                v-else-if="item.path === '/crm' || item.path === '/projects'"
                 :d="item.iconPath"
                 stroke="currentColor"
                 stroke-width="1.5"
