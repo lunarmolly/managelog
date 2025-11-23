@@ -65,19 +65,35 @@
                   class="progress-segment progress-segment-small"
                   :style="{ width: `${deadlineData.small.percentage}%` }"
                 >
+                  <div class="progress-segment-label">{{ deadlineData.small.percentage }}%</div>
                 </div>
               </div>
               <div class="progress-labels">
-                <div class="progress-label">большие</div>
-                <div class="progress-label">средние</div>
-                <div class="progress-label">малые</div>
+                <div
+                  class="progress-label"
+                  :style="{ left: `${progressLabelPositions.large}%` }"
+                >
+                  большие
+                </div>
+                <div
+                  class="progress-label"
+                  :style="{ left: `${progressLabelPositions.medium}%` }"
+                >
+                  средние
+                </div>
+                <div
+                  class="progress-label"
+                  :style="{ left: `${progressLabelPositions.small}%` }"
+                >
+                  малые
+                </div>
               </div>
             </div>
 
             <!-- Дополнительная информация -->
             <div class="deadline-info">
               <div class="deadline-info-text">
-                лучше всего даются <span class="highlight">{{ bestTaskType }}</span> задачи
+                лучше всего даются <span class="highlight">{{ bestTaskType }}</span> проекты
               </div>
               <div class="deadline-stats">
                 <div class="deadline-stats-value">{{ deadlineData.closedOnTime }} / {{ deadlineData.total }}</div>
@@ -158,6 +174,19 @@ const bestTaskType = computed(() => {
     { type: 'малые', value: deadlineData.value.small.percentage },
   ];
   return segments.reduce((max, current) => (current.value > max.value ? current : max)).type;
+});
+
+// Вычисляемые позиции для подписей под прогресс-баром
+const progressLabelPositions = computed(() => {
+  const large = deadlineData.value.large.percentage;
+  const medium = deadlineData.value.medium.percentage;
+  const small = deadlineData.value.small.percentage;
+  
+  return {
+    large: large / 2, // центр первого сегмента
+    medium: large + (medium / 2), // центр второго сегмента
+    small: large + medium + (small / 2), // центр третьего сегмента
+  };
 });
 </script>
 
@@ -269,7 +298,6 @@ const bestTaskType = computed(() => {
   flex-direction: column;
   gap: 24px;
   min-width: 0;
-  width: 1020px;
 }
 
 .metrics-row {
@@ -306,15 +334,15 @@ const bestTaskType = computed(() => {
   width: 100%;
 }
 
-/* Специфичные размеры из макета */
+/* Специфичные размеры из макета - пропорции */
 .metrics-row .metric-card:first-child {
-  width: 672px;
-  flex-shrink: 0;
+  flex: 2.07; /* 672 / 324 ≈ 2.07 */
+  min-width: 0;
 }
 
 .metrics-row .metric-card:last-child {
-  width: 324px;
-  flex-shrink: 0;
+  flex: 1; /* 324 / 324 = 1 */
+  min-width: 0;
 }
 
 .metric-title {
@@ -414,13 +442,20 @@ const bestTaskType = computed(() => {
 
 .progress-segment-medium {
   background: rgba(255, 252, 252, 0.34);
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 4px,
+    rgba(217, 217, 217, 0.3) 4px,
+    rgba(217, 217, 217, 0.3) 8px
+  );
   border: 4.154px solid #d9d9d9;
   border-left: none;
   border-right: none;
 }
 
 .progress-segment-small {
-  background: transparent;
+  background: rgba(255, 252, 252, 0.34);
   border: 4.154px solid #d9d9d9;
   border-left: none;
   border-radius: 0 16px 16px 0;
@@ -439,11 +474,26 @@ const bestTaskType = computed(() => {
   padding: 0 12px;
 }
 
+.progress-segment-label-pattern {
+  background-image: repeating-linear-gradient(
+    45deg,
+    #d9d9d9,
+    #d9d9d9 2px,
+    transparent 2px,
+    transparent 4px
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-size: 8px 8px;
+}
+
 .progress-labels {
   display: flex;
   gap: 0;
   position: relative;
   height: 22px;
+  width: 100%;
 }
 
 .progress-label {
@@ -454,19 +504,9 @@ const bestTaskType = computed(() => {
   line-height: 22px;
   position: absolute;
   top: 50%;
-  transform: translateY(-50%);
-}
-
-.progress-label:nth-child(1) {
-  left: 0;
-}
-
-.progress-label:nth-child(2) {
-  left: 312px;
-}
-
-.progress-label:nth-child(3) {
-  left: 476px;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  white-space: nowrap;
 }
 
 /* Дополнительная информация о сроках */
@@ -521,13 +561,8 @@ const bestTaskType = computed(() => {
   }
 
   .user-card {
-    width: 100%;
-    max-width: 324px;
-  }
-
-  .metrics-container {
-    width: 100%;
-    max-width: 1020px;
+    width: 324px;
+    min-width: 324px;
   }
 }
 
