@@ -173,6 +173,10 @@ const options: swaggerJsdoc.Options = {
         description: 'Эндпоинты для аутентификации и авторизации',
       },
       {
+        name: 'Profile',
+        description: 'Эндпоинты для управления профилем пользователя',
+      },
+      {
         name: 'Health',
         description: 'Проверка состояния сервера',
       },

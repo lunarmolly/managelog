@@ -19,6 +19,15 @@ export function validateName(name: string): boolean {
   return /^[а-яА-ЯёЁa-zA-Z\s-]+$/.test(name) && name.length <= 24;
 }
 
+export function validatePhone(phone: string): boolean {
+  return /^[+]?[(]?[0-9]{1,4}[)]?[-\s.]?[(]?[0-9]{1,4}[)]?[-\s.]?[0-9]{1,9}$/.test(phone);
+}
+
+export function validateDate(date: string): boolean {
+  const d = new Date(date);
+  return d instanceof Date && !isNaN(d.getTime());
+}
+
 export function validateLoginRequest(data: any): { isValid: boolean; errors: Record<string, string[]> } {
   const errors: Record<string, string[]> = {};
 
@@ -68,9 +77,71 @@ export function validateRegisterRequest(data: any): { isValid: boolean; errors: 
     errors.password = ['Пароль должен содержать только буквы латиницы и специальные символы, от 8 до 24 символов'];
   }
 
+  if (!data.firstName) {
+    errors.firstName = ['Имя обязательно'];
+  } else if (!validateName(data.firstName)) {
+    errors.firstName = ['Имя может содержать только буквы кириллицы, латиницы и символ -'];
+  }
+
+  if (!data.lastName) {
+    errors.lastName = ['Фамилия обязательна'];
+  } else if (!validateName(data.lastName)) {
+    errors.lastName = ['Фамилия может содержать только буквы кириллицы, латиницы и символ -'];
+  }
+
   return {
     isValid: Object.keys(errors).length === 0,
     errors,
   };
 }
 
+export function validateProfileUpdate(data: any): { isValid: boolean; errors: Record<string, string[]> } {
+  const errors: Record<string, string[]> = {};
+
+  if (data.email !== undefined) {
+    if (!data.email) {
+      errors.email = ['Email обязателен'];
+    } else if (!validateEmail(data.email)) {
+      errors.email = ['Некорректный формат email'];
+    }
+  }
+
+  if (data.firstName !== undefined && data.firstName && !validateName(data.firstName)) {
+    errors.firstName = ['Имя может содержать только буквы кириллицы, латиницы и символ -'];
+  }
+
+  if (data.lastName !== undefined && data.lastName && !validateName(data.lastName)) {
+    errors.lastName = ['Фамилия может содержать только буквы кириллицы, латиницы и символ -'];
+  }
+
+  if (data.middleName !== undefined && data.middleName && !validateName(data.middleName)) {
+    errors.middleName = ['Отчество может содержать только буквы кириллицы, латиницы и символ -'];
+  }
+
+  if (data.displayName !== undefined && data.displayName && data.displayName.length > 56) {
+    errors.displayName = ['Отображаемое имя должно быть не более 56 символов'];
+  }
+
+  if (data.birthDate !== undefined && data.birthDate && !validateDate(data.birthDate)) {
+    errors.birthDate = ['Некорректная дата рождения'];
+  }
+
+  if (data.role !== undefined && data.role && data.role.length > 50) {
+    errors.role = ['Роль должна быть не более 50 символов'];
+  }
+
+  if (data.phone !== undefined && data.phone && !validatePhone(data.phone)) {
+    errors.phone = ['Некорректный формат телефона'];
+  }
+
+  if (data.password !== undefined && data.password) {
+    if (!validatePassword(data.password)) {
+      errors.password = ['Пароль должен содержать только буквы латиницы и специальные символы, от 8 до 24 символов'];
+    }
+  }
+
+  return {
+    isValid: Object.keys(errors).length === 0,
+    errors,
+  };
+}

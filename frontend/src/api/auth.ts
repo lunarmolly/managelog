@@ -18,6 +18,8 @@ export interface RegisterRequest {
   email: string;
   login: string;
   password: string;
+  firstName: string;
+  lastName: string;
 }
 
 export interface RegisterResponse {

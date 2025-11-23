@@ -47,6 +47,20 @@ const routes: RouteRecordRaw[] = [
     component: () => import('../views/SettingsView.vue'),
   },
   {
+    path: '/profile',
+    name: 'profile',
+    component: () => import('../views/ProfileView.vue'),
+    beforeEnter: (to, from, next) => {
+      // Проверка наличия токенов
+      const tokens = localStorage.getItem('auth_tokens');
+      if (!tokens) {
+        next('/auth');
+      } else {
+        next();
+      }
+    },
+  },
+  {
     path: '/',
     redirect: '/auth',
   },

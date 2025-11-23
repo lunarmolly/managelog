@@ -5,6 +5,7 @@ import swaggerUi from 'swagger-ui-express';
 import { connectDatabase, disconnectDatabase } from './config/database.js';
 import { swaggerSpec } from './config/swagger.js';
 import authRoutes from './routes/authRoutes.js';
+import profileRoutes from './routes/profileRoutes.js';
 
 dotenv.config();
 
@@ -55,6 +56,9 @@ app.get('/api/v1', (req: Request, res: Response) => {
 
 // Роуты авторизации
 app.use('/api/v1/auth', authRoutes);
+
+// Роуты профиля
+app.use('/api/v1/profile', profileRoutes);
 
 // Обработка 404
 app.use((req: Request, res: Response) => {

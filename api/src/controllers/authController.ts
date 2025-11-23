@@ -82,7 +82,7 @@ export async function register(req: Request, res: Response): Promise<void> {
       return;
     }
 
-    const { email, login, password } = req.body;
+    const { email, login, password, firstName, lastName } = req.body;
 
     // Проверка на существование пользователя
     const existingUser = await User.findOne({
@@ -105,6 +105,9 @@ export async function register(req: Request, res: Response): Promise<void> {
       email,
       login,
       password,
+      firstName: firstName?.trim() || undefined,
+      lastName: lastName?.trim() || undefined,
+      // displayName будет установлен автоматически в pre-save hook на основе firstName
     });
 
     await user.save();

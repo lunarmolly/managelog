@@ -7,6 +7,11 @@ export interface IUser extends Document {
   password: string;
   firstName?: string;
   lastName?: string;
+  middleName?: string;
+  displayName?: string;
+  birthDate?: Date;
+  role?: string;
+  phone?: string;
   createdAt: Date;
   updatedAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
@@ -47,25 +52,53 @@ const UserSchema = new Schema<IUser>(
       trim: true,
       maxlength: [24, 'Фамилия должна быть не более 24 символов'],
     },
+    middleName: {
+      type: String,
+      trim: true,
+      maxlength: [24, 'Отчество должно быть не более 24 символов'],
+    },
+    displayName: {
+      type: String,
+      trim: true,
+      maxlength: [56, 'Отображаемое имя должно быть не более 56 символов'],
+    },
+    birthDate: {
+      type: Date,
+    },
+    role: {
+      type: String,
+      trim: true,
+      maxlength: [50, 'Роль должна быть не более 50 символов'],
+    },
+    phone: {
+      type: String,
+      trim: true,
+      match: [/^[+]?[(]?[0-9]{1,4}[)]?[-\s.]?[(]?[0-9]{1,4}[)]?[-\s.]?[0-9]{1,9}$/, 'Некорректный формат телефона'],
+    },
   },
   {
     timestamps: true,
   }
 );
 
-// Хеширование пароля перед сохранением
+// Pre-save hook для установки displayName и хеширования пароля
 UserSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) {
-    return next();
+  // Установка displayName по умолчанию
+  if (!this.displayName && this.firstName) {
+    this.displayName = this.firstName;
   }
 
-  try {
-    const salt = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password, salt);
-    next();
-  } catch (error: any) {
-    next(error);
+  // Хеширование пароля только если он изменен
+  if (this.isModified('password')) {
+    try {
+      const salt = await bcrypt.genSalt(10);
+      this.password = await bcrypt.hash(this.password, salt);
+    } catch (error: any) {
+      return next(error);
+    }
   }
+
+  next();
 });
 
 // Метод для сравнения паролей

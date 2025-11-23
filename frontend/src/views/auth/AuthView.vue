@@ -741,6 +741,8 @@ async function handleRegister(): Promise<void> {
       email: registerForm.email,
       login: registerForm.username,
       password: registerForm.password,
+      firstName: registerForm.firstName,
+      lastName: registerForm.lastName,
     });
 
     // Автоматический вход после регистрации
