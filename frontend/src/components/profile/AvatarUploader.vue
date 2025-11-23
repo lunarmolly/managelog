@@ -1,27 +1,5 @@
 <template>
   <div class="avatar-uploader">
-    <!-- Модальное окно для обрезки -->
-    <div v-if="showCropModal" class="crop-modal" @click.self="cancelCrop">
-      <div class="crop-modal-content">
-        <div class="crop-modal-header">
-          <h3>Обрезка фото</h3>
-          <button class="crop-modal-close" @click="cancelCrop">×</button>
-        </div>
-        <div class="crop-modal-body">
-          <div class="crop-preview-container">
-            <img ref="cropImageRef" class="crop-image" />
-            <div class="crop-preview-circle">
-              <div ref="previewRef" class="crop-preview"></div>
-            </div>
-          </div>
-        </div>
-        <div class="crop-modal-footer">
-          <button class="crop-btn crop-btn-cancel" @click="cancelCrop">Отмена</button>
-          <button class="crop-btn crop-btn-confirm" @click="confirmCrop">Применить</button>
-        </div>
-      </div>
-    </div>
-
     <!-- Основной контейнер аватара -->
     <div class="avatar-container">
       <div class="avatar-wrapper" :class="{ 'avatar-wrapper--has-image': currentAvatar }">
@@ -32,33 +10,40 @@
             <path d="M12.0002 14.5C6.99016 14.5 2.95016 17.86 2.95016 22C2.95016 22.28 3.17016 22.5 3.45016 22.5H20.5502C20.8302 22.5 21.0502 22.28 21.0502 22C21.0502 17.86 17.0102 14.5 12.0002 14.5Z" fill="#912138"/>
           </svg>
         </div>
+        <div v-if="isUploading" class="avatar-loading">
+          <div class="avatar-loading-spinner"></div>
+        </div>
       </div>
       <div class="avatar-actions">
-        <label class="avatar-action-btn avatar-action-btn--upload">
+        <label class="avatar-action-btn avatar-action-btn--upload" :class="{ 'avatar-action-btn--disabled': isUploading }">
           <input
             ref="fileInputRef"
             type="file"
             accept="image/jpeg,image/png,image/webp"
             @change="handleFileSelect"
             class="avatar-file-input"
+            :disabled="isUploading"
           />
-          {{ currentAvatar ? 'Изменить' : 'Загрузить' }}
+          {{ isUploading ? 'Загрузка...' : (currentAvatar ? 'Изменить' : 'Загрузить') }}
         </label>
         <button
           v-if="currentAvatar"
           class="avatar-action-btn avatar-action-btn--delete"
           @click="handleDelete"
+          :disabled="isUploading"
         >
           Удалить
         </button>
+      </div>
+      <div v-if="error" class="avatar-error">
+        {{ error }}
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch } from 'vue';
-import Cropper from 'cropperjs';
+import { ref, watch } from 'vue';
 
 interface Props {
   avatarUrl?: string | null;
@@ -68,6 +53,7 @@ interface Props {
 interface Emits {
   (e: 'upload', file: File): void;
   (e: 'delete'): void;
+  (e: 'error', error: string): void;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -78,169 +64,207 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<Emits>();
 
 const fileInputRef = ref<HTMLInputElement | null>(null);
-const cropImageRef = ref<HTMLImageElement | null>(null);
-const previewRef = ref<HTMLDivElement | null>(null);
-const showCropModal = ref(false);
 const currentAvatar = ref<string | null>(props.avatarUrl || null);
-const selectedFile = ref<File | null>(null);
-let cropper: Cropper | null = null;
+const error = ref<string>('');
+const isUploading = ref(false);
 
 watch(() => props.avatarUrl, (newUrl) => {
   currentAvatar.value = newUrl || null;
 });
 
-function handleFileSelect(event: Event) {
-  const target = event.target as HTMLInputElement;
-  const file = target.files?.[0];
-  
-  if (!file) return;
-
-  // Валидация типа файла
-  const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
-  if (!allowedTypes.includes(file.type)) {
-    alert('Неподдерживаемый формат файла. Разрешены только JPEG, PNG и WebP');
-    return;
-  }
-
-  // Валидация размера (10MB)
-  const maxSize = 10 * 1024 * 1024;
-  if (file.size > maxSize) {
-    alert('Файл слишком большой. Максимальный размер: 10MB');
-    return;
-  }
-
-  selectedFile.value = file;
-  showCropModal.value = true;
-  
-  // Сброс input для возможности повторной загрузки того же файла
-  if (fileInputRef.value) {
-    fileInputRef.value.value = '';
-  }
+function clearError() {
+  error.value = '';
+  emit('error', '');
 }
 
-function initCropper() {
-  if (!cropImageRef.value || !selectedFile.value) return;
+async function processImage(file: File): Promise<File> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const reader = new FileReader();
 
-  const imageUrl = URL.createObjectURL(selectedFile.value);
-  cropImageRef.value.src = imageUrl;
+    reader.onload = (e) => {
+      const dataUrl = e.target?.result as string;
+      img.src = dataUrl;
 
-  cropper = new Cropper(cropImageRef.value, {
-    aspectRatio: 1, // Квадрат 1:1
-    viewMode: 1,
-    dragMode: 'move',
-    autoCropArea: 0.8,
-    restore: false,
-    guides: true,
-    center: true,
-    highlight: false,
-    cropBoxMovable: true,
-    cropBoxResizable: true,
-    toggleDragModeOnDblclick: false,
-    ready() {
-      // Обновляем превью
-      if (previewRef.value && cropper) {
-        const canvas = cropper.getCroppedCanvas({
-          width: 200,
-          height: 200,
-        });
-        if (canvas) {
-          previewRef.value.innerHTML = '';
-          previewRef.value.appendChild(canvas);
+      img.onload = () => {
+        try {
+          // Определяем размер для кропа (берем минимальную сторону)
+          const size = Math.min(img.width, img.height);
+          
+          // Создаем canvas для кропа
+          const canvas = document.createElement('canvas');
+          canvas.width = 800;
+          canvas.height = 800;
+          const ctx = canvas.getContext('2d');
+
+          if (!ctx) {
+            reject(new Error('Не удалось создать контекст canvas'));
+            return;
+          }
+
+          // Вычисляем координаты для кропа по центру
+          const sourceX = (img.width - size) / 2;
+          const sourceY = (img.height - size) / 2;
+          const sourceSize = size;
+
+          // Рисуем обрезанное изображение на canvas
+          ctx.drawImage(
+            img,
+            sourceX,
+            sourceY,
+            sourceSize,
+            sourceSize,
+            0,
+            0,
+            800,
+            800
+          );
+
+          // Конвертируем в blob с сжатием
+          // Используем формат исходного файла (JPEG/PNG/WebP) для избежания проблем
+          let outputFormat: string;
+          let outputExtension: string;
+          
+          if (file.type === 'image/png') {
+            outputFormat = 'image/png';
+            outputExtension = 'png';
+          } else if (file.type === 'image/webp') {
+            // WebP поддерживается не во всех браузерах через canvas.toBlob, используем JPEG как fallback
+            outputFormat = 'image/jpeg';
+            outputExtension = 'jpg';
+          } else {
+            outputFormat = 'image/jpeg';
+            outputExtension = 'jpg';
+          }
+          
+          canvas.toBlob(
+            (blob) => {
+              if (!blob) {
+                reject(new Error('Не удалось обработать изображение'));
+                return;
+              }
+
+              // Проверяем, что blob не пустой
+              if (blob.size === 0) {
+                reject(new Error('Обработанное изображение пустое'));
+                return;
+              }
+
+              // Создаем File из blob
+              const processedFile = new File(
+                [blob],
+                file.name.replace(/\.[^/.]+$/, '') + '.' + outputExtension,
+                {
+                  type: outputFormat,
+                  lastModified: Date.now(),
+                }
+              );
+
+              resolve(processedFile);
+            },
+            outputFormat,
+            0.85 // Качество 85%
+          );
+        } catch (err) {
+          reject(err);
         }
-      }
-    },
-    crop() {
-      // Обновляем превью при изменении обрезки
-      if (previewRef.value && cropper) {
-        const canvas = cropper.getCroppedCanvas({
-          width: 200,
-          height: 200,
-        });
-        if (canvas) {
-          previewRef.value.innerHTML = '';
-          previewRef.value.appendChild(canvas);
-        }
-      }
-    },
+      };
+
+      img.onerror = () => {
+        reject(new Error('Не удалось загрузить изображение'));
+      };
+    };
+
+    reader.onerror = () => {
+      reject(new Error('Не удалось прочитать файл'));
+    };
+
+    reader.readAsDataURL(file);
   });
 }
 
-function confirmCrop() {
-  if (!cropper || !selectedFile.value) return;
-
-  cropper.getCroppedCanvas({
-    width: 800,
-    height: 800,
-    imageSmoothingEnabled: true,
-    imageSmoothingQuality: 'high',
-  }).toBlob((blob) => {
-    if (blob) {
-      const file = new File([blob], selectedFile.value!.name, {
-        type: 'image/webp',
-        lastModified: Date.now(),
-      });
-      emit('upload', file);
-    }
-  }, 'image/webp', 0.9);
-
-  // Очистка
-  if (cropImageRef.value) {
-    const url = cropImageRef.value.src;
-    if (url.startsWith('blob:')) {
-      URL.revokeObjectURL(url);
-    }
-  }
+async function handleFileSelect(event: Event) {
+  clearError();
   
-  destroyCropper();
-  showCropModal.value = false;
-  selectedFile.value = null;
-}
-
-function cancelCrop() {
-  if (cropImageRef.value) {
-    const url = cropImageRef.value.src;
-    if (url.startsWith('blob:')) {
-      URL.revokeObjectURL(url);
-    }
-  }
+  const target = event.target as HTMLInputElement;
+  const file = target.files?.[0];
   
-  destroyCropper();
-  showCropModal.value = false;
-  selectedFile.value = null;
-}
+  if (!file) {
+    if (fileInputRef.value) {
+      fileInputRef.value.value = '';
+    }
+    return;
+  }
 
-function destroyCropper() {
-  if (cropper) {
-    cropper.destroy();
-    cropper = null;
+  // Валидация формата
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+  if (!allowedTypes.includes(file.type)) {
+    error.value = 'Неподдерживаемый формат файла. Разрешены только JPEG, PNG и WebP';
+    emit('error', error.value);
+    if (fileInputRef.value) {
+      fileInputRef.value.value = '';
+    }
+    return;
+  }
+
+  // Валидация размера (50MB)
+  const maxSize = 50 * 1024 * 1024;
+  if (file.size > maxSize) {
+    error.value = 'Файл слишком большой. Максимальный размер: 50MB';
+    emit('error', error.value);
+    if (fileInputRef.value) {
+      fileInputRef.value.value = '';
+    }
+    return;
+  }
+
+  isUploading.value = true;
+
+  try {
+    // Обрабатываем изображение: кроп и сжатие
+    const processedFile = await processImage(file);
+    
+    // Проверяем размер обработанного файла
+    if (processedFile.size === 0) {
+      throw new Error('Обработанный файл пустой');
+    }
+    
+    console.log('Processed file:', {
+      name: processedFile.name,
+      type: processedFile.type,
+      size: processedFile.size,
+    });
+    
+    // Отправляем обработанный файл
+    emit('upload', processedFile);
+  } catch (err: any) {
+    const errorMessage = err?.message || 'Ошибка при обработке изображения';
+    error.value = errorMessage;
+    emit('error', errorMessage);
+    console.error('Error processing image:', err);
+    console.error('Error details:', {
+      message: err?.message,
+      stack: err?.stack,
+      name: err?.name,
+    });
+  } finally {
+    isUploading.value = false;
+    if (fileInputRef.value) {
+      fileInputRef.value.value = '';
+    }
   }
 }
 
 function handleDelete() {
   if (confirm('Вы уверены, что хотите удалить аватар?')) {
+    clearError();
     emit('delete');
   }
 }
 
-watch(showCropModal, (show) => {
-  if (show) {
-    // Небольшая задержка для монтирования DOM
-    setTimeout(() => {
-      initCropper();
-    }, 100);
-  } else {
-    destroyCropper();
-  }
-});
-
-onUnmounted(() => {
-  destroyCropper();
-  if (cropImageRef.value) {
-    const url = cropImageRef.value.src;
-    if (url.startsWith('blob:')) {
-      URL.revokeObjectURL(url);
-    }
-  }
+// Экспортируем функцию для очистки ошибки извне
+defineExpose({
+  clearError,
 });
 </script>
 
@@ -257,6 +281,7 @@ onUnmounted(() => {
   flex-direction: column;
   align-items: center;
   gap: 1rem;
+  width: 100%;
 }
 
 .avatar-wrapper {
@@ -296,9 +321,40 @@ onUnmounted(() => {
   height: 60%;
 }
 
+.avatar-loading {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  z-index: 10;
+}
+
+.avatar-loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #e1eaf8;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .avatar-actions {
   display: flex;
   gap: 0.75rem;
+  flex-wrap: wrap;
+  justify-content: center;
 }
 
 .avatar-action-btn {
@@ -313,12 +369,18 @@ onUnmounted(() => {
   text-transform: lowercase;
 }
 
+.avatar-action-btn:disabled,
+.avatar-action-btn--disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .avatar-action-btn--upload {
   background: rgba(145, 33, 56, 0.8);
   color: #e1eaf8;
 }
 
-.avatar-action-btn--upload:hover {
+.avatar-action-btn--upload:hover:not(:disabled) {
   background: rgba(145, 33, 56, 1);
 }
 
@@ -328,7 +390,7 @@ onUnmounted(() => {
   border: 1px solid rgba(255, 107, 107, 0.3);
 }
 
-.avatar-action-btn--delete:hover {
+.avatar-action-btn--delete:hover:not(:disabled) {
   background: rgba(255, 107, 107, 0.3);
 }
 
@@ -336,158 +398,17 @@ onUnmounted(() => {
   display: none;
 }
 
-/* Модальное окно обрезки */
-.crop-modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.8);
-  backdrop-filter: blur(10px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: 1rem;
-}
-
-.crop-modal-content {
-  background: rgba(26, 22, 28, 0.95);
-  border-radius: 20px;
-  width: 100%;
-  max-width: 900px;
-  max-height: 90vh;
-  display: flex;
-  flex-direction: column;
-  border: 1px solid rgba(225, 234, 248, 0.1);
-}
-
-.crop-modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.5rem;
-  border-bottom: 1px solid rgba(225, 234, 248, 0.1);
-}
-
-.crop-modal-header h3 {
-  margin: 0;
-  font-size: 24px;
-  font-weight: 600;
-  color: #e1eaf8;
-  text-transform: lowercase;
+.avatar-error {
+  color: #ff4444;
   font-family: 'Involve', Arial, sans-serif;
-}
-
-.crop-modal-close {
-  background: none;
-  border: none;
-  color: #e1eaf8;
-  font-size: 32px;
-  cursor: pointer;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  font-size: 14px;
+  text-align: center;
+  padding: 0.5rem 1rem;
+  background: rgba(255, 68, 68, 0.1);
+  border: 1px solid rgba(255, 68, 68, 0.3);
   border-radius: 8px;
-  transition: background 0.2s ease;
-}
-
-.crop-modal-close:hover {
-  background: rgba(255, 255, 255, 0.1);
-}
-
-.crop-modal-body {
-  padding: 1.5rem;
-  display: flex;
-  gap: 2rem;
-  flex: 1;
-  overflow: auto;
-}
-
-.crop-preview-container {
-  display: flex;
-  gap: 2rem;
   width: 100%;
-  align-items: flex-start;
-}
-
-.crop-image {
-  max-width: 500px;
-  max-height: 500px;
-  flex: 1;
-}
-
-.crop-preview-circle {
-  width: 200px;
-  height: 200px;
-  border-radius: 50%;
-  overflow: hidden;
-  border: 3px solid rgba(145, 33, 56, 0.5);
-  flex-shrink: 0;
-  background: rgba(4, 9, 16, 0.5);
-}
-
-.crop-preview {
-  width: 100%;
-  height: 100%;
-}
-
-.crop-modal-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 1rem;
-  padding: 1.5rem;
-  border-top: 1px solid rgba(225, 234, 248, 0.1);
-}
-
-.crop-btn {
-  padding: 0.75rem 1.5rem;
-  border-radius: 12px;
-  font-size: 16px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  border: none;
-  font-family: 'Involve', Arial, sans-serif;
-  text-transform: lowercase;
-}
-
-.crop-btn-cancel {
-  background: rgba(255, 255, 255, 0.1);
-  color: #e1eaf8;
-}
-
-.crop-btn-cancel:hover {
-  background: rgba(255, 255, 255, 0.15);
-}
-
-.crop-btn-confirm {
-  background: rgba(145, 33, 56, 0.8);
-  color: #e1eaf8;
-}
-
-.crop-btn-confirm:hover {
-  background: rgba(145, 33, 56, 1);
-}
-
-@media (max-width: 768px) {
-  .crop-preview-container {
-    flex-direction: column;
-    align-items: center;
-  }
-
-  .crop-image {
-    max-width: 100%;
-    max-height: 400px;
-  }
-
-  .crop-preview-circle {
-    width: 150px;
-    height: 150px;
-  }
+  max-width: 400px;
+  margin-top: 0.5rem;
 }
 </style>
-

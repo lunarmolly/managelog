@@ -12,10 +12,13 @@
       <div class="profile-sidebar">
         <div class="profile-avatar-section">
           <AvatarUploader
+            ref="avatarUploaderRef"
             :avatar-url="avatarUrl"
             @upload="handleAvatarUpload"
             @delete="handleAvatarDelete"
+            @error="handleAvatarError"
           />
+          <div v-if="avatarError" class="avatar-error-message">{{ avatarError }}</div>
           <div class="profile-name">{{ displayName }}</div>
           <div class="profile-username">@{{ profileForm.login }}</div>
           <div class="profile-role">{{ profileForm.role || 'роль не указана' }}</div>
@@ -205,7 +208,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted, onUnmounted } from 'vue';
+import { ref, reactive, computed, onMounted, onUnmounted, type ComponentPublicInstance } from 'vue';
 import { useRouter } from 'vue-router';
 import { getProfile, updateProfile, uploadAvatar, deleteAvatar, type Profile, type ProfileUpdateRequest } from '@/api/profile';
 import { login, type LoginRequest } from '@/api/auth';
@@ -238,6 +241,8 @@ const isSaving = ref(false);
 const isLoading = ref(true);
 const saveSuccessMessage = ref<string>('');
 const avatarUrl = ref<string | null>(null);
+const avatarError = ref<string>('');
+const avatarUploaderRef = ref<ComponentPublicInstance & { clearError?: () => void } | null>(null);
 
 const roleOptions = ['менеджер', 'разработчик', 'дизайнер', 'аналитик'];
 const isRoleMenuOpen = ref(false);
@@ -540,7 +545,18 @@ function selectRole(role: string): void {
   isRoleMenuOpen.value = false;
 }
 
+function handleAvatarError(error: string): void {
+  avatarError.value = error;
+  // Очищаем ошибку через 5 секунд
+  setTimeout(() => {
+    avatarError.value = '';
+  }, 5000);
+}
+
 async function handleAvatarUpload(file: File): Promise<void> {
+  // Очищаем предыдущие ошибки
+  avatarError.value = '';
+  
   try {
     isSaving.value = true;
     const result = await uploadAvatar(file);
@@ -561,19 +577,74 @@ async function handleAvatarUpload(file: File): Promise<void> {
     // Перезагружаем профиль для получения обновленных данных
     await loadProfile();
     
+    // Очищаем ошибки из компонента загрузки
+    if (avatarUploaderRef.value?.clearError) {
+      avatarUploaderRef.value.clearError();
+    }
+    
     saveSuccessMessage.value = 'Аватар успешно загружен';
     setTimeout(() => {
       saveSuccessMessage.value = '';
     }, 5000);
   } catch (error: any) {
     console.error('Ошибка загрузки аватара:', error);
-    alert(error.data?.detail || error.message || 'Ошибка при загрузке аватара');
+    console.error('Детали ошибки:', {
+      status: error.status,
+      data: error.data,
+      message: error.message,
+    });
+    
+    // Выводим ошибку на экран
+    let errorMessage = 'Ошибка при загрузке аватара';
+    
+    if (error.status === 422) {
+      // Ошибка валидации
+      if (error.data?.errors?.avatar) {
+        const avatarErrors = error.data.errors.avatar;
+        errorMessage = Array.isArray(avatarErrors) ? avatarErrors[0] : avatarErrors;
+      } else if (error.data?.detail) {
+        errorMessage = error.data.detail;
+      }
+    } else if (error.status === 413) {
+      errorMessage = 'Файл слишком большой. Максимальный размер: 50MB';
+    } else if (error.status === 400) {
+      if (error.data?.errors?.avatar) {
+        const avatarErrors = error.data.errors.avatar;
+        errorMessage = Array.isArray(avatarErrors) ? avatarErrors[0] : avatarErrors;
+      } else if (error.data?.detail) {
+        errorMessage = error.data.detail;
+      }
+    } else if (error.status === 500) {
+      // Серверная ошибка - выводим детальное сообщение
+      if (error.data?.detail) {
+        errorMessage = error.data.detail;
+      } else if (error.data?.errors?.avatar) {
+        const avatarErrors = error.data.errors.avatar;
+        errorMessage = Array.isArray(avatarErrors) ? avatarErrors[0] : avatarErrors;
+      } else {
+        errorMessage = 'Ошибка сервера при загрузке аватара';
+      }
+    } else if (error.data?.detail) {
+      errorMessage = error.data.detail;
+    } else if (error.message) {
+      errorMessage = error.message;
+    }
+    
+    avatarError.value = errorMessage;
+    
+    // Очищаем ошибку через 10 секунд
+    setTimeout(() => {
+      avatarError.value = '';
+    }, 10000);
   } finally {
     isSaving.value = false;
   }
 }
 
 async function handleAvatarDelete(): Promise<void> {
+  // Очищаем предыдущие ошибки
+  avatarError.value = '';
+  
   try {
     isSaving.value = true;
     await deleteAvatar();
@@ -583,13 +654,26 @@ async function handleAvatarDelete(): Promise<void> {
     // Перезагружаем профиль для получения обновленных данных
     await loadProfile();
     
+    // Очищаем ошибки из компонента загрузки
+    if (avatarUploaderRef.value?.clearError) {
+      avatarUploaderRef.value.clearError();
+    }
+    
     saveSuccessMessage.value = 'Аватар успешно удален';
     setTimeout(() => {
       saveSuccessMessage.value = '';
     }, 5000);
   } catch (error: any) {
     console.error('Ошибка удаления аватара:', error);
-    alert(error.data?.detail || error.message || 'Ошибка при удалении аватара');
+    
+    // Выводим ошибку на экран
+    const errorMessage = error.data?.detail || error.message || 'Ошибка при удалении аватара';
+    avatarError.value = errorMessage;
+    
+    // Очищаем ошибку через 8 секунд
+    setTimeout(() => {
+      avatarError.value = '';
+    }, 8000);
   } finally {
     isSaving.value = false;
   }
@@ -788,6 +872,20 @@ onUnmounted(() => {
   padding: 8px 16px;
   background: rgba(76, 175, 80, 0.1);
   border-radius: 8px;
+  animation: fadeIn 0.3s ease;
+}
+
+.avatar-error-message {
+  font-family: 'Involve', Arial, sans-serif;
+  font-size: 14px;
+  color: #ff4444;
+  text-align: center;
+  margin-top: 12px;
+  padding: 8px 16px;
+  background: rgba(255, 68, 68, 0.1);
+  border: 1px solid rgba(255, 68, 68, 0.3);
+  border-radius: 8px;
+  width: 100%;
   animation: fadeIn 0.3s ease;
 }
 

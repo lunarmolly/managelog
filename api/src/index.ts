@@ -49,8 +49,8 @@ app.use((req, res, next) => {
 });
 
 // Парсинг JSON и URL-encoded данных ДО логирования
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Логирование запросов в режиме разработки
 if (isDevelopment) {
