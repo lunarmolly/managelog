@@ -1,5 +1,206 @@
 <template>
   <div class="projects-view">
+    <!-- Модальное окно фильтров для мобильной версии -->
+    <div
+      v-if="isFiltersMenuOpen && isMobile"
+      class="modal-overlay"
+      @click="closeAllMenus"
+    >
+      <div class="mobile-filter-modal" @click.stop>
+        <div class="mobile-menu-header">
+          <h3 class="mobile-menu-title">Фильтры</h3>
+          <button class="mobile-menu-close" @click.stop="closeAllMenus" aria-label="Закрыть">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </div>
+        <div class="mobile-filter-content">
+          <!-- Исполнитель -->
+          <div
+            class="dropdown-item expandable"
+            :class="{ expanded: isExecutorSubmenuOpen, active: selectedFilters.executor.length > 0 }"
+            @click.stop="toggleFilterSubmenu('executor')"
+          >
+            <span>исполнитель</span>
+          </div>
+          <div v-if="isExecutorSubmenuOpen" class="filter-submenu active" @click.stop>
+            <div class="filter-search">
+              <input
+                v-model="executorSearchQuery"
+                type="text"
+                class="filter-search-input"
+                placeholder="поиск исполнителя..."
+                @click.stop
+              />
+            </div>
+            <div class="filter-results">
+              <div
+                v-for="user in filteredExecutorUsers"
+                :key="user.id"
+                class="filter-result-item"
+                :class="{ selected: isUserSelected('executor', user.id) }"
+                @click.stop="toggleUserSelection('executor', user.id)"
+              >
+                <span>{{ user.name }}</span>
+                <div class="checkbox">
+                  <svg v-if="isUserSelected('executor', user.id)" viewBox="0 0 12 12" fill="none">
+                    <path
+                      d="M10 3L4.5 8.5L2 6"
+                      stroke="#912138"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Руководитель -->
+          <div
+            class="dropdown-item expandable"
+            :class="{ expanded: isManagerSubmenuOpen, active: selectedFilters.manager.length > 0 }"
+            @click.stop="toggleFilterSubmenu('manager')"
+          >
+            <span>руководитель</span>
+          </div>
+          <div v-if="isManagerSubmenuOpen" class="filter-submenu active" @click.stop>
+            <div class="filter-search">
+              <input
+                v-model="managerSearchQuery"
+                type="text"
+                class="filter-search-input"
+                placeholder="поиск руководителя..."
+                @click.stop
+              />
+            </div>
+            <div class="filter-results">
+              <div
+                v-for="user in filteredManagerUsers"
+                :key="user.id"
+                class="filter-result-item"
+                :class="{ selected: isUserSelected('manager', user.id) }"
+                @click.stop="toggleUserSelection('manager', user.id)"
+              >
+                <span>{{ user.name }}</span>
+                <div class="checkbox">
+                  <svg v-if="isUserSelected('manager', user.id)" viewBox="0 0 12 12" fill="none">
+                    <path
+                      d="M10 3L4.5 8.5L2 6"
+                      stroke="#912138"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Статус -->
+          <div
+            class="dropdown-item expandable"
+            :class="{ expanded: isStatusSubmenuOpen, active: selectedFilters.status.length > 0 }"
+            @click.stop="toggleFilterSubmenu('status')"
+          >
+            <span>статус</span>
+          </div>
+          <div v-if="isStatusSubmenuOpen" class="filter-submenu active" @click.stop>
+            <div class="filter-status-list">
+              <div
+                v-for="status in availableStatuses"
+                :key="status.id"
+                class="filter-status-item"
+                :class="{ selected: isStatusSelected(status.id) }"
+                @click.stop="toggleStatusSelection(status.id)"
+              >
+                <span>{{ status.name }}</span>
+                <div class="checkbox">
+                  <svg v-if="isStatusSelected(status.id)" viewBox="0 0 12 12" fill="none">
+                    <path
+                      d="M10 3L4.5 8.5L2 6"
+                      stroke="#912138"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Рекомендуются действия -->
+          <div
+            class="dropdown-item"
+            :class="{ active: selectedFilters.actions }"
+            @click.stop="toggleFilter('actions')"
+          >
+            <span>рекомендуются действия</span>
+            <div class="checkbox">
+              <svg v-if="selectedFilters.actions" viewBox="0 0 12 12" fill="none">
+                <path
+                  d="M10 3L4.5 8.5L2 6"
+                  stroke="#912138"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </div>
+          </div>
+
+          <div class="filter-actions">
+            <div class="apply-btn" @click.stop="applyFilters">применить</div>
+            <div class="reset-filters-btn" @click.stop="resetFilters" title="Сбросить фильтры">
+              <div class="reset-filters-icon">
+                <svg viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path
+                    d="M13.5 4.5L4.5 13.5M4.5 4.5L13.5 13.5"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Модальное окно сортировки для мобильной версии -->
+    <div
+      v-if="isSortMenuOpen && isMobile"
+      class="modal-overlay"
+      @click="closeAllMenus"
+    >
+      <div class="mobile-filter-modal" @click.stop>
+        <div class="mobile-menu-header">
+          <h3 class="mobile-menu-title">Сортировка</h3>
+          <button class="mobile-menu-close" @click.stop="closeAllMenus" aria-label="Закрыть">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </div>
+        <div class="mobile-filter-content">
+          <div
+            v-for="sortOption in sortOptions"
+            :key="sortOption.id"
+            class="dropdown-item"
+            :class="{ active: selectedSort === sortOption.id }"
+            @click.stop="selectSort(sortOption.id)"
+          >
+            <span>{{ sortOption.name }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Секция фильтров и сортировки -->
     <div class="filters-container">
       <div class="filters-left">
@@ -18,7 +219,7 @@
               </svg>
             </div>
           </div>
-          <div v-if="isFiltersMenuOpen" class="dropdown-menu active" @click.stop>
+          <div v-if="isFiltersMenuOpen && !isMobile" class="dropdown-menu active" @click.stop>
             <!-- Исполнитель -->
             <div
               class="dropdown-item expandable"
@@ -187,7 +388,7 @@
               </svg>
             </div>
           </div>
-          <div v-if="isSortMenuOpen" class="dropdown-menu active" @click.stop>
+          <div v-if="isSortMenuOpen && !isMobile" class="dropdown-menu active" @click.stop>
             <div
               v-for="sortOption in sortOptions"
               :key="sortOption.id"
@@ -509,6 +710,21 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
+
+// Определение мобильного устройства
+const windowWidth = ref(typeof window !== 'undefined' ? window.innerWidth : 1920);
+const isMobile = computed(() => windowWidth.value <= 768);
+
+// Отслеживание изменения размера окна
+if (typeof window !== 'undefined') {
+  const handleResizeWindow = () => {
+    windowWidth.value = window.innerWidth;
+  };
+  window.addEventListener('resize', handleResizeWindow);
+  onUnmounted(() => {
+    window.removeEventListener('resize', handleResizeWindow);
+  });
+}
 
 // Типы
 interface User {
@@ -835,10 +1051,31 @@ function getProjectIconHtml(project: Project): string {
 }
 
 // Методы
+function closeAllMenus() {
+  isFiltersMenuOpen.value = false;
+  isSortMenuOpen.value = false;
+  isExecutorSubmenuOpen.value = false;
+  isManagerSubmenuOpen.value = false;
+  isStatusSubmenuOpen.value = false;
+  // Восстанавливаем скролл
+  if (window.innerWidth <= 768) {
+    document.body.style.overflow = '';
+  }
+}
+
 function toggleFiltersMenu() {
   isFiltersMenuOpen.value = !isFiltersMenuOpen.value;
   if (isFiltersMenuOpen.value) {
     isSortMenuOpen.value = false;
+    // Блокируем скролл body в мобильной версии
+    if (window.innerWidth <= 768) {
+      document.body.style.overflow = 'hidden';
+    }
+  } else {
+    // Восстанавливаем скролл
+    if (window.innerWidth <= 768) {
+      document.body.style.overflow = '';
+    }
   }
 }
 
@@ -846,6 +1083,15 @@ function toggleSortMenu() {
   isSortMenuOpen.value = !isSortMenuOpen.value;
   if (isSortMenuOpen.value) {
     isFiltersMenuOpen.value = false;
+    // Блокируем скролл body в мобильной версии
+    if (window.innerWidth <= 768) {
+      document.body.style.overflow = 'hidden';
+    }
+  } else {
+    // Восстанавливаем скролл
+    if (window.innerWidth <= 768) {
+      document.body.style.overflow = '';
+    }
   }
 }
 
@@ -1231,14 +1477,26 @@ function handleClickOutside(event: MouseEvent) {
   }
 }
 
+// Функция для закрытия меню при изменении размера окна
+function handleResize() {
+  if (window.innerWidth > 768) {
+    // Восстанавливаем скролл при переходе на десктоп
+    document.body.style.overflow = '';
+  }
+}
+
 onMounted(() => {
   document.addEventListener('click', handleClickOutside);
   document.addEventListener('click', handleClickOutsideProjectMenu);
+  window.addEventListener('resize', handleResize);
 });
 
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside);
   document.removeEventListener('click', handleClickOutsideProjectMenu);
+  window.removeEventListener('resize', handleResize);
+  // Восстанавливаем скролл при размонтировании
+  document.body.style.overflow = '';
 });
 </script>
 
@@ -1424,17 +1682,20 @@ onUnmounted(() => {
   position: absolute;
   top: calc(100% + clamp(0.5rem, 1vw, 0.75rem));
   left: 0;
-  background: rgba(145, 33, 56, 0.95);
-  backdrop-filter: blur(25px);
-  -webkit-backdrop-filter: blur(25px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(145, 33, 56, 0.98);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: clamp(0.875rem, 1.5vw, 1.25rem);
-  padding: clamp(0.5rem, 1vw, 0.75rem) 0;
+  padding: clamp(0.75rem, 1.5vw, 1rem) 0;
   min-width: clamp(12.5rem, 20vw, 18.75rem);
-  z-index: 10000;
+  z-index: 10001;
   display: none;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
   animation: fadeInDown 0.2s ease-out;
+  max-height: calc(100vh - 200px);
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 @keyframes fadeInDown {
@@ -1452,8 +1713,26 @@ onUnmounted(() => {
   display: block;
 }
 
+/* Улучшенный скролл для выпадающих меню */
+.dropdown-menu::-webkit-scrollbar {
+  width: 6px;
+}
+
+.dropdown-menu::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.dropdown-menu::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 3px;
+}
+
+.dropdown-menu::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+
 .dropdown-item {
-  padding: clamp(0.625rem, 1.25vw, 0.875rem) clamp(1rem, 2vw, 1.5rem);
+  padding: clamp(0.75rem, 1.5vw, 1rem) clamp(1.25rem, 2.5vw, 1.75rem);
   color: #e1eaf8;
   font-size: clamp(0.875rem, 1.25vw, 0.9375rem);
   font-weight: 500;
@@ -1462,9 +1741,10 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: clamp(0.5rem, 1vw, 0.75rem);
-  border-radius: clamp(0.375rem, 0.75vw, 0.5rem);
-  margin: 0 clamp(0.25rem, 0.5vw, 0.5rem);
+  gap: clamp(0.75rem, 1.5vw, 1rem);
+  border-radius: clamp(0.5rem, 1vw, 0.625rem);
+  margin: 0 clamp(0.5rem, 1vw, 0.75rem) clamp(0.25rem, 0.5vw, 0.375rem);
+  min-height: clamp(2.5rem, 5vw, 3rem);
 }
 
 .dropdown-item:hover {
@@ -1478,27 +1758,36 @@ onUnmounted(() => {
 }
 
 .dropdown-item .checkbox {
-  width: 16px;
-  height: 16px;
-  border: 2px solid #e1eaf8;
-  border-radius: 4px;
+  width: clamp(1rem, 1.5vw, 1.125rem);
+  height: clamp(1rem, 1.5vw, 1.125rem);
+  border: 2px solid rgba(225, 234, 248, 0.6);
+  border-radius: clamp(0.25rem, 0.5vw, 0.375rem);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  background: transparent;
+}
+
+.dropdown-item:hover .checkbox {
+  border-color: rgba(255, 255, 255, 0.8);
 }
 
 .dropdown-item.active .checkbox {
   border-color: #ffffff;
   background: #ffffff;
+  box-shadow: 0 2px 8px rgba(145, 33, 56, 0.3);
 }
 
 .dropdown-item .checkbox svg {
-  width: 10px;
-  height: 10px;
+  width: clamp(0.625rem, 1vw, 0.75rem);
+  height: clamp(0.625rem, 1vw, 0.75rem);
   stroke: #912138;
+  stroke-width: 2.5;
   fill: none;
   display: none;
+  transition: opacity 0.2s ease;
 }
 
 .dropdown-item.active .checkbox svg {
@@ -1509,46 +1798,57 @@ onUnmounted(() => {
 .filter-actions {
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin: 6px 10px 0;
+  gap: clamp(0.5rem, 1vw, 0.75rem);
+  margin: clamp(0.75rem, 1.5vw, 1rem) clamp(0.75rem, 1.5vw, 1rem) 0;
+  padding-top: clamp(0.5rem, 1vw, 0.75rem);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .apply-btn {
   flex: 1;
-  padding: 8px 16px;
+  padding: clamp(0.625rem, 1.25vw, 0.875rem) clamp(1rem, 2vw, 1.5rem);
   background: #912138;
-  border-radius: 16px;
+  border-radius: clamp(0.75rem, 1.5vw, 1rem);
   color: #ffffff;
-  font-size: 0.875rem;
+  font-size: clamp(0.875rem, 1.25vw, 0.9375rem);
   font-weight: 500;
   text-align: center;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  min-height: clamp(2.25rem, 4vw, 2.75rem);
 }
 
 .apply-btn:hover {
   background: #a02a43;
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .reset-filters-btn {
-  padding: 8px 16px;
-  background: #912138;
-  border-radius: 16px;
+  padding: clamp(0.625rem, 1.25vw, 0.875rem) clamp(1rem, 2vw, 1.5rem);
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: clamp(0.75rem, 1.5vw, 1rem);
   color: #ffffff;
-  font-size: 0.875rem;
+  font-size: clamp(0.875rem, 1.25vw, 0.9375rem);
   font-weight: 500;
   text-align: center;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  border: none;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  min-height: clamp(2.25rem, 4vw, 2.75rem);
+  min-width: clamp(2.25rem, 4vw, 2.75rem);
 }
 
 .reset-filters-btn:hover {
-  background: #a02a43;
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
 }
 
 .reset-filters-icon {
@@ -1567,24 +1867,28 @@ onUnmounted(() => {
 }
 
 .filter-btn .dropdown-menu {
-  padding-bottom: 6px;
+  padding-bottom: clamp(0.5rem, 1vw, 0.75rem);
 }
 
 .sort-btn .dropdown-menu {
-  min-width: 220px;
+  min-width: clamp(13.75rem, 25vw, 18.75rem);
+  z-index: 10001;
 }
 
 .filter-btn .dropdown-menu {
-  min-width: 280px;
-  max-width: 400px;
+  min-width: clamp(17.5rem, 30vw, 25rem);
+  max-width: clamp(20rem, 35vw, 28rem);
+  z-index: 10001;
 }
 
 /* Подменю фильтров */
 .filter-submenu {
   display: none;
-  padding: 6px 0;
+  padding: clamp(0.5rem, 1vw, 0.75rem) 0;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
-  margin-top: 6px;
+  margin-top: clamp(0.5rem, 1vw, 0.75rem);
+  position: relative;
+  z-index: 10002;
 }
 
 .filter-submenu.active {
@@ -1592,20 +1896,21 @@ onUnmounted(() => {
 }
 
 .filter-search {
-  padding: 6px 20px;
-  margin-bottom: 6px;
+  padding: 0 clamp(1.25rem, 2.5vw, 1.75rem) clamp(0.75rem, 1.5vw, 1rem);
+  margin-bottom: clamp(0.5rem, 1vw, 0.75rem);
 }
 
 .filter-search-input {
   width: 100%;
-  padding: 6px 10px;
-  background: rgba(255, 255, 255, 0.1);
+  padding: clamp(0.625rem, 1.25vw, 0.875rem) clamp(0.75rem, 1.5vw, 1rem);
+  background: rgba(255, 255, 255, 0.12);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 6px;
+  border-radius: clamp(0.5rem, 1vw, 0.625rem);
   color: #ffffff;
-  font-size: 0.875rem;
+  font-size: clamp(0.875rem, 1.25vw, 0.9375rem);
   font-weight: 400;
   font-family: 'Involve', Arial, sans-serif;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .filter-search-input::placeholder {
@@ -1615,28 +1920,49 @@ onUnmounted(() => {
 .filter-search-input:focus {
   outline: none;
   border-color: rgba(255, 255, 255, 0.4);
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.18);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
 }
 
 .filter-results {
-  max-height: 180px;
+  max-height: clamp(12rem, 30vw, 16rem);
   overflow-y: auto;
-  padding: 0 10px;
+  padding: 0 clamp(0.75rem, 1.5vw, 1rem);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+}
+
+.filter-results::-webkit-scrollbar {
+  width: 6px;
+}
+
+.filter-results::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.filter-results::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 3px;
+}
+
+.filter-results::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
 }
 
 .filter-result-item {
-  padding: 6px 10px;
+  padding: clamp(0.625rem, 1.25vw, 0.875rem) clamp(0.75rem, 1.5vw, 1rem);
   color: #e1eaf8;
-  font-size: 0.875rem;
+  font-size: clamp(0.875rem, 1.25vw, 0.9375rem);
   font-weight: 400;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  border-radius: 6px;
-  margin-bottom: 3px;
+  gap: clamp(0.75rem, 1.5vw, 1rem);
+  border-radius: clamp(0.5rem, 1vw, 0.625rem);
+  margin-bottom: clamp(0.25rem, 0.5vw, 0.375rem);
+  min-height: clamp(2.25rem, 4vw, 2.75rem);
 }
 
 .filter-result-item:hover {
@@ -1649,25 +1975,33 @@ onUnmounted(() => {
 }
 
 .filter-result-item .checkbox {
-  width: 16px;
-  height: 16px;
-  border: 2px solid #e1eaf8;
-  border-radius: 4px;
+  width: clamp(1rem, 1.5vw, 1.125rem);
+  height: clamp(1rem, 1.5vw, 1.125rem);
+  border: 2px solid rgba(225, 234, 248, 0.6);
+  border-radius: clamp(0.25rem, 0.5vw, 0.375rem);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  background: transparent;
+}
+
+.filter-result-item:hover .checkbox {
+  border-color: rgba(255, 255, 255, 0.8);
 }
 
 .filter-result-item.selected .checkbox {
   border-color: #ffffff;
   background: #ffffff;
+  box-shadow: 0 2px 8px rgba(145, 33, 56, 0.3);
 }
 
 .filter-result-item .checkbox svg {
-  width: 10px;
-  height: 10px;
+  width: clamp(0.625rem, 1vw, 0.75rem);
+  height: clamp(0.625rem, 1vw, 0.75rem);
   stroke: #912138;
+  stroke-width: 2.5;
   fill: none;
   display: none;
 }
@@ -1677,20 +2011,23 @@ onUnmounted(() => {
 }
 
 .filter-status-list {
-  padding: 6px 0;
+  padding: clamp(0.5rem, 1vw, 0.75rem) 0;
 }
 
 .filter-status-item {
-  padding: 6px 20px;
+  padding: clamp(0.75rem, 1.5vw, 1rem) clamp(1.25rem, 2.5vw, 1.75rem);
   color: #e1eaf8;
-  font-size: 0.875rem;
+  font-size: clamp(0.875rem, 1.25vw, 0.9375rem);
   font-weight: 400;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: clamp(0.75rem, 1.5vw, 1rem);
+  border-radius: clamp(0.5rem, 1vw, 0.625rem);
+  margin: 0 clamp(0.5rem, 1vw, 0.75rem) clamp(0.25rem, 0.5vw, 0.375rem);
+  min-height: clamp(2.25rem, 4vw, 2.75rem);
 }
 
 .filter-status-item:hover {
@@ -1703,25 +2040,33 @@ onUnmounted(() => {
 }
 
 .filter-status-item .checkbox {
-  width: 16px;
-  height: 16px;
-  border: 2px solid #e1eaf8;
-  border-radius: 4px;
+  width: clamp(1rem, 1.5vw, 1.125rem);
+  height: clamp(1rem, 1.5vw, 1.125rem);
+  border: 2px solid rgba(225, 234, 248, 0.6);
+  border-radius: clamp(0.25rem, 0.5vw, 0.375rem);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  background: transparent;
+}
+
+.filter-status-item:hover .checkbox {
+  border-color: rgba(255, 255, 255, 0.8);
 }
 
 .filter-status-item.selected .checkbox {
   border-color: #ffffff;
   background: #ffffff;
+  box-shadow: 0 2px 8px rgba(145, 33, 56, 0.3);
 }
 
 .filter-status-item .checkbox svg {
-  width: 10px;
-  height: 10px;
+  width: clamp(0.625rem, 1vw, 0.75rem);
+  height: clamp(0.625rem, 1vw, 0.75rem);
   stroke: #912138;
+  stroke-width: 2.5;
   fill: none;
   display: none;
 }
@@ -1732,21 +2077,28 @@ onUnmounted(() => {
 
 .dropdown-item.expandable {
   position: relative;
+  z-index: 10003;
 }
 
 .dropdown-item.expandable::after {
   content: '';
   width: 0;
   height: 0;
-  border-left: 5px solid #e1eaf8;
-  border-top: 4px solid transparent;
-  border-bottom: 4px solid transparent;
+  border-left: 6px solid #e1eaf8;
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
   margin-left: auto;
-  transition: transform 0.2s;
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
 }
 
 .dropdown-item.expandable.expanded::after {
   transform: rotate(90deg);
+}
+
+.dropdown-item.expandable.expanded {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
 }
 
 /* Сообщение, если проектов нет */
@@ -1867,6 +2219,115 @@ onUnmounted(() => {
   .projects-grid {
     grid-template-columns: 1fr;
     gap: clamp(0.875rem, 1.75vw, 1.25rem);
+  }
+
+  /* Мобильная версия: полноэкранные модальные окна */
+  .modal-overlay {
+    z-index: 10010;
+  }
+
+  .mobile-filter-modal {
+    background: rgba(4, 9, 16, 0.6);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-left: 1px solid #000000;
+    border-radius: 0;
+    width: 100%;
+    max-width: 100%;
+    max-height: 100vh;
+    height: 100vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    box-shadow: -10px 0 40px rgba(0, 0, 0, 0.5);
+    box-sizing: border-box;
+    z-index: 10011;
+  }
+
+  .mobile-menu-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: clamp(1rem, 2vw, 1.5rem);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    flex-shrink: 0;
+    background: rgba(145, 33, 56, 0.98);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  .mobile-menu-title {
+    font-size: clamp(1.25rem, 2.5vw, 1.5rem);
+    font-weight: 600;
+    color: #ffffff;
+    margin: 0;
+    font-family: 'Involve', Arial, sans-serif;
+  }
+
+  .mobile-menu-close {
+    width: clamp(2.5rem, 5vw, 3rem);
+    height: clamp(2.5rem, 5vw, 3rem);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    color: #ffffff;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    flex-shrink: 0;
+  }
+
+  .mobile-menu-close:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.3);
+    transform: scale(1.05);
+  }
+
+  .mobile-menu-close svg {
+    width: 1.5rem;
+    height: 1.5rem;
+  }
+
+  .mobile-filter-content {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: clamp(0.75rem, 1.5vw, 1rem) 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .mobile-filter-content .dropdown-item {
+    margin: 0 clamp(0.75rem, 1.5vw, 1rem);
+  }
+
+  .mobile-filter-content .filter-submenu {
+    margin: 0;
+    padding: 0 clamp(0.75rem, 1.5vw, 1rem);
+  }
+
+  .mobile-filter-content .filter-actions {
+    margin: clamp(0.75rem, 1.5vw, 1rem);
+    padding-top: clamp(0.75rem, 1.5vw, 1rem);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    position: sticky;
+    bottom: 0;
+    background: rgba(145, 33, 56, 0.98);
+    z-index: 10;
+  }
+
+  .filter-submenu {
+    z-index: 10006;
+    position: relative;
+  }
+
+  .dropdown-item.expandable {
+    z-index: 10007;
   }
 }
 
@@ -2620,6 +3081,17 @@ onUnmounted(() => {
     border-radius: 0;
     padding: 12px 16px;
     gap: 20px;
+    box-shadow: none;
+  }
+
+  .mobile-filter-modal {
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    min-height: 100vh;
+    max-height: none;
+    border-left: none;
+    border-radius: 0;
     box-shadow: none;
   }
 
