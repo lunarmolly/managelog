@@ -215,6 +215,14 @@
     <!-- Сообщение, если проектов нет -->
     <div v-if="projects.length === 0" class="empty-projects">
       <p class="empty-projects__text">создайте свой первый проект</p>
+      <div class="empty-projects__cta" @click="openCreateProjectModal">
+        <span class="empty-projects__cta-text">создать проект</span>
+        <div class="empty-projects__cta-icon">
+          <svg viewBox="0 0 18 18" fill="none">
+            <path d="M9 0V18M0 9H18" stroke="white" stroke-width="2" stroke-linecap="round" />
+          </svg>
+        </div>
+      </div>
     </div>
 
     <!-- Модальное окно создания проекта -->
@@ -1322,8 +1330,10 @@ onUnmounted(() => {
 /* Сообщение, если проектов нет */
 .empty-projects {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 12px;
   min-height: 400px;
   padding: 40px 20px;
 }
@@ -1334,6 +1344,49 @@ onUnmounted(() => {
   font-weight: 400;
   text-align: center;
   margin: 0;
+}
+
+.empty-projects__cta {
+  background: #912138;
+  border-radius: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 20px;
+  gap: 16px;
+  cursor: pointer;
+  min-width: fit-content;
+  border: none;
+  transition: background 0.2s;
+}
+
+.empty-projects__cta:hover {
+  background: #a02a43;
+}
+
+.empty-projects__cta-text {
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 500;
+  white-space: nowrap;
+  text-align: center;
+}
+
+.empty-projects__cta-icon {
+  width: 0.875rem;
+  height: 0.875rem;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.empty-projects__cta-icon svg {
+  width: 100%;
+  height: 100%;
+  stroke: #ffffff;
+  fill: none;
 }
 
 /* Адаптивность для секции фильтров */
