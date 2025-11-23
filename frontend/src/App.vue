@@ -30,7 +30,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted, onUnmounted } from 'vue';
+import { computed, ref, onMounted, onUnmounted, nextTick, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useSettingsStore } from '@/stores/settings';
 import BrandHeader from '@/components/common/BrandHeader.vue';
@@ -51,25 +51,48 @@ const shouldShowHeader = computed(() => {
 
 function handleResize() {
   windowWidth.value = window.innerWidth;
+  // Проверяем прокрутку при изменении размера окна
+  checkScroll();
 }
 
 function checkScroll() {
-  const scrollTop = window.scrollY || document.documentElement.scrollTop;
-  const documentHeight = document.documentElement.scrollHeight;
-  const windowHeight = window.innerHeight;
+  // Используем несколько способов определения прокрутки для надежности
+  const scrollTop = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
+  const documentHeight = document.documentElement.scrollHeight || document.body.scrollHeight;
+  const windowHeight = window.innerHeight || document.documentElement.clientHeight;
   
-  // Показываем футер, если:
-  // 1. Прокрутка больше 100px, ИЛИ
-  // 2. Контент достаточно длинный (больше высоты окна), ИЛИ
-  // 3. На странице профиля (всегда показываем)
-  const isProfilePage = route.path === '/profile';
-  showFooter.value = scrollTop > 100 || documentHeight > windowHeight + 100 || isProfilePage;
+  // Показываем футер только при прокрутке больше 100px
+  // Также проверяем, что есть что прокручивать
+  const shouldShow = scrollTop > 100 && documentHeight > windowHeight;
+  
+  if (shouldShow && !showFooter.value) {
+    // Добавляем небольшую задержку для анимации
+    nextTick(() => {
+      setTimeout(() => {
+        showFooter.value = true;
+      }, 50);
+    });
+  } else if (!shouldShow && showFooter.value) {
+    showFooter.value = false;
+  }
 }
 
+// Отслеживаем изменения маршрута
+watch(() => route.path, () => {
+  // Сбрасываем футер при смене страницы
+  showFooter.value = false;
+  checkScroll();
+});
+
 onMounted(() => {
-  window.addEventListener('scroll', checkScroll);
+  window.addEventListener('scroll', checkScroll, { passive: true });
   window.addEventListener('resize', handleResize);
-  checkScroll(); // Проверяем при монтировании
+  // Проверяем при монтировании с небольшой задержкой, чтобы DOM успел отрендериться
+  nextTick(() => {
+    setTimeout(() => {
+      checkScroll();
+    }, 100);
+  });
 });
 
 onUnmounted(() => {
