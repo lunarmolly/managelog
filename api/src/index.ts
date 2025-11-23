@@ -7,6 +7,7 @@ import { swaggerSpec } from './config/swagger.js';
 import authRoutes from './routes/authRoutes.js';
 import profileRoutes from './routes/profileRoutes.js';
 import avatarRoutes from './routes/avatarRoutes.js';
+import userRoutes from './routes/userRoutes.js';
 import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -116,6 +117,9 @@ app.use('/api/v1/profile', profileRoutes);
 
 // Роуты аватара
 app.use('/api/v1/avatar', avatarRoutes);
+
+// Роуты пользователя
+app.use('/api/v1/user', userRoutes);
 
 // Статическая раздача аватаров (должна быть ДО роутов аватара, чтобы не конфликтовать)
 const __filename = fileURLToPath(import.meta.url);

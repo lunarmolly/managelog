@@ -31,12 +31,38 @@
           class="avatar-action-btn avatar-action-btn--delete"
           @click="handleDelete"
           :disabled="isUploading"
+          title="Удалить аватар"
         >
-          Удалить
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="delete-icon">
+            <path d="M3 6H5H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M8 6V4C8 3.46957 8.21071 2.96086 8.58579 2.58579C8.96086 2.21071 9.46957 2 10 2H14C14.5304 2 15.0391 2.21071 15.4142 2.58579C15.7893 2.96086 16 3.46957 16 4V6M19 6V20C19 20.5304 18.7893 21.0391 18.4142 21.4142C18.0391 21.7893 17.5304 22 17 22H7C6.46957 22 5.96086 21.7893 5.58579 21.4142C5.21071 21.0391 5 20.5304 5 20V6H19Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M10 11V17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M14 11V17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
         </button>
       </div>
       <div v-if="error" class="avatar-error">
         {{ error }}
+      </div>
+    </div>
+
+    <!-- Модальное окно подтверждения удаления -->
+    <div v-if="showDeleteConfirm" class="delete-modal-overlay" @click.self="cancelDelete">
+      <div class="delete-modal-content">
+        <div class="delete-modal-header">
+          <h3 class="delete-modal-title">удалить аватар?</h3>
+        </div>
+        <div class="delete-modal-body">
+          <p class="delete-modal-message">вы уверены, что хотите удалить аватар? это действие нельзя отменить.</p>
+        </div>
+        <div class="delete-modal-actions">
+          <button class="delete-modal-btn delete-modal-btn--cancel" @click="cancelDelete">
+            отмена
+          </button>
+          <button class="delete-modal-btn delete-modal-btn--confirm" @click="confirmDelete">
+            удалить
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -67,6 +93,7 @@ const fileInputRef = ref<HTMLInputElement | null>(null);
 const currentAvatar = ref<string | null>(props.avatarUrl || null);
 const error = ref<string>('');
 const isUploading = ref(false);
+const showDeleteConfirm = ref(false);
 
 watch(() => props.avatarUrl, (newUrl) => {
   currentAvatar.value = newUrl || null;
@@ -256,10 +283,17 @@ async function handleFileSelect(event: Event) {
 }
 
 function handleDelete() {
-  if (confirm('Вы уверены, что хотите удалить аватар?')) {
-    clearError();
-    emit('delete');
-  }
+  showDeleteConfirm.value = true;
+}
+
+function confirmDelete() {
+  showDeleteConfirm.value = false;
+  clearError();
+  emit('delete');
+}
+
+function cancelDelete() {
+  showDeleteConfirm.value = false;
 }
 
 // Экспортируем функцию для очистки ошибки извне
@@ -385,13 +419,31 @@ defineExpose({
 }
 
 .avatar-action-btn--delete {
-  background: rgba(255, 107, 107, 0.2);
-  color: #ff6b6b;
-  border: 1px solid rgba(255, 107, 107, 0.3);
+  background: rgba(41, 45, 50, 0.3);
+  color: #e1eaf8;
+  border: none;
+  padding: 0.75rem;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 40px;
+  box-shadow: none;
 }
 
 .avatar-action-btn--delete:hover:not(:disabled) {
-  background: rgba(255, 107, 107, 0.3);
+  background: rgba(41, 45, 50, 0.5);
+  color: #ffffff;
+}
+
+.avatar-action-btn--delete:active:not(:disabled) {
+  background: rgba(41, 45, 50, 0.6);
+}
+
+.delete-icon {
+  width: 20px;
+  height: 20px;
 }
 
 .avatar-file-input {
@@ -410,5 +462,122 @@ defineExpose({
   width: 100%;
   max-width: 400px;
   margin-top: 0.5rem;
+}
+
+/* Модальное окно подтверждения удаления */
+.delete-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  animation: fadeIn 0.2s ease;
+}
+
+.delete-modal-content {
+  background: rgba(145, 33, 56, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 40px;
+  padding: 32px;
+  max-width: 480px;
+  width: 90%;
+  box-shadow: 0px 20px 60px rgba(0, 0, 0, 0.5);
+  animation: slideUp 0.3s ease;
+  border: 1px solid rgba(225, 234, 248, 0.1);
+}
+
+.delete-modal-header {
+  margin-bottom: 20px;
+}
+
+.delete-modal-title {
+  font-family: 'Involve', Arial, sans-serif;
+  font-size: 24px;
+  font-weight: 600;
+  color: #e1eaf8;
+  margin: 0;
+  text-transform: lowercase;
+  text-align: center;
+}
+
+.delete-modal-body {
+  margin-bottom: 24px;
+}
+
+.delete-modal-message {
+  font-family: 'Involve', Arial, sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  color: #e1eaf8;
+  margin: 0;
+  text-align: center;
+  line-height: 1.5;
+}
+
+.delete-modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.delete-modal-btn {
+  padding: 12px 24px;
+  border-radius: 40px;
+  font-family: 'Involve', Arial, sans-serif;
+  font-size: 20px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  text-transform: lowercase;
+  min-width: 120px;
+}
+
+.delete-modal-btn--cancel {
+  background: rgba(41, 45, 50, 0.3);
+  color: #e1eaf8;
+}
+
+.delete-modal-btn--cancel:hover {
+  background: rgba(41, 45, 50, 0.5);
+  color: #ffffff;
+}
+
+.delete-modal-btn--confirm {
+  background: rgba(255, 68, 68, 0.8);
+  color: #ffffff;
+}
+
+.delete-modal-btn--confirm:hover {
+  background: rgba(255, 68, 68, 1);
+  box-shadow: 0 4px 12px rgba(255, 68, 68, 0.4);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 </style>

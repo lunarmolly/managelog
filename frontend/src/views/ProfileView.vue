@@ -210,13 +210,14 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted, onUnmounted, type ComponentPublicInstance } from 'vue';
 import { useRouter } from 'vue-router';
-import { getProfile, updateProfile, uploadAvatar, deleteAvatar, type Profile, type ProfileUpdateRequest } from '@/api/profile';
+import { getUserInfo, updateUserInfo, type UserInfo, type UserUpdateRequest } from '@/api/user';
+import { uploadAvatar, deleteAvatar } from '@/api/profile';
 import { login, type LoginRequest } from '@/api/auth';
 import AvatarUploader from '@/components/profile/AvatarUploader.vue';
 
 const router = useRouter();
 
-const profileForm = reactive<ProfileUpdateRequest & { login: string }>({
+const profileForm = reactive<UserUpdateRequest & { login: string }>({
   email: '',
   firstName: '',
   lastName: '',
@@ -264,7 +265,7 @@ const displayName = computed(() => {
 async function loadProfile(): Promise<void> {
   try {
     isLoading.value = true;
-    const profile = await getProfile();
+    const profile = await getUserInfo();
     
     console.log('Получен профиль из API:', profile);
     
@@ -396,7 +397,7 @@ async function handleSaveProfile(): Promise<void> {
   isSaving.value = true;
 
   try {
-    const updateData: ProfileUpdateRequest = {};
+    const updateData: UserUpdateRequest = {};
 
     // Email всегда обязателен
     if (!profileForm.email || profileForm.email.trim() === '') {
@@ -470,7 +471,7 @@ async function handleSaveProfile(): Promise<void> {
       updateData.displayName = trimmed !== '' ? trimmed : undefined;
     }
 
-    const updatedProfile = await updateProfile(updateData);
+    const updatedProfile = await updateUserInfo(updateData);
 
     // Обновляем форму с данными с сервера
     // Email всегда должен быть, так как он обязателен
