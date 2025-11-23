@@ -55,8 +55,15 @@ function handleResize() {
 
 function checkScroll() {
   const scrollTop = window.scrollY || document.documentElement.scrollTop;
-  // Показываем футер, если прокрутка больше 100px
-  showFooter.value = scrollTop > 100;
+  const documentHeight = document.documentElement.scrollHeight;
+  const windowHeight = window.innerHeight;
+  
+  // Показываем футер, если:
+  // 1. Прокрутка больше 100px, ИЛИ
+  // 2. Контент достаточно длинный (больше высоты окна), ИЛИ
+  // 3. На странице профиля (всегда показываем)
+  const isProfilePage = route.path === '/profile';
+  showFooter.value = scrollTop > 100 || documentHeight > windowHeight + 100 || isProfilePage;
 }
 
 onMounted(() => {

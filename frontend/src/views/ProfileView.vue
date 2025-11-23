@@ -925,16 +925,45 @@ onUnmounted(() => {
 
 <style scoped>
 .profile-view {
-  min-height: 100vh;
+  min-height: calc(100vh - 100px);
+  position: relative;
+  overflow: visible;
+  padding: 36px;
+  padding-bottom: 120px; /* Отступ для footer */
+  z-index: 1;
+  box-sizing: border-box;
+}
+
+/* Фиксированный фон через псевдоэлемент */
+.profile-view::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   background-color: #1a161c;
   background-image: url('/images/backgrounds/bg.jpg');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  background-attachment: fixed;
-  padding: 36px;
-  position: relative;
-  overflow: visible;
+  z-index: -1;
+  /* Фиксируем фон на всех устройствах */
+  will-change: transform;
+}
+
+/* На мобильных устройствах */
+@media (max-width: 768px) {
+  .profile-view {
+    padding: 20px 16px;
+    padding-bottom: 100px; /* Отступ для footer на мобильных */
+    min-height: auto; /* Убираем фиксированную высоту, контент определяет высоту */
+  }
+  
+  .profile-view::before {
+    /* На мобильных также фиксированный фон */
+    position: fixed;
+  }
 }
 
 .profile-header {
@@ -1715,7 +1744,7 @@ onUnmounted(() => {
 }
 
 @media (max-width: 768px) {
-  .profile-view {
+  .profile-view-content {
     padding: 20px 16px;
   }
 
