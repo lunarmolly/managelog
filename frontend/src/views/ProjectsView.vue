@@ -470,7 +470,7 @@
                   </div>
                   <div
                     class="project-card-context-item delete"
-                    @click="deleteProject(project.id)"
+                    @click="deleteProjectHandler(project.id)"
                   >
                     <span>удалить</span>
                   </div>
@@ -563,10 +563,13 @@
               v-model="projectName"
               type="text"
               class="modal-field-input"
+              :class="{ 'modal-field-input--error': projectFormErrors.name }"
               placeholder="Введите название проекта"
               required
+              @input="projectFormErrors.name = ''"
             />
           </div>
+          <span v-if="projectFormErrors.name" class="modal-field-error">{{ projectFormErrors.name }}</span>
         </div>
         <div class="modal-field-group">
           <div class="modal-field">
@@ -617,13 +620,16 @@
               id="project-description"
               v-model="projectDescription"
               class="modal-description-textarea"
+              :class="{ 'modal-description-textarea--error': projectFormErrors.description }"
               placeholder="Опишите цели, задачи и особенности проекта..."
               rows="6"
+              @input="projectFormErrors.description = ''"
             />
             <div class="modal-textarea-footer">
               <span class="modal-char-count">{{ projectDescription.length }} символов</span>
             </div>
           </div>
+          <span v-if="projectFormErrors.description" class="modal-field-error">{{ projectFormErrors.description }}</span>
         </div>
         <div class="modal-generate-section">
           <div class="modal-generate-btn" @click="generateDescription">
@@ -753,7 +759,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
+import { ref, reactive, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
+import { getProjects, createProject, updateProject, deleteProject, type Project as ApiProject, type ProjectCreateRequest, type ProjectUpdateRequest } from '@/api/projects';
+import { useRouter } from 'vue-router';
 
 // Определение мобильного устройства
 const windowWidth = ref(typeof window !== 'undefined' ? window.innerWidth : 1920);
@@ -789,17 +797,18 @@ interface SelectedFilters {
 }
 
 interface Project {
-  id: number;
+  id: string;
   name: string;
   description: string;
   manager: string;
-  executor?: (string | number)[];
-  managerId?: string | number;
+  executor?: string[];
+  managerId?: string;
   status?: string;
   icon: string;
   color: string;
   createdAt: string;
   updatedAt?: string;
+  requiresAction?: boolean;
 }
 
 interface ProjectIcon {
@@ -837,73 +846,9 @@ const managerSearchQuery = ref('');
 const selectedSort = ref<string>('activity');
 
 // Проекты (заглушки для примера)
-const projects = ref<Project[]>([
-  {
-    id: 1,
-    name: 'Разработка мобильного приложения',
-    description:
-      'Создание кроссплатформенного мобильного приложения для управления задачами. Включает разработку UI/UX дизайна, интеграцию с backend API, тестирование на различных устройствах и публикацию в app stores.',
-    manager: 'Гриднева Наталья',
-    managerId: 1,
-    executor: [1, 2],
-    status: 'in_progress',
-    icon: 'building',
-    color: '#c2c7f3',
-    createdAt: '2024-01-15T10:00:00.000Z',
-  },
-  {
-    id: 2,
-    name: 'Внедрение системы аналитики',
-    description:
-      'Настройка и интеграция системы аналитики для отслеживания поведения пользователей на сайте. Настройка дашбордов, создание отчетов и обучение команды работе с новыми инструментами.',
-    manager: 'Иванов Иван',
-    managerId: 2,
-    executor: [3, 4],
-    status: 'new',
-    icon: 'chart',
-    color: '#c2f3d5',
-    createdAt: '2024-01-20T14:30:00.000Z',
-  },
-  {
-    id: 3,
-    name: 'Оптимизация базы данных',
-    description:
-      'Проведение аудита производительности базы данных, оптимизация медленных запросов, индексирование критических таблиц и настройка репликации для повышения отказоустойчивости системы.',
-    manager: 'Петров Петр',
-    managerId: 3,
-    executor: [5],
-    status: 'completed',
-    icon: 'folder',
-    color: '#f3c2c3',
-    createdAt: '2024-01-25T09:15:00.000Z',
-  },
-  {
-    id: 4,
-    name: 'Разработка API для интеграции',
-    description:
-      'Создание RESTful API для интеграции с внешними сервисами. Разработка документации, реализация аутентификации и авторизации, написание unit-тестов и нагрузочное тестирование.',
-    manager: 'Сидорова Анна',
-    managerId: 4,
-    executor: [6, 1],
-    status: 'in_progress',
-    icon: 'target',
-    color: '#efc2f3',
-    createdAt: '2024-02-01T11:45:00.000Z',
-  },
-  {
-    id: 5,
-    name: 'Обновление дизайна сайта',
-    description:
-      'Редизайн основного сайта компании с учетом современных трендов и улучшением пользовательского опыта. Адаптация под мобильные устройства и обеспечение быстрой загрузки страниц.',
-    manager: 'Гриднева Наталья',
-    managerId: 1,
-    executor: [2, 3],
-    status: 'on_hold',
-    icon: 'star',
-    color: '#f3dbc2',
-    createdAt: '2024-02-10T16:20:00.000Z',
-  },
-]);
+const router = useRouter();
+const projects = ref<Project[]>([]);
+const isLoading = ref(true);
 
 // Состояние модального окна создания проекта
 const isCreateProjectModalOpen = ref(false);
@@ -913,10 +858,13 @@ const generatedDescription = ref('');
 const selectedIcon = ref('building');
 const selectedColor = ref('#c2c7f3');
 const scrollbarThumb = ref<HTMLElement | null>(null);
-const editingProjectId = ref<number | null>(null);
-const activeProjectMenuId = ref<number | null>(null);
+const editingProjectId = ref<string | null>(null);
+const activeProjectMenuId = ref<string | null>(null);
 const isDeleteConfirmModalOpen = ref(false);
 const projectToDelete = ref<Project | null>(null);
+
+// Ошибки валидации формы проекта
+const projectFormErrors = reactive<Record<string, string>>({});
 
 // Массив иконок для проектов (хранятся на фронте)
 const projectIcons: ProjectIcon[] = [
@@ -1251,6 +1199,8 @@ function closeCreateProjectModal() {
   projectName.value = '';
   projectDescription.value = '';
   generatedDescription.value = '';
+  // Очищаем ошибки
+  Object.keys(projectFormErrors).forEach(key => delete projectFormErrors[key]);
   // Восстанавливаем скролл body при закрытии модального окна
   document.body.style.overflow = '';
 }
@@ -1380,63 +1330,114 @@ function updateScrollbar() {
   });
 }
 
-// Создание проекта (заглушка API)
+// Преобразование API проекта в формат компонента
+function transformApiProject(apiProject: ApiProject): Project {
+  return {
+    id: apiProject.id,
+    name: apiProject.name,
+    description: apiProject.description || 'Описание не указано',
+    manager: apiProject.creator.displayName || apiProject.creator.firstName || apiProject.creator.login || 'Неизвестно',
+    managerId: apiProject.creator.id,
+    executor: apiProject.participants.map(p => p.id),
+    status: apiProject.status,
+    icon: apiProject.icon,
+    color: apiProject.color,
+    createdAt: apiProject.createdAt,
+    updatedAt: apiProject.updatedAt,
+    requiresAction: apiProject.requiresAction,
+  };
+}
+
+// Загрузка проектов
+async function loadProjects(): Promise<void> {
+  try {
+    isLoading.value = true;
+    const apiProjects = await getProjects();
+    projects.value = apiProjects.map(transformApiProject);
+  } catch (error: any) {
+    console.error('Ошибка загрузки проектов:', error);
+    if (error.status === 401 || error.status === 403) {
+      localStorage.removeItem('auth_tokens');
+      router.push('/auth');
+    } else {
+      alert('Не удалось загрузить проекты. Проверьте консоль для деталей.');
+    }
+  } finally {
+    isLoading.value = false;
+  }
+}
+
+// Создание проекта
 async function submitCreateProject() {
+  // Очищаем предыдущие ошибки
+  Object.keys(projectFormErrors).forEach(key => delete projectFormErrors[key]);
+
   const name = projectName.value.trim();
   const description = projectDescription.value.trim();
 
+  // Валидация на клиенте
   if (!name) {
-    alert('Пожалуйста, введите название проекта');
+    projectFormErrors.name = 'Название проекта обязательно';
     return;
   }
 
-  // Если редактируем проект
-  if (editingProjectId.value !== null) {
-    const projectIndex = projects.value.findIndex((p) => p.id === editingProjectId.value);
-    if (projectIndex !== -1) {
-      projects.value[projectIndex] = {
-        ...projects.value[projectIndex],
+  try {
+    // Если редактируем проект
+    if (editingProjectId.value !== null) {
+      const updateData: ProjectUpdateRequest = {
         name,
-        description: description || 'Описание не указано',
+        description: description || undefined,
         icon: selectedIcon.value,
         color: selectedColor.value,
-        updatedAt: new Date().toISOString(),
       };
-      console.log('Проект обновлен:', projects.value[projectIndex]);
-    }
-    closeCreateProjectModal();
-    return;
-  }
 
-  // Создаем новый проект
-  try {
-    // TODO: Заменить на реальный вызов API
-    const newProject: Project = {
-      id: Date.now(),
+      const updatedProject = await updateProject(editingProjectId.value, updateData);
+      const projectIndex = projects.value.findIndex((p) => p.id === editingProjectId.value);
+      if (projectIndex !== -1) {
+        projects.value[projectIndex] = transformApiProject(updatedProject);
+      }
+      closeCreateProjectModal();
+      return;
+    }
+
+    // Создаем новый проект
+    const createData: ProjectCreateRequest = {
       name,
-      description: description || 'Описание не указано',
-      manager: 'Гриднева Наталья',
-      managerId: 1,
-      executor: [],
+      description: description || undefined,
+      participants: [],
       status: 'new',
+      requiresAction: false,
       icon: selectedIcon.value,
       color: selectedColor.value,
-      createdAt: new Date().toISOString(),
     };
 
-    projects.value.push(newProject);
-    console.log('Проект создан (заглушка):', newProject);
+    const newProject = await createProject(createData);
+    projects.value.push(transformApiProject(newProject));
     
-    // Закрываем модальное окно
     closeCreateProjectModal();
-  } catch (error) {
-    console.error('Ошибка при создании проекта:', error);
-    alert('Не удалось создать проект. Попробуйте еще раз.');
+  } catch (error: any) {
+    console.error('Ошибка при создании/обновлении проекта:', error);
+    
+    // Обработка ошибок валидации с сервера
+    if (error.status === 422 && error.data?.errors) {
+      const errors = error.data.errors;
+      Object.keys(errors).forEach(field => {
+        if (Array.isArray(errors[field])) {
+          projectFormErrors[field] = errors[field][0];
+        } else {
+          projectFormErrors[field] = errors[field];
+        }
+      });
+    } else {
+      // Общая ошибка
+      const errorMessage = error.data?.detail || error.message || 'Не удалось сохранить проект. Попробуйте еще раз.';
+      projectFormErrors.name = errorMessage;
+    }
   }
 }
 
 // Функции для работы с контекстным меню проектов
-function toggleProjectMenu(projectId: number) {
+function toggleProjectMenu(projectId: string) {
   if (activeProjectMenuId.value === projectId) {
     activeProjectMenuId.value = null;
   } else {
@@ -1456,7 +1457,7 @@ function handleClickOutsideProjectMenu(event: MouseEvent) {
 }
 
 // Переход к проекту
-function goToProject(projectId: number) {
+function goToProject(projectId: string) {
   activeProjectMenuId.value = null;
   // TODO: Реализовать переход к проекту
   console.log('Переход к проекту:', projectId);
@@ -1464,7 +1465,7 @@ function goToProject(projectId: number) {
 }
 
 // Редактирование проекта
-function editProject(projectId: number) {
+function editProject(projectId: string) {
   activeProjectMenuId.value = null;
   const project = projects.value.find((p) => p.id === projectId);
   if (project) {
@@ -1473,28 +1474,32 @@ function editProject(projectId: number) {
 }
 
 // Удаление проекта
-function deleteProject(projectId: number) {
+function deleteProjectHandler(projectId: string) {
   activeProjectMenuId.value = null;
   const project = projects.value.find((p) => p.id === projectId);
   if (!project) return;
 
   projectToDelete.value = project;
   isDeleteConfirmModalOpen.value = true;
-  // Блокируем скролл body при открытии модального окна
   document.body.style.overflow = 'hidden';
 }
 
 // Подтверждение удаления
-function confirmDelete() {
+async function confirmDelete() {
   if (!projectToDelete.value) return;
 
-  const index = projects.value.findIndex((p) => p.id === projectToDelete.value!.id);
-  if (index > -1) {
-    projects.value.splice(index, 1);
-    console.log('Проект удален:', projectToDelete.value);
+  try {
+    await deleteProject(projectToDelete.value.id);
+    const index = projects.value.findIndex((p) => p.id === projectToDelete.value!.id);
+    if (index > -1) {
+      projects.value.splice(index, 1);
+    }
+    closeDeleteConfirmModal();
+  } catch (error: any) {
+    console.error('Ошибка при удалении проекта:', error);
+    const errorMessage = error.data?.detail || error.message || 'Не удалось удалить проект. Попробуйте еще раз.';
+    alert(errorMessage);
   }
-
-  closeDeleteConfirmModal();
 }
 
 // Закрытие модального окна подтверждения удаления
@@ -1530,6 +1535,7 @@ function handleResize() {
 }
 
 onMounted(() => {
+  loadProjects();
   document.addEventListener('click', handleClickOutside);
   document.addEventListener('click', handleClickOutsideProjectMenu);
   window.addEventListener('resize', handleResize);
@@ -2589,6 +2595,36 @@ onUnmounted(() => {
   outline: none;
   padding: 0;
   line-height: 1.5;
+}
+
+.modal-field-input--error {
+  color: #ff6b6b;
+}
+
+.modal-input-wrapper:has(.modal-field-input--error) {
+  border-color: #ff6b6b;
+  background: rgba(255, 107, 107, 0.1);
+}
+
+.modal-description-textarea--error {
+  border-color: #ff6b6b;
+  background: rgba(255, 107, 107, 0.1);
+}
+
+.modal-field-error {
+  font-family: 'Involve', Arial, sans-serif;
+  font-size: 13px;
+  color: #ff6b6b;
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  line-height: 1.4;
+}
+
+.modal-field-error::before {
+  content: '⚠';
+  font-size: 14px;
 }
 
 .modal-field-input::placeholder {

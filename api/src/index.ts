@@ -8,6 +8,7 @@ import authRoutes from './routes/authRoutes.js';
 import profileRoutes from './routes/profileRoutes.js';
 import avatarRoutes from './routes/avatarRoutes.js';
 import userRoutes from './routes/userRoutes.js';
+import projectRoutes from './routes/projectRoutes.js';
 import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -120,6 +121,9 @@ app.use('/api/v1/avatar', avatarRoutes);
 
 // Роуты пользователя
 app.use('/api/v1/user', userRoutes);
+
+// Роуты проектов
+app.use('/api/v1/projects', projectRoutes);
 
 // Статическая раздача аватаров (должна быть ДО роутов аватара, чтобы не конфликтовать)
 const __filename = fileURLToPath(import.meta.url);
