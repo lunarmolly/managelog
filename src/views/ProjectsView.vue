@@ -286,6 +286,49 @@
       </div>
     </div>
 
+    <!-- Модальное окно подтверждения удаления -->
+    <div
+      v-if="isDeleteConfirmModalOpen"
+      class="modal-overlay"
+      @click="closeDeleteConfirmModal"
+    >
+      <div class="delete-confirm-modal" @click.stop>
+        <div class="delete-confirm-content">
+          <div class="delete-confirm-title">удалить проект?</div>
+          <div class="delete-confirm-text">
+            Вы уверены, что хотите удалить проект "{{ projectToDelete?.name }}"? Это действие нельзя отменить.
+          </div>
+          <div class="delete-confirm-actions">
+            <div class="modal-btn modal-btn-delete" @click="confirmDelete">
+              <div class="modal-btn-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path
+                    d="M20 5C20.2652 5 20.5196 5.10536 20.7071 5.29289C20.8946 5.48043 21 5.73478 21 6C21 6.26522 20.8946 6.51957 20.7071 6.70711C20.5196 6.89464 20.2652 7 20 7H19L18.997 7.071L18.064 20.142C18.0281 20.6466 17.8023 21.1188 17.4321 21.4636C17.0619 21.8083 16.5749 22 16.069 22H7.93C7.42414 22 6.93707 21.8083 6.56688 21.4636C6.1967 21.1188 5.97092 20.6466 5.935 20.142L5.002 7.072L5 7H4C3.73478 7 3.48043 6.89464 3.29289 6.70711C3.10536 6.51957 3 6.26522 3 6C3 5.73478 3.10536 5.48043 3.29289 5.29289C3.48043 5.10536 3.73478 5 4 5H20ZM16.997 7H7.003L7.931 20H16.069L16.997 7ZM14 2C14.2652 2 14.5196 2.10536 14.7071 2.29289C14.8946 2.48043 15 2.73478 15 3C15 3.26522 14.8946 3.51957 14.7071 3.70711C14.5196 3.89464 14.2652 4 14 4H10C9.73478 4 9.48043 3.89464 9.29289 3.70711C9.10536 3.51957 9 3.26522 9 3C9 2.73478 9.10536 2.48043 9.29289 2.29289C9.48043 2.10536 9.73478 2 10 2H14Z"
+                    fill="#ffffff"
+                  />
+                </svg>
+              </div>
+              <span>удалить</span>
+            </div>
+            <div class="modal-btn modal-btn-cancel" @click="closeDeleteConfirmModal">
+              <div class="modal-btn-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path
+                    d="M18 6L6 18M6 6L18 18"
+                    stroke="#912138"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </div>
+              <span>отмена</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Модальное окно создания проекта -->
     <div
       v-if="isCreateProjectModalOpen"
@@ -612,6 +655,8 @@ const selectedColor = ref('#c2c7f3');
 const scrollbarThumb = ref<HTMLElement | null>(null);
 const editingProjectId = ref<number | null>(null);
 const activeProjectMenuId = ref<number | null>(null);
+const isDeleteConfirmModalOpen = ref(false);
+const projectToDelete = ref<Project | null>(null);
 
 // Массив иконок для проектов (хранятся на фронте)
 const projectIcons: ProjectIcon[] = [
@@ -917,7 +962,12 @@ function closeCreateProjectModal() {
 function closeModalOnOverlay(event: MouseEvent) {
   const target = event.target as HTMLElement;
   if (target.classList.contains('modal-overlay')) {
-    closeCreateProjectModal();
+    // Проверяем, какое модальное окно открыто
+    if (isDeleteConfirmModalOpen.value) {
+      closeDeleteConfirmModal();
+    } else if (isCreateProjectModalOpen.value) {
+      closeCreateProjectModal();
+    }
   }
 }
 
@@ -1132,15 +1182,27 @@ function deleteProject(projectId: number) {
   const project = projects.value.find((p) => p.id === projectId);
   if (!project) return;
 
-  const confirmed = confirm(`Вы уверены, что хотите удалить проект "${project.name}"?`);
-  
-  if (confirmed) {
-    const index = projects.value.findIndex((p) => p.id === projectId);
-    if (index > -1) {
-      projects.value.splice(index, 1);
-      console.log('Проект удален:', project);
-    }
+  projectToDelete.value = project;
+  isDeleteConfirmModalOpen.value = true;
+}
+
+// Подтверждение удаления
+function confirmDelete() {
+  if (!projectToDelete.value) return;
+
+  const index = projects.value.findIndex((p) => p.id === projectToDelete.value!.id);
+  if (index > -1) {
+    projects.value.splice(index, 1);
+    console.log('Проект удален:', projectToDelete.value);
   }
+
+  closeDeleteConfirmModal();
+}
+
+// Закрытие модального окна подтверждения удаления
+function closeDeleteConfirmModal() {
+  isDeleteConfirmModalOpen.value = false;
+  projectToDelete.value = null;
 }
 
 // Закрытие меню при клике вне
@@ -2226,6 +2288,62 @@ onUnmounted(() => {
 .modal-btn-icon svg {
   width: 100%;
   height: 100%;
+}
+
+/* Модальное окно подтверждения удаления */
+.delete-confirm-modal {
+  background: rgba(4, 9, 16, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 24px;
+  padding: 32px;
+  max-width: 480px;
+  width: 90%;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  margin: auto;
+}
+
+.delete-confirm-content {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.delete-confirm-title {
+  color: #e1eaf8;
+  font-size: 1.5rem;
+  font-weight: 500;
+  font-family: 'Involve', Arial, sans-serif;
+  text-align: center;
+}
+
+.delete-confirm-text {
+  color: #e1eaf8;
+  font-size: 1rem;
+  font-weight: 400;
+  font-family: 'Involve', Arial, sans-serif;
+  text-align: center;
+  line-height: 1.5;
+  opacity: 0.9;
+}
+
+.delete-confirm-actions {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+}
+
+.modal-btn-delete {
+  background: #d32f2f;
+  color: #ffffff;
+}
+
+.modal-btn-delete:hover {
+  background: #b71c1c;
+}
+
+.modal-btn-delete .modal-btn-icon svg {
+  fill: #ffffff;
 }
 
 /* Секция проектов */
