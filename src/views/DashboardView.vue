@@ -1,6 +1,7 @@
 <template>
   <div class="dashboard-view">
-    <div class="dashboard-container">
+    <!-- Первый ряд: карточка пользователя и метрики -->
+    <div class="dashboard-first-row">
       <!-- Карточка пользователя -->
       <div class="user-card">
         <div class="user-card-image">
@@ -93,13 +94,63 @@
             <!-- Дополнительная информация -->
             <div class="deadline-info">
               <div class="deadline-info-text">
-                лучше всего даются <span class="highlight">{{ bestTaskType }}</span> проекты
+                лучше всего даются <span class="highlight">{{ bestTaskType }}</span> задачи
               </div>
               <div class="deadline-stats">
                 <div class="deadline-stats-value">{{ deadlineData.closedOnTime }} / {{ deadlineData.total }}</div>
                 <div class="deadline-stats-label">закрыты в срок</div>
               </div>
             </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Второй ряд: доходы и важное/цели -->
+    <div class="dashboard-second-row">
+      <!-- Левая часть: доходы и важное -->
+      <div class="dashboard-left-section">
+        <!-- Блок доходов -->
+        <div class="metric-card metric-card-light metric-card-wide">
+          <div class="portfolio-header">
+            <div class="portfolio-title">общий доход портфеля</div>
+            <div class="portfolio-title">маржинальность портфеля</div>
+          </div>
+          <div class="portfolio-values">
+            <div class="portfolio-value">
+              <div class="portfolio-value-number">{{ portfolioData.totalIncome }} ₽</div>
+            </div>
+            <div class="portfolio-value">
+              <div class="portfolio-value-number">{{ portfolioData.marginality }} ₽</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Блок важного -->
+        <div class="metric-card metric-card-dark metric-card-tall">
+          <div class="metric-title">важное</div>
+          <div class="important-items">
+            <div
+              v-for="(item, index) in importantItems"
+              :key="index"
+              class="important-item"
+            >
+              {{ item }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Правая часть: цели на месяц -->
+      <div class="metric-card metric-card-dark metric-card-goals">
+        <div class="metric-title">цели на месяц</div>
+        <div class="goals-items">
+          <div
+            v-for="(goal, index) in monthlyGoals"
+            :key="index"
+            class="goal-item"
+          >
+            {{ goal }}
           </div>
         </div>
       </div>
@@ -166,6 +217,29 @@ const deadlineData = ref<DeadlineData>({
   total: 275,
 });
 
+// Данные портфеля
+const portfolioData = ref({
+  totalIncome: '765 045',
+  marginality: '765 045',
+});
+
+// Важные элементы
+const importantItems = ref<string[]>([
+  'Важный элемент 1',
+  'Важный элемент 2',
+  'Важный элемент 3',
+]);
+
+// Цели на месяц
+const monthlyGoals = ref<string[]>([
+  'Цель 1',
+  'Цель 2',
+  'Цель 3',
+  'Цель 4',
+  'Цель 5',
+  'Цель 6',
+]);
+
 // Вычисляемое свойство для лучшего типа задач
 const bestTaskType = computed(() => {
   const segments = [
@@ -209,16 +283,18 @@ const progressLabelPositions = computed(() => {
   width: 95vw;
   max-width: 100%;
   margin: 0 auto;
-  padding: 24px 0px;
+  padding: 24px 0;
   font-family: 'Involve', Arial, sans-serif;
   min-height: calc(100vh - 100px);
   box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
 }
 
-.dashboard-container {
+/* Первый ряд: карточка пользователя и метрики */
+.dashboard-first-row {
   width: 100%;
-  width: 95vw;
-  margin: 0 auto;
   display: flex;
   gap: 24px;
   align-items: flex-start;
@@ -586,9 +662,120 @@ const progressLabelPositions = computed(() => {
   text-align: right;
 }
 
+/* Второй ряд дашборда */
+.dashboard-second-row {
+  width: 100%;
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+  box-sizing: border-box;
+}
+
+.dashboard-left-section {
+  flex: 2.05; /* 904 / 440 ≈ 2.05 */
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-width: 0;
+}
+
+/* Блок доходов портфеля */
+.portfolio-header {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+}
+
+.portfolio-title {
+  flex: 1;
+  font-size: 24px;
+  font-weight: 500;
+  color: #292d32;
+  line-height: 24px;
+}
+
+.portfolio-values {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  width: 100%;
+  flex: 1;
+}
+
+.portfolio-value {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+}
+
+.portfolio-value-number {
+  font-size: 36px;
+  font-weight: 500;
+  color: #5d2233;
+  line-height: 38px;
+}
+
+/* Блок важного */
+.metric-card-tall {
+  height: 259px;
+}
+
+.important-items {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+  width: 100%;
+}
+
+.important-item {
+  background: #912138;
+  height: 48px;
+  border-radius: 16px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  color: #e1eaf8;
+  font-size: 15px;
+  font-weight: 400;
+  font-family: 'Involve', Arial, sans-serif;
+}
+
+/* Блок целей на месяц */
+.metric-card-goals {
+  flex: 1; /* 440 / 440 = 1 */
+  height: 433px;
+  min-width: 0;
+}
+
+.goals-items {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+  width: 100%;
+  align-items: center;
+}
+
+.goal-item {
+  background: #912138;
+  height: 48px;
+  border-radius: 16px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  color: #e1eaf8;
+  font-size: 15px;
+  font-weight: 400;
+  font-family: 'Involve', Arial, sans-serif;
+}
+
 /* Адаптивность */
 @media (max-width: 1440px) {
-  .dashboard-container {
+  .dashboard-first-row {
     flex-wrap: wrap;
   }
 
@@ -596,10 +783,14 @@ const progressLabelPositions = computed(() => {
     width: 324px;
     min-width: 324px;
   }
+
+  .metrics-container {
+    width: 100%;
+  }
 }
 
 @media (max-width: 1100px) {
-  .dashboard-container {
+  .dashboard-first-row {
     flex-direction: column;
   }
 
@@ -628,6 +819,19 @@ const progressLabelPositions = computed(() => {
 
   .deadline-info {
     width: 100%;
+  }
+
+  .dashboard-second-row {
+    flex-direction: column;
+  }
+
+  .dashboard-left-section {
+    width: 100%;
+  }
+
+  .metric-card-goals {
+    width: 100%;
+    height: auto;
   }
 }
 
