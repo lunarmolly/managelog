@@ -131,11 +131,18 @@
           <div class="metric-title">важное</div>
           <div class="important-items">
             <div
-              v-for="(item, index) in importantItems"
+              v-for="(item, index) in displayedImportantItems"
               :key="index"
               class="important-item"
             >
               {{ item }}
+            </div>
+            <div
+              v-if="hasMoreImportantItems"
+              class="important-item important-item-more"
+              @click="toggleImportantItems"
+            >
+              {{ isImportantItemsExpanded ? 'меньше' : 'больше' }}
             </div>
           </div>
         </div>
@@ -223,21 +230,47 @@ const portfolioData = ref({
   marginality: '765 045',
 });
 
-// Важные элементы
+// Важные элементы (уведомления и рекомендации)
 const importantItems = ref<string[]>([
-  'Важный элемент 1',
-  'Важный элемент 2',
-  'Важный элемент 3',
+  '⚠️ Проект "Редизайн сайта" требует внимания: дедлайн через 3 дня',
+  '💡 Рекомендация: увеличить загрузку на 15% для достижения месячного плана',
+  '🔔 Новое уведомление: клиент запросил изменения в проекте "Мобильное приложение"',
+  '📊 Отчет за прошлую неделю готов к просмотру',
+  '✅ Все задачи по проекту "Корпоративный портал" выполнены в срок',
 ]);
+
+// Состояние развернутости списка важных элементов
+const isImportantItemsExpanded = ref<boolean>(false);
+
+// Вычисляемое свойство для отображаемых важных элементов
+const displayedImportantItems = computed(() => {
+  if (importantItems.value.length <= 3) {
+    return importantItems.value;
+  }
+  if (isImportantItemsExpanded.value) {
+    return importantItems.value;
+  }
+  return importantItems.value.slice(0, 2);
+});
+
+// Есть ли еще элементы для показа
+const hasMoreImportantItems = computed(() => {
+  return importantItems.value.length > 3;
+});
+
+// Переключение развернутости
+const toggleImportantItems = () => {
+  isImportantItemsExpanded.value = !isImportantItemsExpanded.value;
+};
 
 // Цели на месяц
 const monthlyGoals = ref<string[]>([
-  'Цель 1',
-  'Цель 2',
-  'Цель 3',
-  'Цель 4',
-  'Цель 5',
-  'Цель 6',
+  'Завершить 5 крупных проектов',
+  'Достичь маржинальности портфеля 45%',
+  'Увеличить общий доход на 20%',
+  'Соблюсти дедлайны в 95% случаев',
+  'Привлечь 3 новых клиента',
+  'Провести 10 встреч с командой',
 ]);
 
 // Вычисляемое свойство для лучшего типа задач
@@ -718,29 +751,47 @@ const progressLabelPositions = computed(() => {
 
 /* Блок важного */
 .metric-card-tall {
-  height: 259px;
+  min-height: 259px;
+  height: auto;
 }
 
 .important-items {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  flex: 1;
   width: 100%;
+  min-height: 0;
 }
 
 .important-item {
   background: #912138;
-  height: 48px;
+  min-height: 48px;
+  height: auto;
   border-radius: 16px;
   width: 100%;
   display: flex;
   align-items: center;
-  padding: 0 16px;
+  padding: 12px 16px;
   color: #e1eaf8;
   font-size: 15px;
   font-weight: 400;
   font-family: 'Involve', Arial, sans-serif;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  box-sizing: border-box;
+}
+
+.important-item-more {
+  background: rgba(145, 33, 56, 0.6);
+  cursor: pointer;
+  transition: background 0.2s ease;
+  justify-content: center;
+  font-weight: 500;
+  text-transform: lowercase;
+}
+
+.important-item-more:hover {
+  background: rgba(145, 33, 56, 0.8);
 }
 
 /* Блок целей на месяц */
