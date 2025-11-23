@@ -16,6 +16,32 @@
         <!-- Навигационные колонки -->
         <nav class="footer__nav" aria-label="Footer navigation">
           <div class="footer__nav-column">
+            <h3 class="footer__nav-title">Навигация</h3>
+            <ul class="footer__nav-list">
+              <li>
+                <router-link class="footer__nav-link" to="/dashboard" aria-label="Дашборд">
+                  Дашборд
+                </router-link>
+              </li>
+              <li>
+                <router-link class="footer__nav-link" to="/projects" aria-label="Проекты">
+                  Проекты
+                </router-link>
+              </li>
+              <li>
+                <router-link class="footer__nav-link" to="/crm" aria-label="CRM">
+                  CRM
+                </router-link>
+              </li>
+              <li>
+                <router-link class="footer__nav-link" to="/teams" aria-label="Команды">
+                  Команды
+                </router-link>
+              </li>
+            </ul>
+          </div>
+
+          <div class="footer__nav-column">
             <h3 class="footer__nav-title">Пользователям</h3>
             <ul class="footer__nav-list">
               <li>
@@ -129,14 +155,54 @@
           </div>
         </div>
       </div>
+
+      <!-- Кнопка "Наверх" -->
+      <button
+        v-if="showScrollTop"
+        class="footer__scroll-top"
+        @click="scrollToTop"
+        aria-label="Прокрутить наверх"
+        :class="{ 'footer__scroll-top--visible': showScrollTop }"
+      >
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path
+            d="M12 19V5M5 12L12 5L19 12"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+      </button>
     </div>
   </footer>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref, onMounted, onUnmounted } from 'vue';
 
 const currentYear = computed(() => String(new Date().getFullYear()));
+const showScrollTop = ref(false);
+
+function handleScroll() {
+  showScrollTop.value = window.scrollY > 300;
+}
+
+function scrollToTop() {
+  window.scrollTo({
+    top: 0,
+    behavior: 'smooth',
+  });
+}
+
+onMounted(() => {
+  window.addEventListener('scroll', handleScroll);
+  handleScroll();
+});
+
+onUnmounted(() => {
+  window.removeEventListener('scroll', handleScroll);
+});
 </script>
 
 <style scoped>
@@ -251,7 +317,7 @@ const currentYear = computed(() => String(new Date().getFullYear()));
 /* Navigation */
 .footer__nav {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 2.5rem;
 }
 
@@ -520,5 +586,101 @@ const currentYear = computed(() => String(new Date().getFullYear()));
 
 .footer__social-link:focus-visible {
   border-radius: 50%;
+}
+
+/* Scroll to top button */
+.footer__scroll-top {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 50%;
+  background: rgba(145, 33, 56, 0.9);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(225, 234, 248, 0.2);
+  color: #e1eaf8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  transform: translateY(20px) scale(0.8);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 1000;
+  box-shadow: 0 4px 16px rgba(145, 33, 56, 0.3);
+}
+
+.footer__scroll-top:hover,
+.footer__scroll-top:focus-visible {
+  background: rgba(145, 33, 56, 1);
+  transform: translateY(-4px) scale(1);
+  box-shadow: 0 8px 24px rgba(145, 33, 56, 0.5);
+  outline: none;
+}
+
+.footer__scroll-top:active {
+  transform: translateY(-2px) scale(0.95);
+}
+
+.footer__scroll-top--visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.footer__scroll-top svg {
+  width: 1.5rem;
+  height: 1.5rem;
+  transition: transform 0.3s ease;
+}
+
+.footer__scroll-top:hover svg {
+  transform: translateY(-2px);
+}
+
+.footer__scroll-top:focus-visible {
+  outline: 2px solid #e1eaf8;
+  outline-offset: 2px;
+}
+
+/* Responsive scroll button */
+@media (max-width: 768px) {
+  .footer__scroll-top {
+    width: 3rem;
+    height: 3rem;
+    bottom: 1.5rem;
+    right: 1.5rem;
+  }
+
+  .footer__scroll-top svg {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .footer__scroll-top {
+    width: 2.75rem;
+    height: 2.75rem;
+    bottom: 1rem;
+    right: 1rem;
+  }
+}
+
+/* Accessibility for scroll button */
+@media (prefers-reduced-motion: reduce) {
+  .footer__scroll-top {
+    transition: opacity 0.2s ease;
+  }
+
+  .footer__scroll-top:hover,
+  .footer__scroll-top:focus-visible {
+    transform: none;
+  }
+
+  .footer__scroll-top svg {
+    transition: none;
+  }
 }
 </style>
