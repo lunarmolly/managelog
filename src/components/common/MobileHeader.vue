@@ -57,20 +57,6 @@
               alt="Аватар пользователя"
               class="mobile-header__menu-avatar-img"
             />
-            <svg
-              class="mobile-header__menu-icon"
-              viewBox="0 0 24 24"
-              fill="none"
-              aria-hidden="true"
-            >
-              <path
-                d="M3 12h18M3 6h18M3 18h18"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
-            </svg>
           </div>
         </button>
       </div>
@@ -96,13 +82,6 @@
               />
               <div class="mobile-header__profile-details">
                 <h3 class="mobile-header__profile-name">Иван Иванов</h3>
-                <router-link
-                  to="/profile"
-                  class="mobile-header__profile-link"
-                  @click="toggleProfile"
-                >
-                  профиль
-                </router-link>
               </div>
             </div>
             <button
@@ -123,6 +102,13 @@
             </button>
           </div>
           <div class="mobile-header__profile-actions">
+            <router-link
+              to="/profile"
+              class="mobile-header__profile-action"
+              @click="toggleProfile"
+            >
+              профиль
+            </router-link>
             <router-link
               to="/settings"
               class="mobile-header__profile-action"
@@ -174,18 +160,19 @@ const navItems = [
   {
     label: 'crm',
     path: '/crm',
-    // Фильтр/воронка (outline) - три горизонтальные линии
-    iconPath: 'M3 6h18M7 12h10M11 18h2',
-    // Фильтр/воронка (filled) - три прямоугольника
-    activeIconPath: 'M3 4h18v2H3V4zm2 4h14v2H5V8zm4 4h6v2H9v-2z',
+    // Фильтр/воронка (outline) - три горизонтальные линии разной ширины
+    iconPath: 'M3 6h18M5 12h14M7 18h10',
+    // Фильтр/воронка (filled) - три горизонтальные линии разной ширины (заполненные)
+    activeIconPath: 'M3 5h18v2H3V5zm2 6h14v2H5v-2zm2 6h10v2H7v-2z',
   },
   {
     label: 'команды',
     path: '/teams',
-    // Люди/группа (outline) - иконка с одним человеком слева и двумя справа
-    iconPath: 'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 7a4 4 0 1 0 8 0 4 4 0 0 0-8 0zm12 4a4 4 0 1 0-8 0 4 4 0 0 0 8 0z',
-    // Люди/группа (filled) - иконка с одним человеком слева и двумя справа
-    activeIconPath: 'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 7a4 4 0 1 0 8 0 4 4 0 0 0-8 0zm12 4a4 4 0 1 0-8 0 4 4 0 0 0 8 0z',
+    // Иконка команд из DashboardView.vue (outline версия)
+    // Объединены все пути: нижняя часть, круг (голова) как path, правая группа
+    iconPath: 'M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M5 7a4 4 0 118 0 4 4 0 01-8 0zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75',
+    // Filled версия той же иконки
+    activeIconPath: 'M17 19v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2h16zM5 7a4 4 0 118 0 4 4 0 01-8 0zm12 0a4 4 0 11-4 4 4 4 0 014-4zM23 19v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75',
   },
 ] as const;
 
@@ -377,18 +364,6 @@ async function handleLogout(): Promise<void> {
   left: 0;
 }
 
-.mobile-header__menu-icon {
-  width: 18px;
-  height: 18px;
-  color: #e1eaf8;
-  position: absolute;
-  bottom: 2px;
-  right: 2px;
-  background: rgba(145, 33, 56, 0.9);
-  border-radius: 50%;
-  padding: 2px;
-  z-index: 1;
-}
 
 /* Profile Panel */
 .mobile-header__profile-overlay {
@@ -464,20 +439,6 @@ async function handleLogout(): Promise<void> {
   text-overflow: ellipsis;
 }
 
-.mobile-header__profile-link {
-  font-size: 0.875rem;
-  font-weight: 400;
-  color: rgba(225, 234, 248, 0.8);
-  text-decoration: none;
-  text-transform: lowercase;
-  letter-spacing: 0.02em;
-  transition: color 0.2s ease;
-  white-space: nowrap;
-}
-
-.mobile-header__profile-link:hover {
-  color: #e1eaf8;
-}
 
 .mobile-header__profile-close {
   width: 40px;
