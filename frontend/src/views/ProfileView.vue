@@ -562,6 +562,17 @@ async function handleSaveProfile(): Promise<void> {
     return;
   }
 
+  // Валидация телефона: должен быть либо пустым, либо полностью заполнен (11 цифр)
+  if (profileForm.phone && profileForm.phone.trim() !== '') {
+    const phoneDigits = profileForm.phone.replace(/\D/g, '');
+    // Проверяем, что телефон содержит ровно 11 цифр (7 + 10)
+    if (phoneDigits.length !== 11) {
+      profileErrors.phone = 'Введите полный номер телефона или оставьте поле пустым';
+      isSaving.value = false;
+      return;
+    }
+  }
+
   isSaving.value = true;
 
   try {
