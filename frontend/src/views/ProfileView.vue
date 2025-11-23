@@ -191,6 +191,8 @@
                 class="form-input"
                 :class="{ 'form-input--error': profileErrors.phone, 'form-input--filled': profileForm.phone }"
                 placeholder="+7 (999) 123-45-67"
+                @input="handlePhoneInput"
+                maxlength="18"
               />
               <span v-if="profileErrors.phone" class="form-error">{{ profileErrors.phone }}</span>
             </div>
@@ -315,6 +317,100 @@ function togglePasswordSection(): void {
   isPasswordSectionOpen.value = !isPasswordSectionOpen.value;
 }
 
+function formatPhoneNumber(value: string): string {
+  // Удаляем все символы кроме цифр
+  const digits = value.replace(/\D/g, '');
+  
+  // Если пусто, возвращаем пустую строку
+  if (!digits) {
+    return '';
+  }
+  
+  // Если номер начинается с 8, заменяем на 7
+  let phoneDigits = digits.startsWith('8') ? '7' + digits.slice(1) : digits;
+  
+  // Если номер начинается не с 7, добавляем 7
+  if (phoneDigits && !phoneDigits.startsWith('7')) {
+    phoneDigits = '7' + phoneDigits;
+  }
+  
+  // Ограничиваем длину (7 + 10 цифр = 11)
+  if (phoneDigits.length > 11) {
+    phoneDigits = phoneDigits.slice(0, 11);
+  }
+  
+  // Если только одна цифра (7), возвращаем +7
+  if (phoneDigits.length === 1) {
+    return '+7';
+  }
+  
+  // Форматируем: +7 (XXX) XXX-XX-XX
+  const code = phoneDigits.slice(1, 4);
+  const part1 = phoneDigits.slice(4, 7);
+  const part2 = phoneDigits.slice(7, 9);
+  const part3 = phoneDigits.slice(9, 11);
+  
+  let result = '+7';
+  
+  if (code) {
+    result += ` (${code}`;
+    if (part1) {
+      result += `) ${part1}`;
+      if (part2) {
+        result += `-${part2}`;
+        if (part3) {
+          result += `-${part3}`;
+        }
+      }
+    }
+  }
+  
+  return result;
+}
+
+function handlePhoneInput(event: Event): void {
+  const target = event.target as HTMLInputElement;
+  const inputValue = target.value;
+  const cursorPosition = target.selectionStart || 0;
+  
+  // Получаем отформатированное значение
+  const formatted = formatPhoneNumber(inputValue);
+  
+  // Подсчитываем количество цифр до курсора в исходном вводе
+  const digitsBeforeCursor = inputValue.substring(0, cursorPosition).replace(/\D/g, '').length;
+  
+  // Устанавливаем новое значение
+  profileForm.phone = formatted;
+  
+  // Если пользователь вводил в конец, ставим курсор в конец
+  const wasAtEnd = cursorPosition >= inputValue.length - 1;
+  
+  if (wasAtEnd) {
+    // Курсор в конец
+    requestAnimationFrame(() => {
+      target.setSelectionRange(formatted.length, formatted.length);
+    });
+  } else {
+    // Вычисляем новую позицию курсора на основе количества цифр
+    let digitCount = 0;
+    let newPosition = formatted.length;
+    
+    for (let i = 0; i < formatted.length; i++) {
+      if (/\d/.test(formatted[i])) {
+        digitCount++;
+        if (digitCount >= digitsBeforeCursor) {
+          newPosition = i + 1;
+          break;
+        }
+      }
+    }
+    
+    requestAnimationFrame(() => {
+      target.setSelectionRange(newPosition, newPosition);
+    });
+  }
+}
+
 const roleButtonText = computed(() => {
   return profileForm.role || 'выберите роль';
 });
@@ -349,7 +445,12 @@ async function loadProfile(): Promise<void> {
     // Необязательные поля - обрабатываем null и undefined
     profileForm.middleName = (profile.middleName && profile.middleName.trim()) || '';
     profileForm.role = (profile.role && profile.role.trim()) || '';
-    profileForm.phone = (profile.phone && profile.phone.trim()) || '';
+    // Форматируем телефон при загрузке, если он есть
+    if (profile.phone && profile.phone.trim()) {
+      profileForm.phone = formatPhoneNumber(profile.phone.trim());
+    } else {
+      profileForm.phone = '';
+    }
     
     // Аватар - формируем полный URL если есть
     if (profile.avatar) {
@@ -520,11 +621,23 @@ async function handleSaveProfile(): Promise<void> {
     updateData.role = roleValue;
     
     // Телефон - всегда отправляем, даже если пустое (для удаления)
-    // Отправляем пустую строку, сервер обработает как null
-    const phoneValue = profileForm.phone !== undefined && profileForm.phone !== null 
-      ? profileForm.phone.trim() 
-      : '';
-    updateData.phone = phoneValue;
+    // Убираем форматирование перед отправкой (оставляем только цифры)
+    let phoneValue = '';
+    if (profileForm.phone !== undefined && profileForm.phone !== null && profileForm.phone.trim() !== '') {
+      // Удаляем все символы кроме цифр
+      const digits = profileForm.phone.replace(/\D/g, '');
+      // Если номер начинается с 8, заменяем на 7
+      phoneValue = digits.startsWith('8') ? '7' + digits.slice(1) : digits;
+      // Если номер не начинается с 7, добавляем 7
+      if (phoneValue && !phoneValue.startsWith('7')) {
+        phoneValue = '7' + phoneValue;
+      }
+      // Ограничиваем длину
+      if (phoneValue.length > 11) {
+        phoneValue = phoneValue.slice(0, 11);
+      }
+    }
+    updateData.phone = phoneValue || '';
     
     // Дата рождения - всегда отправляем, даже если пустая (для удаления)
     // Отправляем пустую строку, сервер обработает как null
@@ -552,7 +665,12 @@ async function handleSaveProfile(): Promise<void> {
     // Необязательные поля
     profileForm.middleName = updatedProfile.middleName || '';
     profileForm.role = updatedProfile.role || '';
-    profileForm.phone = updatedProfile.phone || '';
+    // Форматируем телефон после сохранения
+    if (updatedProfile.phone && updatedProfile.phone.trim()) {
+      profileForm.phone = formatPhoneNumber(updatedProfile.phone.trim());
+    } else {
+      profileForm.phone = '';
+    }
     profileForm.birthDate = updatedProfile.birthDate ? updatedProfile.birthDate.split('T')[0] : '';
 
     // Очищаем форму пароля
