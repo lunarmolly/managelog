@@ -56,24 +56,29 @@ const UserSchema = new Schema<IUser>(
       type: String,
       trim: true,
       maxlength: [24, 'Отчество должно быть не более 24 символов'],
+      default: null,
     },
     displayName: {
       type: String,
       trim: true,
       maxlength: [56, 'Отображаемое имя должно быть не более 56 символов'],
+      default: null,
     },
     birthDate: {
       type: Date,
+      default: null,
     },
     role: {
       type: String,
       trim: true,
       maxlength: [50, 'Роль должна быть не более 50 символов'],
+      default: null,
     },
     phone: {
       type: String,
       trim: true,
       match: [/^[+]?[(]?[0-9]{1,4}[)]?[-\s.]?[(]?[0-9]{1,4}[)]?[-\s.]?[0-9]{1,9}$/, 'Некорректный формат телефона'],
+      default: null,
     },
   },
   {

@@ -41,7 +41,7 @@
         <!-- Основные данные -->
         <div class="form-section">
           <h2 class="form-section-title">основные данные</h2>
-          <p class="form-section-description">эти данные используются внутри PMS, в списках пользователей и обращениях к вам</p>
+          <p class="form-section-description">вы так красивы сегодня! есть обновления?</p>
           
           <div class="form-row">
             <div class="form-field">
@@ -325,8 +325,9 @@ async function handleSaveProfile(): Promise<void> {
   Object.keys(profileErrors).forEach(key => delete profileErrors[key]);
   Object.keys(passwordErrors).forEach(key => delete passwordErrors[key]);
 
-  // Валидация смены пароля
-  if (!validatePasswordChange()) {
+  // Валидация смены пароля только если пароль меняется
+  const isPasswordChanging = passwordForm.newPassword && passwordForm.newPassword.trim() !== '';
+  if (isPasswordChanging && !validatePasswordChange()) {
     return;
   }
 
@@ -335,17 +336,25 @@ async function handleSaveProfile(): Promise<void> {
   try {
     const updateData: ProfileUpdateRequest = {};
 
-    if (profileForm.email) updateData.email = profileForm.email;
-    if (profileForm.firstName !== undefined) updateData.firstName = profileForm.firstName || undefined;
-    if (profileForm.lastName !== undefined) updateData.lastName = profileForm.lastName || undefined;
-    if (profileForm.middleName !== undefined) updateData.middleName = profileForm.middleName || undefined;
-    if (profileForm.displayName !== undefined) updateData.displayName = profileForm.displayName || undefined;
-    if (profileForm.birthDate) updateData.birthDate = profileForm.birthDate;
-    if (profileForm.role !== undefined) updateData.role = profileForm.role || undefined;
-    if (profileForm.phone !== undefined) updateData.phone = profileForm.phone || undefined;
+    // Email всегда обязателен
+    if (!profileForm.email || profileForm.email.trim() === '') {
+      profileErrors.email = 'Email обязателен';
+      isSaving.value = false;
+      return;
+    }
+    updateData.email = profileForm.email.trim();
 
-    // Если указан новый пароль, проверяем текущий и обновляем
-    if (passwordForm.newPassword) {
+    // Обязательные поля - можно изменить
+    if (profileForm.firstName !== undefined && profileForm.firstName !== null) {
+      updateData.firstName = profileForm.firstName.trim() || undefined;
+    }
+    if (profileForm.lastName !== undefined && profileForm.lastName !== null) {
+      updateData.lastName = profileForm.lastName.trim() || undefined;
+    }
+
+    // Пароль - отправляем ТОЛЬКО если указан новый пароль
+    // Если пароль не меняется, вообще не отправляем это поле
+    if (isPasswordChanging) {
       // Проверяем текущий пароль через login
       try {
         const loginData: LoginRequest = {
@@ -355,12 +364,35 @@ async function handleSaveProfile(): Promise<void> {
         await login(loginData);
         
         // Если текущий пароль верный, обновляем на новый
-        updateData.password = passwordForm.newPassword;
+        updateData.password = passwordForm.newPassword.trim();
       } catch (error: any) {
         passwordErrors.currentPassword = 'Неверный текущий пароль';
         isSaving.value = false;
         return;
       }
+    }
+    // Если пароль НЕ меняется, НЕ добавляем его в updateData
+
+    // Обработка необязательных полей - пустые строки отправляем как undefined для удаления
+    if (profileForm.middleName !== undefined && profileForm.middleName !== null) {
+      const trimmed = profileForm.middleName.trim();
+      updateData.middleName = trimmed !== '' ? trimmed : undefined;
+    }
+    if (profileForm.role !== undefined && profileForm.role !== null) {
+      const trimmed = profileForm.role.trim();
+      updateData.role = trimmed !== '' ? trimmed : undefined;
+    }
+    if (profileForm.phone !== undefined && profileForm.phone !== null) {
+      const trimmed = profileForm.phone.trim();
+      updateData.phone = trimmed !== '' ? trimmed : undefined;
+    }
+    if (profileForm.birthDate !== undefined && profileForm.birthDate !== null) {
+      updateData.birthDate = profileForm.birthDate !== '' ? profileForm.birthDate : undefined;
+    }
+    // displayName - если пустой, отправляем undefined, сервер установит из firstName
+    if (profileForm.displayName !== undefined && profileForm.displayName !== null) {
+      const trimmed = profileForm.displayName.trim();
+      updateData.displayName = trimmed !== '' ? trimmed : undefined;
     }
 
     const updatedProfile = await updateProfile(updateData);
@@ -387,7 +419,10 @@ async function handleSaveProfile(): Promise<void> {
     console.error('Ошибка обновления профиля:', error);
     
     if (error.status === 0) {
-      profileErrors.email = error.data?.detail || error.message || 'Не удалось подключиться к серверу';
+      // Ошибка подключения - показываем общее сообщение, а не только для email
+      const errorMessage = error.data?.detail || error.message || 'Не удалось подключиться к серверу. Убедитесь, что API сервер запущен на http://localhost:3000';
+      alert(errorMessage);
+      console.error('Ошибка подключения к API:', errorMessage);
     } else if (error.status === 422) {
       const errorData = error.data;
       if (errorData?.errors) {

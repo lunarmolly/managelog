@@ -64,8 +64,20 @@ export async function login(req: Request, res: Response): Promise<void> {
     });
   } catch (error: any) {
     console.error('Login error:', error);
+    console.error('Error stack:', error.stack);
+    console.error('Error message:', error.message);
+
+    // В режиме разработки возвращаем детальную информацию об ошибке
+    const errorMessage = process.env.NODE_ENV === 'development' 
+      ? error.message || 'Внутренняя ошибка сервера'
+      : 'Внутренняя ошибка сервера';
+
     res.status(500).json({
-      detail: 'Внутренняя ошибка сервера',
+      detail: errorMessage,
+      ...(process.env.NODE_ENV === 'development' && {
+        error: error.toString(),
+        stack: error.stack,
+      }),
     });
   }
 }
@@ -117,6 +129,8 @@ export async function register(req: Request, res: Response): Promise<void> {
     });
   } catch (error: any) {
     console.error('Register error:', error);
+    console.error('Error stack:', error.stack);
+    console.error('Error message:', error.message);
 
     // Обработка ошибок MongoDB (дубликаты и т.д.)
     if (error.code === 11000) {
@@ -130,8 +144,17 @@ export async function register(req: Request, res: Response): Promise<void> {
       return;
     }
 
+    // В режиме разработки возвращаем детальную информацию об ошибке
+    const errorMessage = process.env.NODE_ENV === 'development' 
+      ? error.message || 'Внутренняя ошибка сервера'
+      : 'Внутренняя ошибка сервера';
+
     res.status(500).json({
-      detail: 'Внутренняя ошибка сервера',
+      detail: errorMessage,
+      ...(process.env.NODE_ENV === 'development' && {
+        error: error.toString(),
+        stack: error.stack,
+      }),
     });
   }
 }
