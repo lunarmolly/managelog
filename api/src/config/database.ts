@@ -11,9 +11,11 @@ export const connectDatabase = async (): Promise<void> => {
     console.log('✅ MongoDB подключена успешно');
     const dbName = mongoose.connection.db?.databaseName || mongoose.connection.name;
     console.log(`📊 База данных: ${dbName}`);
-  } catch (error) {
-    console.error('❌ Ошибка подключения к MongoDB:', error);
-    process.exit(1);
+  } catch (error: any) {
+    console.error('❌ Ошибка подключения к MongoDB:', error.message || error);
+    console.error('💡 Убедитесь, что MongoDB запущена на mongodb://localhost:27017/');
+    // Не завершаем процесс сразу, даем серверу запуститься
+    // Процесс завершится при попытке использовать БД
   }
 };
 

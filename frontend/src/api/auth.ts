@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://195.133.76.123:8000/api/v1';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api/v1';
 
 export interface LoginRequest {
   login?: string;
@@ -42,28 +42,43 @@ async function handleResponse<T>(response: Response): Promise<T> {
   return response.json();
 }
 
+async function handleRequest<T>(url: string, options: RequestInit): Promise<T> {
+  try {
+    const response = await fetch(url, options);
+    return await handleResponse<T>(response);
+  } catch (error: any) {
+    // Обработка сетевых ошибок
+    if (error.name === 'TypeError' && error.message.includes('fetch')) {
+      throw {
+        status: 0,
+        data: {
+          detail: 'Не удалось подключиться к серверу. Убедитесь, что API сервер запущен на http://localhost:3000',
+        },
+        message: 'Ошибка подключения к серверу',
+      };
+    }
+    throw error;
+  }
+}
+
 export async function login(credentials: LoginRequest): Promise<LoginResponse> {
-  const response = await fetch(`${API_BASE_URL}/auth/login/`, {
+  return handleRequest<LoginResponse>(`${API_BASE_URL}/auth/login/`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(credentials),
   });
-
-  return handleResponse<LoginResponse>(response);
 }
 
 export async function register(data: RegisterRequest): Promise<RegisterResponse> {
-  const response = await fetch(`${API_BASE_URL}/auth/register/`, {
+  return handleRequest<RegisterResponse>(`${API_BASE_URL}/auth/register/`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(data),
   });
-
-  return handleResponse<RegisterResponse>(response);
 }
 
 export function saveTokens(tokens: { access_token: string; refresh_token: string }): void {
@@ -86,7 +101,7 @@ export async function logout(): Promise<void> {
   }
 
   try {
-    await fetch(`${API_BASE_URL}/auth/logout/`, {
+    await handleRequest<void>(`${API_BASE_URL}/auth/logout/`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

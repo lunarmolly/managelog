@@ -11,12 +11,9 @@ export default defineConfig({
   },
   server: {
     port: 5173,
-    strictPort: true,
-    host: true,
-    cors: {
-      origin: ['http://managelog.ru', 'https://managelog.ru', 'http://app.managelog.ru', 'https://app.managelog.ru'],
-      credentials: true,
-    },
+    strictPort: false, // Разрешить использовать другой порт, если 5173 занят
+    host: '0.0.0.0', // Разрешить доступ по сети (localhost и IP адрес)
+    cors: true, // Разрешить CORS для всех источников в dev режиме
   },
 });
 

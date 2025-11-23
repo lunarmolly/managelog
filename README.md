@@ -29,6 +29,7 @@ managelog/
 - TypeScript
 - MongoDB 8.2.2 (Mongoose)
 - CORS
+- Swagger/OpenAPI (документация API)
 
 ### Frontend
 - Vue.js 3
@@ -47,15 +48,22 @@ managelog/
 
 ### 1. Установка зависимостей
 
-#### API
+**Из корневой директории (рекомендуется):**
 ```bash
-cd api
-npm install
+npm run install:all
 ```
 
-#### Frontend
+Или установите зависимости отдельно:
 ```bash
-cd frontend
+# Корневая директория
+npm install
+
+# API
+cd api
+npm install
+
+# Frontend
+cd ../frontend
 npm install
 ```
 
@@ -64,6 +72,11 @@ npm install
 #### API
 Создайте файл `api/.env` на основе `api/.env.example`:
 ```bash
+# Windows PowerShell
+cd api
+Copy-Item .env.example .env
+
+# Linux/Mac
 cd api
 cp .env.example .env
 ```
@@ -73,40 +86,60 @@ cp .env.example .env
 PORT=3000
 MONGODB_URI=mongodb://localhost:27017/managelog
 NODE_ENV=development
+JWT_SECRET=your-super-secret-jwt-key-change-in-production
+JWT_REFRESH_SECRET=your-super-secret-refresh-jwt-key-change-in-production
+JWT_ACCESS_EXPIRES_IN=15m
+JWT_REFRESH_EXPIRES_IN=7d
 ```
 
 #### Frontend
-Создайте файл `frontend/.env` (если требуется):
+Создайте файл `frontend/.env`:
 ```bash
+# Windows PowerShell
 cd frontend
-```
-
-Отредактируйте `frontend/.env` и укажите URL API сервера:
-```env
+@"
 VITE_API_BASE_URL=http://localhost:3000/api/v1
+"@ | Out-File -FilePath .env -Encoding utf8
+
+# Linux/Mac
+cd frontend
+echo "VITE_API_BASE_URL=http://localhost:3000/api/v1" > .env
 ```
 
 ### 3. Запуск сервисов
 
-API и Frontend запускаются как отдельные сервисы. Откройте два терминала:
+**Из корневой директории (параллельный запуск):**
 
-#### Терминал 1 - API сервер
 ```bash
-cd api
+# Запустить оба сервиса одновременно
 npm run dev
 ```
 
-API сервер будет доступен на `http://localhost:3000`
-- Health check: `http://localhost:3000/health`
-- API endpoint: `http://localhost:3000/api/v1`
+Это запустит:
+- **API** на `http://localhost:3000`
+- **Frontend** на `http://localhost:5173`
 
-#### Терминал 2 - Frontend сервер
+**Отдельный запуск сервисов:**
+
 ```bash
+# Только API
+npm run dev:api
+
+# Только Frontend
+npm run dev:frontend
+```
+
+**Или из соответствующих папок:**
+
+```bash
+# API сервер
+cd api
+npm run dev
+
+# Frontend сервер (в другом терминале)
 cd frontend
 npm run dev
 ```
-
-Frontend приложение будет доступно на `http://localhost:5173`
 
 ## Порты по умолчанию
 
@@ -114,22 +147,43 @@ Frontend приложение будет доступно на `http://localhost
 - **Frontend**: `5173`
 - **MongoDB**: `27017`
 
+## API Документация
+
+После запуска API сервера, документация доступна по адресу:
+- **Swagger UI**: `http://localhost:3000/api-docs`
+
+Документация включает:
+- Описание всех эндпоинтов
+- Схемы запросов и ответов
+- Примеры использования
+- Возможность тестирования API прямо в браузере
+
 ## Сборка для production
 
-### API
+**Из корневой директории:**
 ```bash
-cd api
+# Собрать оба проекта
 npm run build
+
+# Запустить собранные проекты
 npm start
 ```
 
-### Frontend
+**Отдельная сборка:**
+
 ```bash
-cd frontend
-npm run build
+# API
+npm run build:api
+npm run start:api
+
+# Frontend
+npm run build:frontend
+npm run start:frontend
 ```
 
-Результат сборки будет в папке `frontend/dist/`.
+Результат сборки:
+- API: `api/dist/`
+- Frontend: `frontend/dist/`
 
 ## Разработка
 

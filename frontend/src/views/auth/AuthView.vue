@@ -617,7 +617,10 @@ async function handleLogin(): Promise<void> {
     await router.push('/dashboard');
   } catch (error: any) {
     // Обработка ошибок API
-    if (error.status === 422) {
+    if (error.status === 0) {
+      // Ошибка подключения к серверу
+      loginErrors.username = error.data?.detail || error.message || 'Не удалось подключиться к серверу. Убедитесь, что API запущен.';
+    } else if (error.status === 422) {
       // Ошибки валидации - показываем под полями
       const errorData = error.data;
       if (errorData?.errors) {
@@ -631,7 +634,7 @@ async function handleLogin(): Promise<void> {
     } else if (error.status === 409) {
       loginErrors.username = 'пользователь уже существует';
     } else {
-      loginErrors.username = 'неизвестная ошибка. попробуйте позже.';
+      loginErrors.username = error.data?.detail || error.message || 'неизвестная ошибка. попробуйте позже.';
     }
   } finally {
     isLoginLoading.value = false;
@@ -770,7 +773,10 @@ async function handleRegister(): Promise<void> {
     }
   } catch (error: any) {
     // Обработка ошибок API при регистрации
-    if (error.status === 422) {
+    if (error.status === 0) {
+      // Ошибка подключения к серверу
+      registerErrors.email = error.data?.detail || error.message || 'Не удалось подключиться к серверу. Убедитесь, что API запущен.';
+    } else if (error.status === 422) {
       // Ошибки валидации - показываем под полями
       const errorData = error.data;
       if (errorData?.errors) {
@@ -788,7 +794,7 @@ async function handleRegister(): Promise<void> {
     } else if (error.status === 409) {
       registerErrors.email = 'пользователь уже существует';
     } else {
-      registerErrors.email = 'неизвестная ошибка. попробуйте позже.';
+      registerErrors.email = error.data?.detail || error.message || 'неизвестная ошибка. попробуйте позже.';
     }
   } finally {
     isRegisterLoading.value = false;
