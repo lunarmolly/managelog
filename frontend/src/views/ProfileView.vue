@@ -414,11 +414,14 @@ async function handleSaveProfile(): Promise<void> {
     }
     // Если пароль НЕ меняется, НЕ добавляем его в updateData
 
-    // Обработка необязательных полей - пустые строки отправляем как undefined для удаления
-    if (profileForm.middleName !== undefined && profileForm.middleName !== null) {
-      const trimmed = profileForm.middleName.trim();
-      updateData.middleName = trimmed !== '' ? trimmed : undefined;
-    }
+    // Обработка необязательных полей - пустые строки отправляем как пустые строки для удаления
+    // Отчество - всегда отправляем, даже если пустое (для удаления)
+    // Отправляем пустую строку, сервер обработает как null
+    const middleNameValue = profileForm.middleName !== undefined && profileForm.middleName !== null 
+      ? profileForm.middleName.trim() 
+      : '';
+    updateData.middleName = middleNameValue;
+    
     // Роль - ВСЕГДА отправляем, даже если пустая (для удаления)
     // Если поле пустое, отправляем пустую строку, сервер обработает как null
     const roleValue = profileForm.role !== undefined && profileForm.role !== null 
@@ -426,10 +429,13 @@ async function handleSaveProfile(): Promise<void> {
       : '';
     // Всегда отправляем role, даже если пустой - это нужно для удаления
     updateData.role = roleValue;
-    if (profileForm.phone !== undefined && profileForm.phone !== null) {
-      const trimmed = profileForm.phone.trim();
-      updateData.phone = trimmed !== '' ? trimmed : undefined;
-    }
+    
+    // Телефон - всегда отправляем, даже если пустое (для удаления)
+    // Отправляем пустую строку, сервер обработает как null
+    const phoneValue = profileForm.phone !== undefined && profileForm.phone !== null 
+      ? profileForm.phone.trim() 
+      : '';
+    updateData.phone = phoneValue;
     if (profileForm.birthDate !== undefined && profileForm.birthDate !== null) {
       updateData.birthDate = profileForm.birthDate !== '' ? profileForm.birthDate : undefined;
     }
