@@ -444,37 +444,13 @@
               <div class="project-card-title">{{ project.name }}</div>
               <div
                 class="project-card-menu"
-                @click.stop="toggleProjectMenu(project.id)"
+                @click.stop="toggleProjectMenu(project.id, $event)"
               >
                 <svg viewBox="0 0 3 15" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <circle cx="1.5" cy="2.5" r="1.5" fill="#292D32" />
                   <circle cx="1.5" cy="7.5" r="1.5" fill="#292D32" />
                   <circle cx="1.5" cy="12.5" r="1.5" fill="#292D32" />
                 </svg>
-                <div
-                  v-if="activeProjectMenuId === project.id"
-                  class="project-card-context-menu"
-                  @click.stop
-                >
-                  <div
-                    class="project-card-context-item"
-                    @click="goToProject(project.id)"
-                  >
-                    <span>перейти</span>
-                  </div>
-                  <div
-                    class="project-card-context-item"
-                    @click="editProject(project.id)"
-                  >
-                    <span>изменить</span>
-                  </div>
-                  <div
-                    class="project-card-context-item delete"
-                    @click="deleteProjectHandler(project.id)"
-                  >
-                    <span>удалить</span>
-                  </div>
-                </div>
               </div>
             </div>
           </div>
@@ -755,6 +731,36 @@
         </div>
       </div>
     </div>
+
+    <!-- Контекстное меню проекта (вне карточки для правильного позиционирования) -->
+    <div
+      v-if="activeProjectMenuId && menuPosition"
+      class="project-card-context-menu"
+      :style="{
+        top: `${menuPosition.top}px`,
+        right: `${menuPosition.right}px`,
+      }"
+      @click.stop
+    >
+      <div
+        class="project-card-context-item"
+        @click="activeProjectMenuId ? goToProject(activeProjectMenuId) : null"
+      >
+        <span>перейти</span>
+      </div>
+      <div
+        class="project-card-context-item"
+        @click="activeProjectMenuId ? editProject(activeProjectMenuId) : null"
+      >
+        <span>изменить</span>
+      </div>
+      <div
+        class="project-card-context-item delete"
+        @click="activeProjectMenuId ? deleteProjectHandler(activeProjectMenuId) : null"
+      >
+        <span>удалить</span>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -860,6 +866,7 @@ const selectedColor = ref('#c2c7f3');
 const scrollbarThumb = ref<HTMLElement | null>(null);
 const editingProjectId = ref<string | null>(null);
 const activeProjectMenuId = ref<string | null>(null);
+const menuPosition = ref<{ top: number; right: number } | null>(null);
 const isDeleteConfirmModalOpen = ref(false);
 const projectToDelete = ref<Project | null>(null);
 
@@ -1382,8 +1389,8 @@ async function submitCreateProject() {
   }
 
   try {
-    // Если редактируем проект
-    if (editingProjectId.value !== null) {
+  // Если редактируем проект
+  if (editingProjectId.value !== null) {
       const updateData: ProjectUpdateRequest = {
         name,
         description: description || undefined,
@@ -1395,12 +1402,12 @@ async function submitCreateProject() {
       const projectIndex = projects.value.findIndex((p) => p.id === editingProjectId.value);
       if (projectIndex !== -1) {
         projects.value[projectIndex] = transformApiProject(updatedProject);
-      }
-      closeCreateProjectModal();
-      return;
     }
+    closeCreateProjectModal();
+    return;
+  }
 
-    // Создаем новый проект
+  // Создаем новый проект
     const createData: ProjectCreateRequest = {
       name,
       description: description || undefined,
@@ -1437,11 +1444,19 @@ async function submitCreateProject() {
 }
 
 // Функции для работы с контекстным меню проектов
-function toggleProjectMenu(projectId: string) {
+function toggleProjectMenu(projectId: string, event: MouseEvent) {
   if (activeProjectMenuId.value === projectId) {
     activeProjectMenuId.value = null;
+    menuPosition.value = null;
   } else {
     activeProjectMenuId.value = projectId;
+    // Вычисляем позицию меню относительно кнопки
+    const button = event.currentTarget as HTMLElement;
+    const rect = button.getBoundingClientRect();
+    menuPosition.value = {
+      top: rect.bottom + 8, // 8px отступ от кнопки
+      right: window.innerWidth - rect.right, // Правый край относительно viewport
+    };
   }
 }
 
@@ -1453,12 +1468,14 @@ function handleClickOutsideProjectMenu(event: MouseEvent) {
     !target.closest('.project-card-context-menu')
   ) {
     activeProjectMenuId.value = null;
+    menuPosition.value = null;
   }
 }
 
 // Переход к проекту
 function goToProject(projectId: string) {
   activeProjectMenuId.value = null;
+  menuPosition.value = null;
   // TODO: Реализовать переход к проекту
   console.log('Переход к проекту:', projectId);
   // window.location.href = `#project-${projectId}`;
@@ -1467,6 +1484,7 @@ function goToProject(projectId: string) {
 // Редактирование проекта
 function editProject(projectId: string) {
   activeProjectMenuId.value = null;
+  menuPosition.value = null;
   const project = projects.value.find((p) => p.id === projectId);
   if (project) {
     openEditProjectModal(project);
@@ -1476,6 +1494,7 @@ function editProject(projectId: string) {
 // Удаление проекта
 function deleteProjectHandler(projectId: string) {
   activeProjectMenuId.value = null;
+  menuPosition.value = null;
   const project = projects.value.find((p) => p.id === projectId);
   if (!project) return;
 
@@ -1490,11 +1509,11 @@ async function confirmDelete() {
 
   try {
     await deleteProject(projectToDelete.value.id);
-    const index = projects.value.findIndex((p) => p.id === projectToDelete.value!.id);
-    if (index > -1) {
-      projects.value.splice(index, 1);
-    }
-    closeDeleteConfirmModal();
+  const index = projects.value.findIndex((p) => p.id === projectToDelete.value!.id);
+  if (index > -1) {
+    projects.value.splice(index, 1);
+  }
+  closeDeleteConfirmModal();
   } catch (error: any) {
     console.error('Ошибка при удалении проекта:', error);
     const errorMessage = error.data?.detail || error.message || 'Не удалось удалить проект. Попробуйте еще раз.';
@@ -1532,6 +1551,15 @@ function handleResize() {
     // Восстанавливаем скролл при переходе на десктоп
     document.body.style.overflow = '';
   }
+  // Закрываем контекстное меню при изменении размера окна
+  activeProjectMenuId.value = null;
+  menuPosition.value = null;
+}
+
+// Функция для закрытия меню при прокрутке
+function handleScroll() {
+  activeProjectMenuId.value = null;
+  menuPosition.value = null;
 }
 
 onMounted(() => {
@@ -1539,6 +1567,7 @@ onMounted(() => {
   document.addEventListener('click', handleClickOutside);
   document.addEventListener('click', handleClickOutsideProjectMenu);
   window.addEventListener('resize', handleResize);
+  window.addEventListener('scroll', handleScroll, { passive: true });
 });
 
 onUnmounted(() => {
@@ -3125,6 +3154,13 @@ onUnmounted(() => {
   overflow: hidden;
 }
 
+/* Разрешаем overflow для области с меню */
+.project-card-header {
+  overflow: visible;
+  position: relative;
+  z-index: 1;
+}
+
 .project-card::before {
   content: '';
   position: absolute;
@@ -3190,6 +3226,8 @@ onUnmounted(() => {
   flex: 1;
   min-width: 0;
   position: relative;
+  overflow: visible; /* Позволяем меню выходить за границы */
+  z-index: 1;
 }
 
 .project-card-menu {
@@ -3197,6 +3235,8 @@ onUnmounted(() => {
   height: clamp(1.25rem, 2vw, 1.5rem);
   display: flex;
   align-items: center;
+  position: relative;
+  z-index: 2; /* Выше обертки */
   justify-content: center;
   flex-shrink: 0;
   cursor: pointer;
@@ -3226,9 +3266,7 @@ onUnmounted(() => {
 }
 
 .project-card-context-menu {
-  position: absolute;
-  top: calc(100% + clamp(0.5rem, 1vw, 0.75rem));
-  right: 0;
+  position: fixed; /* Фиксированное позиционирование относительно viewport */
   background: rgba(145, 33, 56, 0.95);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
@@ -3240,7 +3278,7 @@ onUnmounted(() => {
   flex-direction: column;
   gap: clamp(0.25rem, 0.5vw, 0.375rem);
   min-width: clamp(10rem, 20vw, 12.5rem);
-  z-index: 1000;
+  z-index: 10000; /* Очень высокий z-index, чтобы быть поверх всех карточек */
   animation: fadeInDown 0.2s ease-out;
 }
 

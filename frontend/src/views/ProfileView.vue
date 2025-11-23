@@ -13,15 +13,15 @@
         <div class="profile-card">
           <!-- Аватар -->
           <div class="profile-avatar-wrapper">
-            <AvatarUploader
-              ref="avatarUploaderRef"
-              :avatar-url="avatarUrl"
-              @upload="handleAvatarUpload"
-              @delete="handleAvatarDelete"
-              @error="handleAvatarError"
-            />
-            <div v-if="avatarError" class="avatar-error-message">{{ avatarError }}</div>
-          </div>
+          <AvatarUploader
+            ref="avatarUploaderRef"
+            :avatar-url="avatarUrl"
+            @upload="handleAvatarUpload"
+            @delete="handleAvatarDelete"
+            @error="handleAvatarError"
+          />
+          <div v-if="avatarError" class="avatar-error-message">{{ avatarError }}</div>
+        </div>
 
           <!-- Информация о пользователе -->
           <div class="profile-info">
@@ -49,11 +49,11 @@
           <div class="profile-divider"></div>
 
           <!-- Кнопка сохранения -->
-          <button 
-            class="save-btn" 
-            @click="handleSaveProfile"
+        <button 
+          class="save-btn" 
+          @click="handleSaveProfile"
             :disabled="isSaving || isLoading"
-          >
+        >
             <span v-if="isSaving" class="save-btn-content">
               <span class="save-btn-spinner"></span>
               сохраняю...
@@ -66,7 +66,7 @@
               </svg>
               сохранить изменения
             </span>
-          </button>
+        </button>
 
           <!-- Сообщение об успехе -->
           <transition name="fade">
@@ -195,7 +195,7 @@
         <!-- Контакты -->
         <div class="form-section">
           <div class="form-section-header">
-            <h2 class="form-section-title">контакты</h2>
+          <h2 class="form-section-title">контакты</h2>
             <p class="form-section-description">куда отправлять уведомления и как с вами связаться</p>
           </div>
           
@@ -246,44 +246,44 @@
           <div v-show="isPasswordSectionOpen" class="form-section-content">
             <div class="form-grid">
               <div class="form-field form-field--full">
-                <label class="form-label">текущий пароль</label>
-                <input
-                  v-model="passwordForm.currentPassword"
-                  type="password"
-                  class="form-input"
+              <label class="form-label">текущий пароль</label>
+              <input
+                v-model="passwordForm.currentPassword"
+                type="password"
+                class="form-input"
                   :class="{ 'form-input--error': passwordErrors.currentPassword, 'form-input--filled': passwordForm.currentPassword }"
                   placeholder="введите текущий пароль"
-                />
-                <span v-if="passwordErrors.currentPassword" class="form-error">{{ passwordErrors.currentPassword }}</span>
-              </div>
-              <div class="form-field">
-                <label class="form-label">новый пароль</label>
-                <input
-                  v-model="passwordForm.newPassword"
-                  type="password"
-                  class="form-input"
+              />
+              <span v-if="passwordErrors.currentPassword" class="form-error">{{ passwordErrors.currentPassword }}</span>
+            </div>
+            <div class="form-field">
+              <label class="form-label">новый пароль</label>
+              <input
+                v-model="passwordForm.newPassword"
+                type="password"
+                class="form-input"
                   :class="{ 'form-input--error': passwordErrors.newPassword, 'form-input--filled': passwordForm.newPassword }"
                   placeholder="минимум 8 символов"
-                />
-                <span v-if="passwordErrors.newPassword" class="form-error">{{ passwordErrors.newPassword }}</span>
+              />
+              <span v-if="passwordErrors.newPassword" class="form-error">{{ passwordErrors.newPassword }}</span>
                 <p v-if="passwordForm.newPassword && !passwordErrors.newPassword" class="form-hint form-hint--success">
                   <svg class="hint-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                   </svg>
                   отличный пароль!
                 </p>
-              </div>
-              <div class="form-field">
+            </div>
+            <div class="form-field">
                 <label class="form-label">повторите новый пароль</label>
-                <input
-                  v-model="passwordForm.confirmPassword"
-                  type="password"
-                  class="form-input"
+              <input
+                v-model="passwordForm.confirmPassword"
+                type="password"
+                class="form-input"
                   :class="{ 'form-input--error': passwordErrors.confirmPassword, 'form-input--filled': passwordForm.confirmPassword }"
                   placeholder="для подтверждения"
-                />
-                <span v-if="passwordErrors.confirmPassword" class="form-error">{{ passwordErrors.confirmPassword }}</span>
-              </div>
+              />
+              <span v-if="passwordErrors.confirmPassword" class="form-error">{{ passwordErrors.confirmPassword }}</span>
+            </div>
             </div>
             <p class="form-section-note">
               <svg class="note-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
