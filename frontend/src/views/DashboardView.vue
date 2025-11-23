@@ -340,6 +340,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue';
+import { getProfile, type Profile } from '@/api/profile';
 
 // Типы данных
 interface UserData {
@@ -374,9 +375,39 @@ interface Goal {
 
 // Данные пользователя
 const userData = ref<UserData>({
-  name: 'Наташа',
-  role: 'Менеджер',
-  avatar: '/images/avatars/photo_2025-11-23_17-19-15.jpg',
+  name: 'Пользователь',
+  role: '',
+  avatar: '',
+});
+
+// Загрузка профиля пользователя
+async function loadProfile(): Promise<void> {
+  try {
+    const profile = await getProfile();
+    
+    // Используем displayName, если он есть, иначе firstName, иначе login
+    userData.value.name = profile.displayName || profile.firstName || profile.login || 'Пользователь';
+    userData.value.role = profile.role || '';
+    
+    // Формируем URL аватара
+    if (profile.avatar) {
+      if (profile.avatar.startsWith('http')) {
+        userData.value.avatar = profile.avatar;
+      } else if (profile.avatar.startsWith('/')) {
+        const baseUrl = import.meta.env.VITE_API_BASE_URL?.replace('/api/v1', '') || 'http://localhost:3000';
+        userData.value.avatar = `${baseUrl}${profile.avatar}`;
+      } else {
+        const baseUrl = import.meta.env.VITE_API_BASE_URL?.replace('/api/v1', '') || 'http://localhost:3000';
+        userData.value.avatar = `${baseUrl}/api/v1/avatars/${profile.avatar}`;
+      }
+    }
+  } catch (error) {
+    console.error('Ошибка загрузки профиля:', error);
+  }
+}
+
+onMounted(() => {
+  loadProfile();
 });
 
 // Метрики

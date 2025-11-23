@@ -13,4 +13,7 @@ coverage/
 .env.local
 .env.*.local
 
+# Uploads
+api/uploads/
+
 
