@@ -137,9 +137,9 @@ interface DeadlineData {
 
 // Заглушки данных
 const userData = ref<UserData>({
-  name: 'Ковтун Кирилл',
+  name: 'Наташа Гриднева',
   role: 'Менеджер',
-  avatar: '/images/backgrounds/bg.jpg', // Временная заглушка, будет из API
+  avatar: '/images/avatars/photo_2025-11-23_17-19-15.jpg', // Временная заглушка, будет из API
 });
 
 const workloadData = ref<WorkloadData>({

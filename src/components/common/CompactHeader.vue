@@ -60,7 +60,7 @@
                 <img
                   v-if="!isProfileOpen"
                   key="avatar"
-                  src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop"
+                  src="/images/avatars/photo_2025-11-23_17-19-15.jpg"
                   alt="avatar"
                   class="actions__avatar-img"
                 />
@@ -96,7 +96,7 @@
             <div class="profile-panel__avatar-section">
               <img
                 class="profile-panel__avatar-img"
-                src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop"
+                src="/images/avatars/photo_2025-11-23_17-19-15.jpg"
                 alt="avatar"
               />
               <div class="profile-panel__info">
