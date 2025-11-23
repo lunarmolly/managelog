@@ -256,9 +256,19 @@ const progressLabelPositions = computed(() => {
   left: 0;
   right: 0;
   height: 89px;
-  background: linear-gradient(to bottom, rgba(145, 33, 56, 0.8), rgba(4, 9, 16, 0.8));
-  backdrop-filter: blur(25px);
-  -webkit-backdrop-filter: blur(25px);
+  background: linear-gradient(
+    180deg,
+    rgba(145, 33, 56, 0.98) 0%,
+    rgba(145, 33, 56, 0.92) 40%,
+    rgba(20, 15, 25, 0.98) 100%
+  );
+  backdrop-filter: blur(35px) saturate(200%);
+  -webkit-backdrop-filter: blur(35px) saturate(200%);
+  box-shadow: 
+    0 -8px 32px rgba(145, 33, 56, 0.5),
+    0 -2px 8px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -276,19 +286,41 @@ const progressLabelPositions = computed(() => {
   justify-content: center;
   color: #e1eaf8;
   z-index: 1;
+  padding: 12px 20px 16px;
+  text-align: center;
 }
 
 .user-card-name {
   font-size: 24px;
   font-weight: 500;
   font-family: 'Inter', Arial, sans-serif;
-  margin-bottom: 4px;
+  line-height: 1.25;
+  letter-spacing: -0.015em;
+  margin: 0 0 4px 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  color: #ffffff;
 }
 
 .user-card-role {
   font-size: 12px;
   font-weight: 300;
   font-family: 'Inter', Arial, sans-serif;
+  line-height: 1.5;
+  letter-spacing: 0.02em;
+  margin: 0;
+  opacity: 0.85;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
 }
 
 /* Контейнер метрик */
