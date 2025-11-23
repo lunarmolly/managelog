@@ -12,6 +12,7 @@ export interface IUser extends Document {
   birthDate?: Date;
   role?: string;
   phone?: string;
+  avatar?: string;
   createdAt: Date;
   updatedAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
@@ -78,6 +79,10 @@ const UserSchema = new Schema<IUser>(
       type: String,
       trim: true,
       match: [/^[+]?[(]?[0-9]{1,4}[)]?[-\s.]?[(]?[0-9]{1,4}[)]?[-\s.]?[0-9]{1,9}$/, 'Некорректный формат телефона'],
+      default: null,
+    },
+    avatar: {
+      type: String,
       default: null,
     },
   },

@@ -51,6 +51,7 @@ export async function getProfile(req: AuthRequest, res: Response): Promise<void>
       birthDate: birthDateFormatted,
       role: user.role || null,
       phone: user.phone || null,
+      avatar: user.avatar ? `/api/v1/avatars/${user.avatar}` : null,
       createdAt: user.createdAt ? user.createdAt.toISOString() : null,
       updatedAt: user.updatedAt ? user.updatedAt.toISOString() : null,
     });
@@ -294,6 +295,7 @@ export async function updateProfile(req: AuthRequest, res: Response): Promise<vo
       birthDate: birthDateFormatted,
       role: finalUser.role || null,
       phone: finalUser.phone || null,
+      avatar: finalUser.avatar ? `/api/v1/avatars/${finalUser.avatar}` : null,
       createdAt: finalUser.createdAt ? finalUser.createdAt.toISOString() : null,
       updatedAt: finalUser.updatedAt ? finalUser.updatedAt.toISOString() : null,
     });

@@ -6,6 +6,10 @@ import { connectDatabase, disconnectDatabase } from './config/database.js';
 import { swaggerSpec } from './config/swagger.js';
 import authRoutes from './routes/authRoutes.js';
 import profileRoutes from './routes/profileRoutes.js';
+import avatarRoutes from './routes/avatarRoutes.js';
+import express from 'express';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 dotenv.config();
 
@@ -109,6 +113,14 @@ app.use('/api/v1/auth', authRoutes);
 
 // Роуты профиля
 app.use('/api/v1/profile', profileRoutes);
+
+// Роуты аватара
+app.use('/api/v1/avatar', avatarRoutes);
+
+// Статическая раздача аватаров (должна быть ДО роутов аватара, чтобы не конфликтовать)
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+app.use('/api/v1/avatars', express.static(path.join(__dirname, '../uploads/avatars')));
 
 // Обработка 404
 app.use((req: Request, res: Response) => {

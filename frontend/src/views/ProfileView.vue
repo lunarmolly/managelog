@@ -11,17 +11,11 @@
       <!-- Левая колонка: Аватар и информация -->
       <div class="profile-sidebar">
         <div class="profile-avatar-section">
-          <div class="profile-avatar-container">
-            <div class="profile-avatar">
-              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 12C14.7614 12 17 9.76142 17 7C17 4.23858 14.7614 2 12 2C9.23858 2 7 4.23858 7 7C7 9.76142 9.23858 12 12 12Z" fill="#912138"/>
-                <path d="M12.0002 14.5C6.99016 14.5 2.95016 17.86 2.95016 22C2.95016 22.28 3.17016 22.5 3.45016 22.5H20.5502C20.8302 22.5 21.0502 22.28 21.0502 22C21.0502 17.86 17.0102 14.5 12.0002 14.5Z" fill="#912138"/>
-              </svg>
-            </div>
-          </div>
-          <button class="change-photo-btn" @click="handleChangePhoto">
-            изменить фото
-          </button>
+          <AvatarUploader
+            :avatar-url="avatarUrl"
+            @upload="handleAvatarUpload"
+            @delete="handleAvatarDelete"
+          />
           <div class="profile-name">{{ displayName }}</div>
           <div class="profile-username">@{{ profileForm.login }}</div>
           <div class="profile-role">{{ profileForm.role || 'роль не указана' }}</div>
@@ -213,8 +207,9 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { getProfile, updateProfile, type Profile, type ProfileUpdateRequest } from '@/api/profile';
+import { getProfile, updateProfile, uploadAvatar, deleteAvatar, type Profile, type ProfileUpdateRequest } from '@/api/profile';
 import { login, type LoginRequest } from '@/api/auth';
+import AvatarUploader from '@/components/profile/AvatarUploader.vue';
 
 const router = useRouter();
 
@@ -242,6 +237,7 @@ const passwordErrors = reactive<Record<string, string>>({});
 const isSaving = ref(false);
 const isLoading = ref(true);
 const saveSuccessMessage = ref<string>('');
+const avatarUrl = ref<string | null>(null);
 
 const roleOptions = ['менеджер', 'разработчик', 'дизайнер', 'аналитик'];
 const isRoleMenuOpen = ref(false);
@@ -282,6 +278,24 @@ async function loadProfile(): Promise<void> {
     profileForm.role = (profile.role && profile.role.trim()) || '';
     profileForm.phone = (profile.phone && profile.phone.trim()) || '';
     
+    // Аватар - формируем полный URL если есть
+    if (profile.avatar) {
+      // Если avatar уже содержит полный URL, используем его, иначе формируем
+      if (profile.avatar.startsWith('http')) {
+        avatarUrl.value = profile.avatar;
+      } else if (profile.avatar.startsWith('/')) {
+        // Если начинается с /, добавляем базовый URL
+        const baseUrl = import.meta.env.VITE_API_BASE_URL?.replace('/api/v1', '') || 'http://localhost:3000';
+        avatarUrl.value = `${baseUrl}${profile.avatar}`;
+      } else {
+        // Если просто имя файла, формируем полный путь
+        const baseUrl = import.meta.env.VITE_API_BASE_URL?.replace('/api/v1', '') || 'http://localhost:3000';
+        avatarUrl.value = `${baseUrl}/api/v1/avatars/${profile.avatar}`;
+      }
+    } else {
+      avatarUrl.value = null;
+    }
+    
     // birthDate: если приходит строка, используем её; если Date, форматируем
     if (profile.birthDate) {
       if (typeof profile.birthDate === 'string') {
@@ -318,7 +332,9 @@ async function loadProfile(): Promise<void> {
       message: error.message,
       data: error.data,
     });
-    if (error.status === 401) {
+    if (error.status === 401 || error.status === 403) {
+      // Токен недействителен или истек - перенаправляем на страницу авторизации
+      localStorage.removeItem('auth_tokens');
       router.push('/auth');
     } else {
       alert('Не удалось загрузить профиль. Проверьте консоль для деталей.');
@@ -503,7 +519,9 @@ async function handleSaveProfile(): Promise<void> {
       }
     } else if (error.status === 409) {
       profileErrors.email = error.data?.detail || 'Пользователь с таким email уже существует';
-    } else if (error.status === 401) {
+    } else if (error.status === 401 || error.status === 403) {
+      // Токен недействителен или истек - перенаправляем на страницу авторизации
+      localStorage.removeItem('auth_tokens');
       router.push('/auth');
     } else {
       profileErrors.email = error.data?.detail || error.message || 'Неизвестная ошибка';
@@ -522,9 +540,59 @@ function selectRole(role: string): void {
   isRoleMenuOpen.value = false;
 }
 
-function handleChangePhoto(): void {
-  // TODO: Реализовать загрузку фото
-  alert('Функция загрузки фото будет реализована позже');
+async function handleAvatarUpload(file: File): Promise<void> {
+  try {
+    isSaving.value = true;
+    const result = await uploadAvatar(file);
+    
+    // Обновляем URL аватара
+    if (result.avatar) {
+      if (result.avatar.startsWith('http')) {
+        avatarUrl.value = result.avatar;
+      } else if (result.avatar.startsWith('/')) {
+        const baseUrl = import.meta.env.VITE_API_BASE_URL?.replace('/api/v1', '') || 'http://localhost:3000';
+        avatarUrl.value = `${baseUrl}${result.avatar}`;
+      } else {
+        const baseUrl = import.meta.env.VITE_API_BASE_URL?.replace('/api/v1', '') || 'http://localhost:3000';
+        avatarUrl.value = `${baseUrl}/api/v1/avatars/${result.avatar}`;
+      }
+    }
+    
+    // Перезагружаем профиль для получения обновленных данных
+    await loadProfile();
+    
+    saveSuccessMessage.value = 'Аватар успешно загружен';
+    setTimeout(() => {
+      saveSuccessMessage.value = '';
+    }, 5000);
+  } catch (error: any) {
+    console.error('Ошибка загрузки аватара:', error);
+    alert(error.data?.detail || error.message || 'Ошибка при загрузке аватара');
+  } finally {
+    isSaving.value = false;
+  }
+}
+
+async function handleAvatarDelete(): Promise<void> {
+  try {
+    isSaving.value = true;
+    await deleteAvatar();
+    
+    avatarUrl.value = null;
+    
+    // Перезагружаем профиль для получения обновленных данных
+    await loadProfile();
+    
+    saveSuccessMessage.value = 'Аватар успешно удален';
+    setTimeout(() => {
+      saveSuccessMessage.value = '';
+    }, 5000);
+  } catch (error: any) {
+    console.error('Ошибка удаления аватара:', error);
+    alert(error.data?.detail || error.message || 'Ошибка при удалении аватара');
+  } finally {
+    isSaving.value = false;
+  }
 }
 
 // Закрытие меню роли при клике вне его

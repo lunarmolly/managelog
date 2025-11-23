@@ -11,6 +11,7 @@ export interface Profile {
   birthDate?: string | null;
   role?: string | null;
   phone?: string | null;
+  avatar?: string | null;
   createdAt: string | null;
   updatedAt: string | null;
 }
@@ -75,10 +76,14 @@ function getAuthHeaders(): HeadersInit {
       const parsedTokens = JSON.parse(tokens);
       if (parsedTokens.access_token) {
         headers['Authorization'] = `Bearer ${parsedTokens.access_token}`;
+      } else {
+        console.warn('Access token not found in stored tokens');
       }
     } catch (e) {
       console.error('Error parsing tokens:', e);
     }
+  } else {
+    console.warn('No auth tokens found in localStorage');
   }
 
   return headers;
@@ -96,6 +101,38 @@ export async function updateProfile(data: ProfileUpdateRequest): Promise<Profile
     method: 'PUT',
     headers: getAuthHeaders(),
     body: JSON.stringify(data),
+  });
+}
+
+export async function uploadAvatar(file: File): Promise<{ avatar: string; message: string }> {
+  const formData = new FormData();
+  formData.append('avatar', file);
+
+  const tokens = localStorage.getItem('auth_tokens');
+  const headers: HeadersInit = {};
+
+  if (tokens) {
+    try {
+      const parsedTokens = JSON.parse(tokens);
+      if (parsedTokens.access_token) {
+        headers['Authorization'] = `Bearer ${parsedTokens.access_token}`;
+      }
+    } catch (e) {
+      console.error('Error parsing tokens:', e);
+    }
+  }
+
+  return handleRequest<{ avatar: string; message: string }>(`${API_BASE_URL}/avatar`, {
+    method: 'POST',
+    headers,
+    body: formData,
+  });
+}
+
+export async function deleteAvatar(): Promise<{ message: string }> {
+  return handleRequest<{ message: string }>(`${API_BASE_URL}/avatar`, {
+    method: 'DELETE',
+    headers: getAuthHeaders(),
   });
 }
 
