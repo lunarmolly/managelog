@@ -31,13 +31,19 @@
                 fill="currentColor"
               />
               <path
-                v-else
+                v-else-if="item.path === '/crm'"
                 :d="item.iconPath"
                 stroke="currentColor"
                 stroke-width="1.5"
                 fill="none"
                 stroke-linecap="round"
                 stroke-linejoin="round"
+              />
+              <path
+                v-else
+                :d="item.iconPath"
+                fill="currentColor"
+                fill-rule="evenodd"
               />
             </svg>
           </router-link>
