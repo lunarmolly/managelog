@@ -786,7 +786,7 @@ watch(
 );
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .tasks-view {
   display: flex;
   min-height: 100vh;
