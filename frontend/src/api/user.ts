@@ -31,6 +31,7 @@ export interface CompanyUser {
   lastName?: string | null;
   displayName?: string | null;
   role?: string | null;
+  phone?: string | null;
   avatar?: string | null;
 }
 
