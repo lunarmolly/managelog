@@ -566,7 +566,7 @@ const loginLink = computed(() => {
   if (!createdEmployeeCredentials.value?.login || !createdEmployeeCredentials.value?.password) {
     return '';
   }
-  const baseUrl = window.location.origin;
+  const baseUrl = 'https://app.managelog.ru';
   return `${baseUrl}/auth?login=${encodeURIComponent(createdEmployeeCredentials.value.login)}&password=${encodeURIComponent(createdEmployeeCredentials.value.password)}`;
 });
 
