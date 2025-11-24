@@ -157,7 +157,7 @@
                 >
                   <img
                     v-if="participant.avatar"
-                    :src="participant.avatar"
+                    :src="getAvatarUrl(participant.avatar)"
                     :alt="participant.displayName || participant.firstName || ''"
                   />
                   <div v-else class="participant-placeholder">
@@ -357,7 +357,7 @@
                       class="task-modal-participant-option"
                       @click="selectCreator(user.id)"
                     >
-                      <img v-if="user.avatar" :src="user.avatar" :alt="user.displayName || user.firstName || ''" />
+                      <img v-if="user.avatar" :src="getAvatarUrl(user.avatar)" :alt="user.displayName || user.firstName || ''" />
                       <div v-else class="task-modal-participant-avatar-placeholder">
                         {{ (user.displayName || user.firstName || user.login || '?')[0].toUpperCase() }}
                       </div>
@@ -393,7 +393,7 @@
                       class="task-modal-participant-option"
                       @click="selectAssignee(user.id)"
                     >
-                      <img v-if="user.avatar" :src="user.avatar" :alt="user.displayName || user.firstName || ''" />
+                      <img v-if="user.avatar" :src="getAvatarUrl(user.avatar)" :alt="user.displayName || user.firstName || ''" />
                       <div v-else class="task-modal-participant-avatar-placeholder">
                         {{ (user.displayName || user.firstName || user.login || '?')[0].toUpperCase() }}
                       </div>
@@ -430,7 +430,7 @@
                       @click="toggleWatcher(user.id)"
                     >
                       <input type="checkbox" :checked="newTask.watcherIds.includes(user.id)" @change.stop />
-                      <img v-if="user.avatar" :src="user.avatar" :alt="user.displayName || user.firstName || ''" />
+                      <img v-if="user.avatar" :src="getAvatarUrl(user.avatar)" :alt="user.displayName || user.firstName || ''" />
                       <div v-else class="task-modal-participant-avatar-placeholder">
                         {{ (user.displayName || user.firstName || user.login || '?')[0].toUpperCase() }}
                       </div>
@@ -567,7 +567,7 @@
               <div class="task-modal-participant-display">
                 <img
                   v-if="selectedTask.creator.avatar"
-                  :src="selectedTask.creator.avatar"
+                  :src="getAvatarUrl(selectedTask.creator.avatar)"
                   :alt="selectedTask.creator.displayName || ''"
                   class="task-modal-participant-avatar"
                 />
@@ -579,7 +579,7 @@
               <div class="task-modal-participant-display">
                 <img
                   v-if="selectedTask.assignee?.avatar"
-                  :src="selectedTask.assignee.avatar"
+                  :src="getAvatarUrl(selectedTask.assignee.avatar)"
                   :alt="selectedTask.assignee.displayName || ''"
                   class="task-modal-participant-avatar"
                 />
@@ -591,7 +591,7 @@
               <div class="task-modal-participant-display">
                 <img
                   v-if="selectedTask.watchers && selectedTask.watchers.length > 0 && selectedTask.watchers[0].avatar"
-                  :src="selectedTask.watchers[0].avatar"
+                  :src="getAvatarUrl(selectedTask.watchers[0].avatar)"
                   :alt="selectedTask.watchers[0].displayName || ''"
                   class="task-modal-participant-avatar"
                 />
@@ -1043,6 +1043,24 @@ function openCreateTaskModal(columnId: string) {
   creatorSearchQuery.value = '';
   assigneeSearchQuery.value = '';
   watchersSearchQuery.value = '';
+}
+
+function getAvatarUrl(avatar: string | null | undefined): string {
+  if (!avatar) return '';
+  
+  // Если уже полный URL, возвращаем как есть
+  if (avatar.startsWith('http')) {
+    return avatar;
+  }
+  
+  // Если относительный путь, формируем полный URL
+  const baseUrl = import.meta.env.VITE_API_BASE_URL?.replace('/api/v1', '') || 'http://localhost:3000';
+  if (avatar.startsWith('/')) {
+    return `${baseUrl}${avatar}`;
+  }
+  
+  // Если просто имя файла, формируем полный путь
+  return `${baseUrl}/api/v1/avatars/${avatar}`;
 }
 
 function getCreatorName(): string {
