@@ -767,6 +767,7 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import { getProjects, createProject, updateProject, deleteProject, type Project as ApiProject, type ProjectCreateRequest, type ProjectUpdateRequest } from '@/api/projects';
+import { getCompanyUsers, type CompanyUser } from '@/api/user';
 import { useRouter } from 'vue-router';
 
 // Определение мобильного устройства
@@ -872,6 +873,12 @@ const projectToDelete = ref<Project | null>(null);
 
 // Ошибки валидации формы проекта
 const projectFormErrors = reactive<Record<string, string>>({});
+
+// Участники проекта
+const companyUsers = ref<CompanyUser[]>([]);
+const selectedParticipants = ref<string[]>([]);
+const participantSearchQuery = ref('');
+const isLoadingCompanyUsers = ref(false);
 
 // Массив иконок для проектов (хранятся на фронте)
 const projectIcons: ProjectIcon[] = [
@@ -1170,7 +1177,7 @@ function resetFilters() {
 }
 
 // Функции для работы с модальным окном создания проекта
-function openCreateProjectModal() {
+async function openCreateProjectModal() {
   editingProjectId.value = null;
   isCreateProjectModalOpen.value = true;
   projectName.value = '';
@@ -1178,6 +1185,14 @@ function openCreateProjectModal() {
   generatedDescription.value = '';
   selectedIcon.value = 'building';
   selectedColor.value = '#c2c7f3';
+  selectedParticipants.value = [];
+  participantSearchQuery.value = '';
+  
+  // Загружаем сотрудников компании, если еще не загружены
+  if (companyUsers.value.length === 0) {
+    await loadCompanyUsers();
+  }
+  
   // Блокируем скролл body при открытии модального окна
   document.body.style.overflow = 'hidden';
   nextTick(() => {
@@ -1185,14 +1200,23 @@ function openCreateProjectModal() {
   });
 }
 
-function openEditProjectModal(project: Project) {
-  editingProjectId.value = project.id;
+async function openEditProjectModal(project: Project) {
+  editingProjectId.value = project.id as string;
   isCreateProjectModalOpen.value = true;
   projectName.value = project.name;
   projectDescription.value = project.description;
   generatedDescription.value = '';
   selectedIcon.value = project.icon;
   selectedColor.value = project.color;
+  
+  // Загружаем участников проекта
+  selectedParticipants.value = Array.isArray(project.executor) ? project.executor.map(id => String(id)) : [];
+  
+  // Загружаем сотрудников компании, если еще не загружены
+  if (companyUsers.value.length === 0) {
+    await loadCompanyUsers();
+  }
+  
   // Блокируем скролл body при открытии модального окна
   document.body.style.overflow = 'hidden';
   nextTick(() => {
@@ -1206,6 +1230,8 @@ function closeCreateProjectModal() {
   projectName.value = '';
   projectDescription.value = '';
   generatedDescription.value = '';
+  selectedParticipants.value = [];
+  participantSearchQuery.value = '';
   // Очищаем ошибки
   Object.keys(projectFormErrors).forEach(key => delete projectFormErrors[key]);
   // Восстанавливаем скролл body при закрытии модального окна
@@ -1355,6 +1381,75 @@ function transformApiProject(apiProject: ApiProject): Project {
   };
 }
 
+// Загрузка сотрудников компании
+async function loadCompanyUsers(): Promise<void> {
+  try {
+    isLoadingCompanyUsers.value = true;
+    companyUsers.value = await getCompanyUsers();
+  } catch (error: any) {
+    console.error('Ошибка загрузки сотрудников компании:', error);
+    if (error.status === 401 || error.status === 403) {
+      localStorage.removeItem('auth_tokens');
+      router.push('/auth');
+    }
+  } finally {
+    isLoadingCompanyUsers.value = false;
+  }
+}
+
+// Фильтрация сотрудников по поисковому запросу
+const filteredCompanyUsers = computed(() => {
+  if (!participantSearchQuery.value.trim()) {
+    return companyUsers.value.filter(user => !selectedParticipants.value.includes(user.id));
+  }
+  const query = participantSearchQuery.value.toLowerCase().trim();
+  return companyUsers.value.filter(user => {
+    const name = (user.displayName || user.firstName || user.login || '').toLowerCase();
+    const role = (user.role || '').toLowerCase();
+    return (name.includes(query) || role.includes(query)) && !selectedParticipants.value.includes(user.id);
+  });
+});
+
+// Проверка, выбран ли участник
+function isParticipantSelected(userId: string): boolean {
+  return selectedParticipants.value.includes(userId);
+}
+
+// Переключение выбора участника
+function toggleParticipantSelection(userId: string): void {
+  const index = selectedParticipants.value.indexOf(userId);
+  if (index > -1) {
+    selectedParticipants.value.splice(index, 1);
+  } else {
+    selectedParticipants.value.push(userId);
+  }
+  participantSearchQuery.value = '';
+}
+
+// Удаление участника
+function removeParticipant(userId: string): void {
+  const index = selectedParticipants.value.indexOf(userId);
+  if (index > -1) {
+    selectedParticipants.value.splice(index, 1);
+  }
+}
+
+// Очистка выбранных участников
+function clearSelectedParticipants(): void {
+  selectedParticipants.value = [];
+}
+
+// Получение имени участника
+function getParticipantName(userId: string): string {
+  const user = companyUsers.value.find(u => u.id === userId);
+  return user ? (user.displayName || user.firstName || user.login || 'Неизвестно') : 'Неизвестно';
+}
+
+// Обработка поиска участников
+function handleParticipantSearch(): void {
+  // Поиск выполняется автоматически через computed
+}
+
 // Загрузка проектов
 async function loadProjects(): Promise<void> {
   try {
@@ -1394,6 +1489,7 @@ async function submitCreateProject() {
       const updateData: ProjectUpdateRequest = {
         name,
         description: description || undefined,
+        participants: selectedParticipants.value,
         icon: selectedIcon.value,
         color: selectedColor.value,
       };
@@ -1411,7 +1507,7 @@ async function submitCreateProject() {
     const createData: ProjectCreateRequest = {
       name,
       description: description || undefined,
-      participants: [],
+      participants: selectedParticipants.value,
       status: 'new',
       requiresAction: false,
       icon: selectedIcon.value,
@@ -3488,5 +3584,237 @@ onUnmounted(() => {
   outline: 2px solid rgba(255, 255, 255, 0.5);
   outline-offset: 2px;
   opacity: 1;
+}
+
+/* Стили для участников проекта */
+.modal-field-label-hint {
+  font-size: clamp(0.75rem, 1.25vw, 0.875rem);
+  font-weight: 400;
+  color: rgba(225, 234, 248, 0.6);
+  margin-left: 0.5rem;
+}
+
+.participants-selector {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.75rem, 1.5vw, 1rem);
+}
+
+.participants-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: clamp(0.5rem, 1vw, 0.75rem);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: clamp(0.5rem, 1vw, 0.75rem);
+  padding: clamp(0.5rem, 1vw, 0.75rem);
+}
+
+.participants-search-icon {
+  width: 20px;
+  height: 20px;
+  color: rgba(225, 234, 248, 0.6);
+  flex-shrink: 0;
+}
+
+.participants-search-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #e1eaf8;
+  font-size: clamp(0.875rem, 1.5vw, 1rem);
+  font-family: 'Involve', Arial, sans-serif;
+}
+
+.participants-search-input::placeholder {
+  color: rgba(225, 234, 248, 0.4);
+}
+
+.participants-list {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.375rem, 0.75vw, 0.5rem);
+  max-height: 200px;
+  overflow-y: auto;
+  padding: clamp(0.5rem, 1vw, 0.75rem);
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: clamp(0.5rem, 1vw, 0.75rem);
+}
+
+.participant-item {
+  display: flex;
+  align-items: center;
+  gap: clamp(0.75rem, 1.5vw, 1rem);
+  padding: clamp(0.5rem, 1vw, 0.75rem);
+  border-radius: clamp(0.5rem, 1vw, 0.625rem);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.participant-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.participant-item.selected {
+  background: rgba(145, 33, 56, 0.3);
+  border: 1px solid rgba(145, 33, 56, 0.5);
+}
+
+.participant-avatar {
+  width: clamp(2rem, 4vw, 2.5rem);
+  height: clamp(2rem, 4vw, 2.5rem);
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: rgba(145, 33, 56, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.participant-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.participant-avatar-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #e1eaf8;
+  font-size: clamp(0.875rem, 1.5vw, 1rem);
+  font-weight: 600;
+  font-family: 'Involve', Arial, sans-serif;
+}
+
+.participant-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.participant-name {
+  font-size: clamp(0.875rem, 1.5vw, 1rem);
+  font-weight: 500;
+  color: #e1eaf8;
+  font-family: 'Involve', Arial, sans-serif;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.participant-role {
+  font-size: clamp(0.75rem, 1.25vw, 0.875rem);
+  font-weight: 400;
+  color: rgba(225, 234, 248, 0.6);
+  font-family: 'Involve', Arial, sans-serif;
+}
+
+.participant-checkbox {
+  width: clamp(1.25rem, 2.5vw, 1.5rem);
+  height: clamp(1.25rem, 2.5vw, 1.5rem);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.participant-item.selected .participant-checkbox {
+  background: #912138;
+  border-color: #912138;
+}
+
+.participants-empty {
+  text-align: center;
+  padding: clamp(1rem, 2vw, 1.5rem);
+  color: rgba(225, 234, 248, 0.5);
+  font-size: clamp(0.875rem, 1.5vw, 1rem);
+  font-family: 'Involve', Arial, sans-serif;
+}
+
+.selected-participants {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.5rem, 1vw, 0.75rem);
+}
+
+.selected-participants-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.selected-participants-label {
+  font-size: clamp(0.75rem, 1.25vw, 0.875rem);
+  font-weight: 500;
+  color: rgba(225, 234, 248, 0.7);
+  font-family: 'Involve', Arial, sans-serif;
+}
+
+.selected-participants-clear {
+  background: transparent;
+  border: none;
+  color: #912138;
+  font-size: clamp(0.75rem, 1.25vw, 0.875rem);
+  font-family: 'Involve', Arial, sans-serif;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.selected-participants-clear:hover {
+  background: rgba(145, 33, 56, 0.2);
+}
+
+.selected-participants-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: clamp(0.5rem, 1vw, 0.75rem);
+}
+
+.selected-participant-tag {
+  display: flex;
+  align-items: center;
+  gap: clamp(0.5rem, 1vw, 0.75rem);
+  padding: clamp(0.375rem, 0.75vw, 0.5rem) clamp(0.75rem, 1.5vw, 1rem);
+  background: rgba(145, 33, 56, 0.3);
+  border: 1px solid rgba(145, 33, 56, 0.5);
+  border-radius: clamp(1.5rem, 3vw, 2rem);
+  font-size: clamp(0.75rem, 1.25vw, 0.875rem);
+  font-weight: 400;
+  color: #e1eaf8;
+  font-family: 'Involve', Arial, sans-serif;
+}
+
+.selected-participant-remove {
+  background: transparent;
+  border: none;
+  color: rgba(225, 234, 248, 0.7);
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.selected-participant-remove:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #e1eaf8;
 }
 </style>

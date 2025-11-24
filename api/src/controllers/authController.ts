@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { User } from '../models/User.js';
+import { Company } from '../models/Company.js';
 import { generateAccessToken, generateRefreshToken, TokenPayload } from '../utils/jwt.js';
 import { validateLoginRequest, validateRegisterRequest } from '../utils/validation.js';
 import { AuthRequest } from '../middleware/auth.js';
@@ -108,9 +109,9 @@ export async function register(req: Request, res: Response): Promise<void> {
       return;
     }
 
-    const { email, login, password, firstName, lastName } = req.body;
+    const { email, login, password, firstName, lastName, companyName } = req.body;
 
-    // Проверка на существование пользователя
+    // Проверка на существование пользователя (логин и email должны быть уникальны)
     const existingUser = await User.findOne({
       $or: [{ email }, { login }],
     });
@@ -126,7 +127,33 @@ export async function register(req: Request, res: Response): Promise<void> {
       return;
     }
 
-    // Создание нового пользователя
+    // Проверка на существование компании (название должно быть уникальным)
+    const existingCompany = await Company.findOne({
+      name: companyName.trim(),
+    });
+
+    if (existingCompany) {
+      res.status(409).json({
+        detail: 'Компания с таким названием уже существует',
+        errors: {
+          companyName: ['Компания с таким названием уже существует'],
+        },
+      });
+      return;
+    }
+
+    // Создание компании (обязательно при регистрации)
+    if (!companyName || !companyName.trim()) {
+      res.status(422).json({
+        detail: 'Ошибка валидации',
+        errors: {
+          companyName: ['Название компании обязательно'],
+        },
+      });
+      return;
+    }
+
+    // Создание нового пользователя (без компании пока)
     const user = new User({
       email,
       login,
@@ -138,8 +165,35 @@ export async function register(req: Request, res: Response): Promise<void> {
 
     await user.save();
 
+    // Создание компании с уже установленным владельцем
+    const company = new Company({
+      name: companyName.trim(),
+      owner: user._id,
+      members: [user._id],
+    });
+
+    await company.save();
+
+    // Обновляем пользователя - привязываем к компании
+    user.company = company._id;
+    await user.save();
+
+    // Автоматическая авторизация после регистрации
+    const tokenPayload: TokenPayload = {
+      userId: user._id.toString(),
+      email: user.email,
+      login: user.login,
+    };
+
+    const accessToken = generateAccessToken(tokenPayload);
+    const refreshToken = generateRefreshToken(tokenPayload);
+
     res.status(201).json({
       status: 'success',
+      tokens: {
+        access_token: accessToken,
+        refresh_token: refreshToken,
+      },
     });
   } catch (error: any) {
     console.error('Register error:', error);

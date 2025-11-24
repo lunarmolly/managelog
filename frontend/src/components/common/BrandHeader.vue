@@ -14,6 +14,11 @@
             <div class="logo__circle" />
             <span class="logo__text">managelog</span>
           </router-link>
+          
+          <!-- Название компании -->
+          <div v-if="companyName" class="company-name">
+            <span class="company-name__text">{{ companyName }}</span>
+          </div>
 
           <nav class="nav">
             <router-link
@@ -159,17 +164,25 @@ import { computed, ref, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { logout, clearTokens } from '../../api/auth';
 import { getProfile, type Profile } from '../../api/profile';
+import { getUserInfo, type UserInfo } from '../../api/user';
 
 const route = useRoute();
 const isProfileOpen = ref(false);
 const profile = ref<Profile | null>(null);
+const userInfo = ref<UserInfo | null>(null);
 const avatarUrl = ref<string | null>(null);
 const displayName = ref<string>('Пользователь');
+const companyName = ref<string | null>(null);
 
 async function loadProfile(): Promise<void> {
   try {
     const profileData = await getProfile();
     profile.value = profileData;
+    
+    // Загружаем информацию о пользователе (включая компанию)
+    const userData = await getUserInfo();
+    userInfo.value = userData;
+    companyName.value = userData.company?.name || null;
     
     // Устанавливаем отображаемое имя
     displayName.value = profileData.displayName || profileData.firstName || profileData.login || 'Пользователь';

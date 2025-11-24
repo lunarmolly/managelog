@@ -89,6 +89,14 @@ export function validateRegisterRequest(data: any): { isValid: boolean; errors: 
     errors.lastName = ['Фамилия может содержать только буквы кириллицы, латиницы и символ -'];
   }
 
+  if (!data.companyName) {
+    errors.companyName = ['Название компании обязательно'];
+  } else if (typeof data.companyName !== 'string' || data.companyName.trim().length === 0) {
+    errors.companyName = ['Название компании не может быть пустым'];
+  } else if (data.companyName.trim().length > 200) {
+    errors.companyName = ['Название компании должно быть не более 200 символов'];
+  }
+
   return {
     isValid: Object.keys(errors).length === 0,
     errors,

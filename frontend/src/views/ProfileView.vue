@@ -43,6 +43,16 @@
                 <span class="role-text">{{ profileForm.role || 'роль не выбрана' }}</span>
               </div>
             </div>
+            
+            <!-- Компания -->
+            <div v-if="userCompanyName" class="profile-company-wrapper">
+              <div class="profile-company-badge">
+                <svg class="company-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M3 21H21M5 21V7L12 3L19 7V21M9 9V21M15 9V21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span class="company-text">{{ userCompanyName }}</span>
+              </div>
+            </div>
           </div>
 
           <!-- Разделитель -->

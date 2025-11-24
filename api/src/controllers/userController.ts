@@ -1,5 +1,6 @@
 import { Response } from 'express';
 import { User } from '../models/User.js';
+import { Company } from '../models/Company.js';
 import { validateProfileUpdate } from '../utils/validation.js';
 import { AuthRequest } from '../middleware/auth.js';
 
@@ -13,7 +14,7 @@ export async function getUserInfo(req: AuthRequest, res: Response): Promise<void
       return;
     }
 
-    const user = await User.findById(userId).select('-password');
+    const user = await User.findById(userId).select('-password').populate('company', 'name owner');
     if (!user) {
       res.status(404).json({
         detail: 'Пользователь не найден',
@@ -38,6 +39,17 @@ export async function getUserInfo(req: AuthRequest, res: Response): Promise<void
         birthDateFormatted = date.toISOString().split('T')[0];
       }
     }
+
+    // Получаем информацию о компании
+    let companyInfo = null;
+    if (user.company) {
+      const company = user.company as any;
+      companyInfo = {
+        id: company._id.toString(),
+        name: company.name,
+        isOwner: company.owner?.toString() === userId,
+      };
+    }
     
     res.json({
       id: user._id.toString(),
@@ -51,11 +63,60 @@ export async function getUserInfo(req: AuthRequest, res: Response): Promise<void
       role: user.role || null,
       phone: user.phone || null,
       avatar: user.avatar ? `/api/v1/avatars/${user.avatar}` : null,
+      company: companyInfo,
       createdAt: user.createdAt ? user.createdAt.toISOString() : null,
       updatedAt: user.updatedAt ? user.updatedAt.toISOString() : null,
     });
   } catch (error: any) {
     console.error('Get user info error:', error);
+    res.status(500).json({
+      detail: 'Внутренняя ошибка сервера',
+    });
+  }
+}
+
+export async function getCompanyUsers(req: AuthRequest, res: Response): Promise<void> {
+  try {
+    const userId = req.user?.userId;
+    if (!userId) {
+      res.status(401).json({
+        detail: 'Пользователь не авторизован',
+      });
+      return;
+    }
+
+    const user = await User.findById(userId).select('company');
+    if (!user || !user.company) {
+      res.status(404).json({
+        detail: 'Пользователь не привязан к компании',
+      });
+      return;
+    }
+
+    // Получаем всех участников компании
+    const company = await Company.findById(user.company).populate('members', 'id email login firstName lastName displayName avatar role');
+    if (!company) {
+      res.status(404).json({
+        detail: 'Компания не найдена',
+      });
+      return;
+    }
+
+    // Формируем список пользователей
+    const users = (company.members as any[]).map((member: any) => ({
+      id: member._id.toString(),
+      email: member.email,
+      login: member.login || '',
+      firstName: member.firstName || null,
+      lastName: member.lastName || null,
+      displayName: member.displayName || member.firstName || null,
+      role: member.role || null,
+      avatar: member.avatar ? `/api/v1/avatars/${member.avatar}` : null,
+    }));
+
+    res.json(users);
+  } catch (error: any) {
+    console.error('Get company users error:', error);
     res.status(500).json({
       detail: 'Внутренняя ошибка сервера',
     });

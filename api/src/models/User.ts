@@ -13,6 +13,7 @@ export interface IUser extends Document {
   role?: string;
   phone?: string;
   avatar?: string;
+  company?: mongoose.Types.ObjectId; // Компания пользователя
   createdAt: Date;
   updatedAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
@@ -40,8 +41,8 @@ const UserSchema = new Schema<IUser>(
     password: {
       type: String,
       required: true,
-      minlength: [8, 'Пароль должен быть не менее 8 символов'],
-      maxlength: [24, 'Пароль должен быть не более 24 символов'],
+      // Не используем minlength/maxlength здесь, т.к. после хеширования пароль будет длинным
+      // Валидация длины пароля выполняется на уровне приложения в validateRegisterRequest
     },
     firstName: {
       type: String,
@@ -85,11 +86,19 @@ const UserSchema = new Schema<IUser>(
       type: String,
       default: null,
     },
+    company: {
+      type: Schema.Types.ObjectId,
+      ref: 'Company',
+      default: null,
+    },
   },
   {
     timestamps: true,
   }
 );
+
+// Индекс для оптимизации запросов
+UserSchema.index({ company: 1 });
 
 // Pre-save hook для установки displayName и хеширования пароля
 UserSchema.pre('save', async function (next) {

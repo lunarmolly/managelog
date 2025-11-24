@@ -20,10 +20,15 @@ export interface RegisterRequest {
   password: string;
   firstName: string;
   lastName: string;
+  companyName: string;
 }
 
 export interface RegisterResponse {
   status: string;
+  tokens?: {
+    access_token: string;
+    refresh_token: string;
+  };
 }
 
 export interface ApiError {

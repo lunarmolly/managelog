@@ -1,5 +1,11 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api/v1';
 
+export interface CompanyInfo {
+  id: string;
+  name: string;
+  isOwner: boolean;
+}
+
 export interface UserInfo {
   id: string;
   email: string;
@@ -12,8 +18,20 @@ export interface UserInfo {
   role?: string | null;
   phone?: string | null;
   avatar?: string | null;
+  company?: CompanyInfo | null;
   createdAt: string | null;
   updatedAt: string | null;
+}
+
+export interface CompanyUser {
+  id: string;
+  email: string;
+  login: string;
+  firstName?: string | null;
+  lastName?: string | null;
+  displayName?: string | null;
+  role?: string | null;
+  avatar?: string | null;
 }
 
 export interface UserUpdateRequest {
@@ -107,6 +125,16 @@ export async function updateUserInfo(data: UserUpdateRequest): Promise<UserInfo>
     method: 'PUT',
     headers: getAuthHeaders(),
     body: JSON.stringify(data),
+  });
+}
+
+/**
+ * Получить список сотрудников компании
+ */
+export async function getCompanyUsers(): Promise<CompanyUser[]> {
+  return handleRequest<CompanyUser[]>(`${API_BASE_URL}/user/company/users`, {
+    method: 'GET',
+    headers: getAuthHeaders(),
   });
 }
 

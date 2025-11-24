@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getUserInfo, updateUserInfo } from '../controllers/userController.js';
+import { getUserInfo, updateUserInfo, getCompanyUsers } from '../controllers/userController.js';
 import { authenticateToken } from '../middleware/auth.js';
 
 const router = Router();
@@ -131,6 +131,47 @@ router.get('/', authenticateToken, getUserInfo);
  *         description: Конфликт (например, email уже используется)
  */
 router.put('/', authenticateToken, updateUserInfo);
+
+/**
+ * @swagger
+ * /api/v1/user/company/users:
+ *   get:
+ *     summary: Получить список сотрудников компании
+ *     tags: [User]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Список сотрудников компании
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: string
+ *                   email:
+ *                     type: string
+ *                   login:
+ *                     type: string
+ *                   firstName:
+ *                     type: string
+ *                   lastName:
+ *                     type: string
+ *                   displayName:
+ *                     type: string
+ *                   role:
+ *                     type: string
+ *                   avatar:
+ *                     type: string
+ *       401:
+ *         description: Пользователь не авторизован
+ *       404:
+ *         description: Пользователь не привязан к компании
+ */
+router.get('/company/users', authenticateToken, getCompanyUsers);
 
 export default router;
 

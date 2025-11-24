@@ -342,20 +342,8 @@
                   </label>
                 </div>
               </div> -->
-              <!-- Создать компанию -->
+              <!-- Название компании (обязательное поле) -->
               <div class="col-span-1 md:col-span-2 flex flex-col">
-                <div class="flex items-center gap-3 mb-0 flex-nowrap">
-                  <input
-                    v-model="registerForm.createCompany"
-                    type="checkbox"
-                    class="checkbox-input"
-                    @change="handleCreateCompanyChange"
-                  />
-                  <label class=" text-[15px] font-medium text-white cursor-default leading-6 select-none">cоздать компанию</label>
-                </div>
-              </div>
-              <!-- Название компании -->
-              <div v-if="registerForm.createCompany" class="col-span-1 md:col-span-2 flex flex-col">
                 <label class="block mb-2 text-[15px] font-medium text-white select-none">название компании</label>
                 <input
                   v-model="registerForm.companyName"
@@ -434,8 +422,7 @@ const registerForm = reactive({
   confirmPassword: '',
   personalData: false,
   marketing: false,
-  createCompany: false,
-  companyName: '',
+  companyName: '', // Теперь обязательное поле
 });
 
 const registerErrors = reactive<Record<string, string>>({});
@@ -476,22 +463,18 @@ function validateField(field: keyof typeof registerForm): void {
   const value = typeof registerForm[field] === 'string' ? registerForm[field].trim() : '';
   const fieldName = field;
 
-  if (field === 'personalData' || field === 'marketing' || field === 'createCompany') {
+  if (field === 'personalData' || field === 'marketing') {
     return;
   }
 
   // Проверка обязательности
-  if ((field === 'firstName' || field === 'lastName' || field === 'email' || field === 'username' || field === 'password' || field === 'confirmPassword') && !value) {
+  if ((field === 'firstName' || field === 'lastName' || field === 'email' || field === 'username' || field === 'password' || field === 'confirmPassword' || field === 'companyName') && !value) {
     registerErrors[field] = 'поле обязательно для заполнения';
     return;
   }
 
-  // Для companyName проверяем обязательность только если чекбокс включен
+  // Для companyName проверяем обязательность (всегда обязательное поле)
   if (field === 'companyName') {
-    if (!registerForm.createCompany) {
-      delete registerErrors[field];
-      return;
-    }
     if (!value) {
       registerErrors[field] = 'поле обязательно для заполнения';
       return;
@@ -581,12 +564,6 @@ function handlePasswordInput(): void {
   }
 }
 
-function handleCreateCompanyChange(): void {
-  if (!registerForm.createCompany) {
-    registerForm.companyName = '';
-    delete registerErrors.companyName;
-  }
-}
 
 function handlePersonalDataChange(): void {
   if (registerForm.personalData) {
@@ -722,17 +699,8 @@ async function handleRegister(): Promise<void> {
     registerErrors.personalData = 'согласие на обработку персональных данных обязательно';
   }
 
-  // Проверка названия компании
-  if (registerForm.createCompany) {
-    if (!registerForm.companyName.trim()) {
-      registerErrors.companyName = 'поле обязательно для заполнения';
-    } else {
-      validateField('companyName');
-    }
-  } else {
-    // Очищаем ошибку, если чекбокс выключен
-    delete registerErrors.companyName;
-  }
+  // Проверка названия компании (обязательное поле)
+  validateField('companyName');
 
   if (Object.keys(registerErrors).length > 0) {
     // Фокус на первом поле с ошибкой
@@ -753,42 +721,49 @@ async function handleRegister(): Promise<void> {
       lastName: registerForm.lastName,
     });
     
-    await register({
+    const registerResponse = await register({
       email: registerForm.email,
       login: registerForm.username,
       password: registerForm.password,
       firstName: registerForm.firstName,
       lastName: registerForm.lastName,
+      companyName: registerForm.companyName.trim(),
     });
     
     console.log('Регистрация успешна');
 
-    // Автоматический вход после регистрации
-    try {
-      const isEmail = registerForm.email.includes('@');
-      const credentials = isEmail
-        ? { email: registerForm.email, password: registerForm.password }
-        : { login: registerForm.username, password: registerForm.password };
-
-      const loginResponse = await login(credentials);
-      saveTokens(loginResponse.tokens);
+    // Если регистрация вернула токены, сохраняем их и переходим на dashboard
+    if (registerResponse.tokens) {
+      saveTokens(registerResponse.tokens);
       await router.push('/dashboard');
-    } catch (loginError: any) {
-      // Обработка ошибок при автоматическом входе
-      if (loginError.status === 422) {
-        const errorData = loginError.data;
-        if (errorData?.errors) {
-          Object.keys(errorData.errors).forEach(field => {
-            const fieldName = field === 'login' || field === 'email' ? 'username' : field;
-            registerErrors[fieldName] = Array.isArray(errorData.errors[field]) ? errorData.errors[field][0] : errorData.errors[field];
-          });
+    } else {
+      // Если токенов нет, пытаемся авторизоваться
+      try {
+        const isEmail = registerForm.email.includes('@');
+        const credentials = isEmail
+          ? { email: registerForm.email, password: registerForm.password }
+          : { login: registerForm.username, password: registerForm.password };
+
+        const loginResponse = await login(credentials);
+        saveTokens(loginResponse.tokens);
+        await router.push('/dashboard');
+      } catch (loginError: any) {
+        // Обработка ошибок при автоматическом входе
+        if (loginError.status === 422) {
+          const errorData = loginError.data;
+          if (errorData?.errors) {
+            Object.keys(errorData.errors).forEach(field => {
+              const fieldName = field === 'login' || field === 'email' ? 'username' : field;
+              registerErrors[fieldName] = Array.isArray(errorData.errors[field]) ? errorData.errors[field][0] : errorData.errors[field];
+            });
+          } else {
+            registerErrors.email = errorData?.detail || errorData?.message || 'ошибка при входе после регистрации';
+          }
+        } else if (loginError.status === 409) {
+          registerErrors.email = 'пользователь уже существует';
         } else {
-          registerErrors.email = errorData?.detail || errorData?.message || 'ошибка при входе после регистрации';
+          registerErrors.email = 'неизвестная ошибка. попробуйте позже.';
         }
-      } else if (loginError.status === 409) {
-        registerErrors.email = 'пользователь уже существует';
-      } else {
-        registerErrors.email = 'неизвестная ошибка. попробуйте позже.';
       }
     }
   } catch (error: any) {
@@ -815,13 +790,52 @@ async function handleRegister(): Promise<void> {
           if (field === 'login') {
             fieldName = 'username';
           }
+          // Ошибки пароля показываем под полем пароля
+          if (field === 'password') {
+            fieldName = 'password';
+          }
           registerErrors[fieldName] = Array.isArray(errorData.errors[field]) ? errorData.errors[field][0] : errorData.errors[field];
         });
       } else {
         registerErrors.email = errorData?.detail || errorData?.message || 'ошибка валидации данных';
       }
     } else if (error.status === 409) {
-      registerErrors.email = 'пользователь уже существует';
+      // Обработка конфликтов (дубликаты)
+      const errorData = error.data;
+      if (errorData?.errors) {
+        Object.keys(errorData.errors).forEach(field => {
+          let fieldName = field;
+          if (field === 'login') {
+            fieldName = 'username';
+          }
+          if (field === 'companyName') {
+            fieldName = 'companyName';
+          }
+          if (errorData.errors[field] && errorData.errors[field].length > 0) {
+            registerErrors[fieldName] = Array.isArray(errorData.errors[field]) ? errorData.errors[field][0] : errorData.errors[field];
+          }
+        });
+      } else {
+        registerErrors.email = errorData?.detail || 'пользователь или компания уже существуют';
+      }
+    } else if (error.status === 500) {
+      // Обработка ошибок валидации от MongoDB (500 статус)
+      const errorMessage = error.message || error.data?.detail || '';
+      
+      // Парсим ошибки валидации MongoDB
+      if (errorMessage.includes('password')) {
+        if (errorMessage.includes('не более 24 символов')) {
+          registerErrors.password = 'пароль должен быть не более 24 символов';
+        } else if (errorMessage.includes('не менее 8 символов')) {
+          registerErrors.password = 'пароль должен быть не менее 8 символов';
+        } else {
+          registerErrors.password = 'некорректный пароль';
+        }
+      } else if (errorMessage.includes('companyName') || errorMessage.includes('company')) {
+        registerErrors.companyName = 'ошибка при создании компании';
+      } else {
+        registerErrors.email = errorMessage || 'ошибка при регистрации';
+      }
     } else {
       registerErrors.email = error.data?.detail || error.message || 'неизвестная ошибка. попробуйте позже.';
     }
