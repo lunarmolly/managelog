@@ -153,3 +153,69 @@ export function validateProfileUpdate(data: any): { isValid: boolean; errors: Re
     errors,
   };
 }
+
+export function validateCreateEmployeeRequest(data: any): { isValid: boolean; errors: Record<string, string[]> } {
+  const errors: Record<string, string[]> = {};
+
+  if (!data.email) {
+    errors.email = ['Email обязателен'];
+  } else if (!validateEmail(data.email)) {
+    errors.email = ['Некорректный формат email'];
+  }
+
+  if (!data.login) {
+    errors.login = ['Логин обязателен'];
+  } else if (!validateLogin(data.login)) {
+    errors.login = ['Логин должен содержать только буквы латиницы, цифры и символы . _ и быть от 3 до 56 символов'];
+  }
+
+  if (!data.password) {
+    errors.password = ['Пароль обязателен'];
+  } else if (!validatePassword(data.password)) {
+    errors.password = ['Пароль должен содержать только буквы латиницы и специальные символы, от 8 до 24 символов'];
+  }
+
+  if (!data.firstName) {
+    errors.firstName = ['Имя обязательно'];
+  } else if (!validateName(data.firstName)) {
+    errors.firstName = ['Имя может содержать только буквы кириллицы, латиницы и символ -'];
+  }
+
+  if (!data.lastName) {
+    errors.lastName = ['Фамилия обязательна'];
+  } else if (!validateName(data.lastName)) {
+    errors.lastName = ['Фамилия может содержать только буквы кириллицы, латиницы и символ -'];
+  }
+
+  if (!data.companyRole) {
+    errors.companyRole = ['Роль в компании обязательна'];
+  } else if (!['owner', 'manager', 'employee'].includes(data.companyRole)) {
+    errors.companyRole = ['Роль должна быть owner, manager или employee'];
+  }
+
+  // Валидация необязательных полей
+  if (data.middleName && !validateName(data.middleName)) {
+    errors.middleName = ['Отчество может содержать только буквы кириллицы, латиницы и символ -'];
+  }
+
+  if (data.displayName && data.displayName.length > 56) {
+    errors.displayName = ['Отображаемое имя должно быть не более 56 символов'];
+  }
+
+  if (data.phone && !validatePhone(data.phone)) {
+    errors.phone = ['Некорректный формат телефона'];
+  }
+
+  if (data.birthDate && !validateDate(data.birthDate)) {
+    errors.birthDate = ['Некорректный формат даты'];
+  }
+
+  if (data.role && data.role.length > 50) {
+    errors.role = ['Роль должна быть не более 50 символов'];
+  }
+
+  return {
+    isValid: Object.keys(errors).length === 0,
+    errors,
+  };
+}
