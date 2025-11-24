@@ -336,7 +336,8 @@
                   :class="{ 'selected': newTask.creatorId }"
                   @click="showCreatorSelect = !showCreatorSelect"
                 >
-                  <img src="/images/icons/tasks/creator.svg" alt="постановщик" />
+                  <img v-if="getCreatorAvatar()" :src="getAvatarUrl(getCreatorAvatar())" alt="постановщик" class="task-modal-participant-avatar-btn" />
+                  <img v-else src="/images/icons/tasks/creator.svg" alt="постановщик" />
                   <span>{{ getCreatorName() || 'постановщик' }}</span>
                 </button>
                 <!-- Выпадающий список постановщика -->
@@ -357,11 +358,11 @@
                       class="task-modal-participant-option"
                       @click="selectCreator(user.id)"
                     >
-                      <img v-if="user.avatar" :src="getAvatarUrl(user.avatar)" :alt="user.displayName || user.firstName || ''" />
+                      <img v-if="user.avatar" :src="getAvatarUrl(user.avatar)" :alt="getUserDisplayNameWithRole(user)" />
                       <div v-else class="task-modal-participant-avatar-placeholder">
-                        {{ (user.displayName || user.firstName || user.login || '?')[0].toUpperCase() }}
+                        {{ (user.firstName || user.displayName || user.login || '?')[0].toUpperCase() }}
                       </div>
-                      <span>{{ user.displayName || user.firstName || user.login }}</span>
+                      <span>{{ getUserDisplayNameWithRole(user) }}</span>
                     </div>
                   </div>
                 </div>
@@ -372,7 +373,8 @@
                   :class="{ 'selected': newTask.assigneeId }"
                   @click="showAssigneeSelect = !showAssigneeSelect"
                 >
-                  <img src="/images/icons/tasks/executor.svg" alt="исполнитель" />
+                  <img v-if="getAssigneeAvatar()" :src="getAvatarUrl(getAssigneeAvatar())" alt="исполнитель" class="task-modal-participant-avatar-btn" />
+                  <img v-else src="/images/icons/tasks/executor.svg" alt="исполнитель" />
                   <span>{{ getAssigneeName() || 'исполнитель' }}</span>
                   <button
                     v-if="newTask.assigneeId"
@@ -409,11 +411,11 @@
                       class="task-modal-participant-option"
                       @click="selectAssignee(user.id)"
                     >
-                      <img v-if="user.avatar" :src="getAvatarUrl(user.avatar)" :alt="user.displayName || user.firstName || ''" />
+                      <img v-if="user.avatar" :src="getAvatarUrl(user.avatar)" :alt="getUserDisplayNameWithRole(user)" />
                       <div v-else class="task-modal-participant-avatar-placeholder">
-                        {{ (user.displayName || user.firstName || user.login || '?')[0].toUpperCase() }}
+                        {{ (user.firstName || user.displayName || user.login || '?')[0].toUpperCase() }}
                       </div>
-                      <span>{{ user.displayName || user.firstName || user.login }}</span>
+                      <span>{{ getUserDisplayNameWithRole(user) }}</span>
                     </div>
                   </div>
                 </div>
@@ -424,7 +426,8 @@
                   :class="{ 'selected': newTask.watcherIds.length > 0 }"
                   @click="showWatchersSelect = !showWatchersSelect"
                 >
-                  <img src="/images/icons/tasks/watcher.svg" alt="наблюдатели" />
+                  <img v-if="getWatchersAvatar()" :src="getAvatarUrl(getWatchersAvatar())" alt="наблюдатели" class="task-modal-participant-avatar-btn" />
+                  <img v-else src="/images/icons/tasks/watcher.svg" alt="наблюдатели" />
                   <span>{{ getWatchersDisplayText() }}</span>
                   <button
                     v-if="newTask.watcherIds.length > 0"
@@ -462,11 +465,11 @@
                       :class="{ 'selected': newTask.watcherIds.includes(user.id) }"
                       @click="toggleWatcher(user.id)"
                     >
-                      <img v-if="user.avatar" :src="getAvatarUrl(user.avatar)" :alt="user.displayName || user.firstName || ''" />
+                      <img v-if="user.avatar" :src="getAvatarUrl(user.avatar)" :alt="getUserDisplayNameWithRole(user)" />
                       <div v-else class="task-modal-participant-avatar-placeholder">
-                        {{ (user.displayName || user.firstName || user.login || '?')[0].toUpperCase() }}
+                        {{ (user.firstName || user.displayName || user.login || '?')[0].toUpperCase() }}
                       </div>
-                      <span>{{ user.displayName || user.firstName || user.login }}</span>
+                      <span>{{ getUserDisplayNameWithRole(user) }}</span>
                     </div>
                   </div>
                 </div>
@@ -840,6 +843,15 @@ const newColumn = ref({
   name: '',
 });
 
+function getUserDisplayNameWithRole(user: CompanyUser): string {
+  const name = user.firstName || user.displayName || user.login || '';
+  const role = user.role || '';
+  if (role) {
+    return `${name} ${role}`;
+  }
+  return name;
+}
+
 const sortedColumns = computed(() => {
   return [...columns.value].sort((a, b) => a.order - b.order);
 });
@@ -865,8 +877,8 @@ const filteredCreatorUsers = computed(() => {
   }
   const query = creatorSearchQuery.value.toLowerCase().trim();
   return companyUsers.value.filter((user) => {
-    const name = (user.displayName || user.firstName || user.lastName || user.login || '').toLowerCase();
-    return name.includes(query);
+    const displayText = getUserDisplayNameWithRole(user).toLowerCase();
+    return displayText.includes(query);
   });
 });
 
@@ -876,8 +888,8 @@ const filteredAssigneeUsers = computed(() => {
   }
   const query = assigneeSearchQuery.value.toLowerCase().trim();
   return companyUsers.value.filter((user) => {
-    const name = (user.displayName || user.firstName || user.lastName || user.login || '').toLowerCase();
-    return name.includes(query);
+    const displayText = getUserDisplayNameWithRole(user).toLowerCase();
+    return displayText.includes(query);
   });
 });
 
@@ -887,8 +899,8 @@ const filteredWatcherUsers = computed(() => {
   }
   const query = watchersSearchQuery.value.toLowerCase().trim();
   return companyUsers.value.filter((user) => {
-    const name = (user.displayName || user.firstName || user.lastName || user.login || '').toLowerCase();
-    return name.includes(query);
+    const displayText = getUserDisplayNameWithRole(user).toLowerCase();
+    return displayText.includes(query);
   });
 });
 
@@ -1098,13 +1110,25 @@ function getAvatarUrl(avatar: string | null | undefined): string {
 function getCreatorName(): string {
   if (!newTask.value.creatorId) return '';
   const user = companyUsers.value.find(u => u.id === newTask.value.creatorId);
-  return user ? (user.displayName || user.firstName || user.login || '') : '';
+  return user ? getUserDisplayNameWithRole(user) : '';
+}
+
+function getCreatorAvatar(): string | null {
+  if (!newTask.value.creatorId) return null;
+  const user = companyUsers.value.find(u => u.id === newTask.value.creatorId);
+  return user?.avatar || null;
 }
 
 function getAssigneeName(): string {
   if (!newTask.value.assigneeId) return '';
   const user = companyUsers.value.find(u => u.id === newTask.value.assigneeId);
-  return user ? (user.displayName || user.firstName || user.login || '') : '';
+  return user ? getUserDisplayNameWithRole(user) : '';
+}
+
+function getAssigneeAvatar(): string | null {
+  if (!newTask.value.assigneeId) return null;
+  const user = companyUsers.value.find(u => u.id === newTask.value.assigneeId);
+  return user?.avatar || null;
 }
 
 function getWatchersDisplayText(): string {
@@ -1113,9 +1137,18 @@ function getWatchersDisplayText(): string {
   }
   if (newTask.value.watcherIds.length === 1) {
     const user = companyUsers.value.find(u => u.id === newTask.value.watcherIds[0]);
-    return user ? (user.displayName || user.firstName || user.login || '') : 'наблюдатель';
+    return user ? getUserDisplayNameWithRole(user) : 'наблюдатель';
   }
   return `${newTask.value.watcherIds.length} наблюдателей`;
+}
+
+function getWatchersAvatar(): string | null {
+  if (newTask.value.watcherIds.length === 0) return null;
+  if (newTask.value.watcherIds.length === 1) {
+    const user = companyUsers.value.find(u => u.id === newTask.value.watcherIds[0]);
+    return user?.avatar || null;
+  }
+  return null;
 }
 
 function clearAssignee() {
@@ -1128,18 +1161,31 @@ function clearWatchers() {
   watchersSearchQuery.value = '';
 }
 
-async function addUserToProjectIfNeeded(userId: string) {
+async function addTaskParticipantsToProject() {
   if (!project.value) return;
   
-  // Проверяем, является ли пользователь участником проекта
-  const isParticipant = projectParticipants.value.some(p => p.id === userId);
+  // Собираем всех участников задачи
+  const taskParticipantIds: string[] = [];
+  if (newTask.value.creatorId) {
+    taskParticipantIds.push(newTask.value.creatorId);
+  }
+  if (newTask.value.assigneeId) {
+    taskParticipantIds.push(newTask.value.assigneeId);
+  }
+  taskParticipantIds.push(...newTask.value.watcherIds);
   
-  if (!isParticipant) {
+  // Убираем дубликаты
+  const uniqueParticipantIds = [...new Set(taskParticipantIds)];
+  
+  // Проверяем, какие пользователи еще не являются участниками проекта
+  const currentParticipantIds = project.value.participants.map(p => p.id);
+  const newParticipantIds = uniqueParticipantIds.filter(id => !currentParticipantIds.includes(id));
+  
+  if (newParticipantIds.length > 0) {
     try {
-      // Добавляем пользователя в участники проекта
-      const currentParticipantIds = project.value.participants.map(p => p.id);
+      // Добавляем новых участников в проект
       const updatedProject = await updateProject(project.value.id, {
-        participants: [...currentParticipantIds, userId],
+        participants: [...currentParticipantIds, ...newParticipantIds],
       });
       
       // Обновляем список участников проекта
@@ -1149,27 +1195,24 @@ async function addUserToProjectIfNeeded(userId: string) {
         ...updatedProject.participants,
       ];
     } catch (error: any) {
-      console.error('Ошибка добавления участника в проект:', error);
+      console.error('Ошибка добавления участников в проект:', error);
     }
   }
 }
 
-async function selectCreator(userId: string) {
-  await addUserToProjectIfNeeded(userId);
+function selectCreator(userId: string) {
   newTask.value.creatorId = userId;
   showCreatorSelect.value = false;
   creatorSearchQuery.value = '';
 }
 
-async function selectAssignee(userId: string) {
-  await addUserToProjectIfNeeded(userId);
+function selectAssignee(userId: string) {
   newTask.value.assigneeId = userId;
   showAssigneeSelect.value = false;
   assigneeSearchQuery.value = '';
 }
 
-async function toggleWatcher(userId: string) {
-  await addUserToProjectIfNeeded(userId);
+function toggleWatcher(userId: string) {
   const index = newTask.value.watcherIds.indexOf(userId);
   if (index > -1) {
     newTask.value.watcherIds.splice(index, 1);
@@ -1320,10 +1363,53 @@ async function createTask() {
 
     const createdTask = await createTaskApi(projectId.value, taskData);
     tasks.value.push(createdTask);
+    
+    // Добавляем участников задачи в участники проекта
+    await addTaskParticipantsToProject();
+    
     closeCreateTaskModal();
   } catch (error: any) {
     console.error('Ошибка создания задачи:', error);
     alert(error.message || 'Ошибка создания задачи');
+  }
+}
+
+async function addEditTaskParticipantsToProject() {
+  if (!project.value || !selectedTask.value) return;
+  
+  // Собираем всех участников задачи из editTask
+  const taskParticipantIds: string[] = [];
+  if (selectedTask.value.creator.id) {
+    taskParticipantIds.push(selectedTask.value.creator.id);
+  }
+  if (editTask.value.assigneeId) {
+    taskParticipantIds.push(editTask.value.assigneeId);
+  }
+  taskParticipantIds.push(...editTask.value.watcherIds);
+  
+  // Убираем дубликаты
+  const uniqueParticipantIds = [...new Set(taskParticipantIds)];
+  
+  // Проверяем, какие пользователи еще не являются участниками проекта
+  const currentParticipantIds = project.value.participants.map(p => p.id);
+  const newParticipantIds = uniqueParticipantIds.filter(id => !currentParticipantIds.includes(id));
+  
+  if (newParticipantIds.length > 0) {
+    try {
+      // Добавляем новых участников в проект
+      const updatedProject = await updateProject(project.value.id, {
+        participants: [...currentParticipantIds, ...newParticipantIds],
+      });
+      
+      // Обновляем список участников проекта
+      project.value = updatedProject;
+      projectParticipants.value = [
+        updatedProject.creator,
+        ...updatedProject.participants,
+      ];
+    } catch (error: any) {
+      console.error('Ошибка добавления участников в проект:', error);
+    }
   }
 }
 
@@ -1341,6 +1427,10 @@ async function updateTask() {
     if (index !== -1) {
       tasks.value[index] = updatedTask;
     }
+    
+    // Добавляем участников задачи в участники проекта
+    await addEditTaskParticipantsToProject();
+    
     closeEditTaskModal();
   } catch (error: any) {
     console.error('Ошибка обновления задачи:', error);
@@ -2713,6 +2803,14 @@ watch(showCreateTaskModal, (isOpen) => {
   width: 24px;
   height: 24px;
   flex-shrink: 0;
+}
+
+.task-modal-participant-avatar-btn {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  object-fit: cover;
 }
 
 .task-modal-participant-btn span {
