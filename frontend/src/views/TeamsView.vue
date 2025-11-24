@@ -113,247 +113,246 @@
     </div>
 
     <!-- Модальное окно создания сотрудника -->
-    <div
-      v-if="showCreateEmployeeModal"
-      class="modal-overlay"
-      @click="closeCreateEmployeeModal"
-    >
-      <div class="modal-content" @click.stop>
+    <Teleport to="body">
+      <div
+        v-if="showCreateEmployeeModal"
+        class="modal-overlay"
+        @click="closeModalOnOverlay"
+      >
+        <div class="create-employee-modal" @click.stop>
         <div class="modal-header">
-          <h2 class="modal-title">добавить сотрудника</h2>
-          <button class="modal-close" @click="closeCreateEmployeeModal" type="button" aria-label="Закрыть">
-            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <button class="modal-close-btn" @click="closeCreateEmployeeModal" aria-label="Закрыть">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path
+                d="M18 6L6 18M6 6L18 18"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
             </svg>
           </button>
+          <h2 class="modal-title">добавить сотрудника</h2>
+          <div class="modal-subtitle">Заполните информацию о новом сотруднике</div>
         </div>
 
         <form @submit.prevent="handleCreateEmployee" class="modal-form">
           <!-- Имя -->
           <div class="modal-field">
-            <label class="modal-field-label">
-              имя <span class="required">*</span>
+            <label class="modal-field-label" for="employee-firstName">
+              Имя
+              <span class="modal-field-required">*</span>
             </label>
-            <input
-              v-model="employeeForm.firstName"
-              type="text"
-              class="modal-field-input"
-              :class="{ 'modal-field-input--error': employeeFormErrors.firstName }"
-              placeholder="введите имя"
-              @input="clearFieldError('firstName')"
-            />
-            <div v-if="employeeFormErrors.firstName" class="modal-field-error">
-              {{ employeeFormErrors.firstName }}
+            <div class="modal-input-wrapper">
+              <input
+                id="employee-firstName"
+                v-model="employeeForm.firstName"
+                type="text"
+                class="modal-field-input"
+                :class="{ 'modal-field-input--error': employeeFormErrors.firstName }"
+                placeholder="Введите имя"
+                required
+                @input="clearFieldError('firstName')"
+              />
             </div>
+            <span v-if="employeeFormErrors.firstName" class="modal-field-error">{{ employeeFormErrors.firstName }}</span>
           </div>
 
           <!-- Фамилия -->
           <div class="modal-field">
-            <label class="modal-field-label">
-              фамилия <span class="required">*</span>
+            <label class="modal-field-label" for="employee-lastName">
+              Фамилия
+              <span class="modal-field-required">*</span>
             </label>
-            <input
-              v-model="employeeForm.lastName"
-              type="text"
-              class="modal-field-input"
-              :class="{ 'modal-field-input--error': employeeFormErrors.lastName }"
-              placeholder="введите фамилию"
-              @input="clearFieldError('lastName')"
-            />
-            <div v-if="employeeFormErrors.lastName" class="modal-field-error">
-              {{ employeeFormErrors.lastName }}
+            <div class="modal-input-wrapper">
+              <input
+                id="employee-lastName"
+                v-model="employeeForm.lastName"
+                type="text"
+                class="modal-field-input"
+                :class="{ 'modal-field-input--error': employeeFormErrors.lastName }"
+                placeholder="Введите фамилию"
+                required
+                @input="clearFieldError('lastName')"
+              />
             </div>
+            <span v-if="employeeFormErrors.lastName" class="modal-field-error">{{ employeeFormErrors.lastName }}</span>
           </div>
 
           <!-- Email -->
           <div class="modal-field">
-            <label class="modal-field-label">
-              email <span class="required">*</span>
+            <label class="modal-field-label" for="employee-email">
+              Email
+              <span class="modal-field-required">*</span>
             </label>
-            <input
-              v-model="employeeForm.email"
-              type="email"
-              class="modal-field-input"
-              :class="{ 'modal-field-input--error': employeeFormErrors.email }"
-              placeholder="email@example.com"
-              @input="clearFieldError('email')"
-            />
-            <div v-if="employeeFormErrors.email" class="modal-field-error">
-              {{ employeeFormErrors.email }}
+            <div class="modal-input-wrapper">
+              <input
+                id="employee-email"
+                v-model="employeeForm.email"
+                type="email"
+                class="modal-field-input"
+                :class="{ 'modal-field-input--error': employeeFormErrors.email }"
+                placeholder="email@example.com"
+                required
+                @input="clearFieldError('email')"
+              />
             </div>
+            <span v-if="employeeFormErrors.email" class="modal-field-error">{{ employeeFormErrors.email }}</span>
           </div>
 
           <!-- Логин -->
           <div class="modal-field">
-            <label class="modal-field-label">
-              логин <span class="required">*</span>
+            <label class="modal-field-label" for="employee-login">
+              Логин
+              <span class="modal-field-required">*</span>
             </label>
-            <input
-              v-model="employeeForm.login"
-              type="text"
-              class="modal-field-input"
-              :class="{ 'modal-field-input--error': employeeFormErrors.login }"
-              placeholder="введите логин"
-              @input="clearFieldError('login')"
-            />
-            <div v-if="employeeFormErrors.login" class="modal-field-error">
-              {{ employeeFormErrors.login }}
+            <div class="modal-input-wrapper">
+              <input
+                id="employee-login"
+                v-model="employeeForm.login"
+                type="text"
+                class="modal-field-input"
+                :class="{ 'modal-field-input--error': employeeFormErrors.login }"
+                placeholder="Введите логин"
+                required
+                @input="clearFieldError('login')"
+              />
             </div>
+            <span v-if="employeeFormErrors.login" class="modal-field-error">{{ employeeFormErrors.login }}</span>
           </div>
 
           <!-- Пароль -->
           <div class="modal-field">
-            <label class="modal-field-label">
-              пароль <span class="required">*</span>
+            <label class="modal-field-label" for="employee-password">
+              Пароль
+              <span class="modal-field-required">*</span>
             </label>
-            <input
-              v-model="employeeForm.password"
-              type="password"
-              class="modal-field-input"
-              :class="{ 'modal-field-input--error': employeeFormErrors.password }"
-              placeholder="минимум 8 символов"
-              @input="clearFieldError('password')"
-            />
-            <div v-if="employeeFormErrors.password" class="modal-field-error">
-              {{ employeeFormErrors.password }}
+            <div class="modal-input-wrapper">
+              <input
+                id="employee-password"
+                v-model="employeeForm.password"
+                type="password"
+                class="modal-field-input"
+                :class="{ 'modal-field-input--error': employeeFormErrors.password }"
+                placeholder="Минимум 8 символов"
+                required
+                @input="clearFieldError('password')"
+              />
             </div>
+            <span v-if="employeeFormErrors.password" class="modal-field-error">{{ employeeFormErrors.password }}</span>
           </div>
 
-          <!-- Роль в компании -->
+          <!-- Тип -->
           <div class="modal-field">
-            <label class="modal-field-label">
-              роль в компании <span class="required">*</span>
+            <label class="modal-field-label" for="employee-companyRole">
+              Тип
+              <span class="modal-field-required">*</span>
             </label>
-            <select
-              v-model="employeeForm.companyRole"
-              class="modal-field-input"
-              :class="{ 'modal-field-input--error': employeeFormErrors.companyRole }"
-              @change="clearFieldError('companyRole')"
-            >
-              <option value="">выберите роль</option>
-              <option value="employee">сотрудник</option>
-              <option value="manager">руководитель</option>
-              <option v-if="currentUserRole === 'owner'" value="owner">владелец</option>
-            </select>
-            <div v-if="employeeFormErrors.companyRole" class="modal-field-error">
-              {{ employeeFormErrors.companyRole }}
+            <div class="modal-input-wrapper">
+              <select
+                id="employee-companyRole"
+                v-model="employeeForm.companyRole"
+                class="modal-field-input"
+                :class="{ 'modal-field-input--error': employeeFormErrors.companyRole }"
+                required
+                @change="clearFieldError('companyRole')"
+              >
+                <option value="">Выберите тип</option>
+                <option value="employee">Сотрудник</option>
+                <option value="manager">Руководитель</option>
+                <option v-if="currentUserRole === 'owner'" value="owner">Владелец</option>
+              </select>
             </div>
+            <span v-if="employeeFormErrors.companyRole" class="modal-field-error">{{ employeeFormErrors.companyRole }}</span>
           </div>
 
-          <!-- Отчество (необязательно) -->
+          <!-- Роль -->
           <div class="modal-field">
-            <label class="modal-field-label">отчество</label>
-            <input
-              v-model="employeeForm.middleName"
-              type="text"
-              class="modal-field-input"
-              :class="{ 'modal-field-input--error': employeeFormErrors.middleName }"
-              placeholder="введите отчество"
-              @input="clearFieldError('middleName')"
-            />
-            <div v-if="employeeFormErrors.middleName" class="modal-field-error">
-              {{ employeeFormErrors.middleName }}
+            <label class="modal-field-label" for="employee-role">Роль</label>
+            <div class="modal-input-wrapper">
+              <select
+                id="employee-role"
+                v-model="employeeForm.role"
+                class="modal-field-input"
+                :class="{ 'modal-field-input--error': employeeFormErrors.role }"
+                @change="clearFieldError('role')"
+              >
+                <option value="">Выберите роль</option>
+                <option value="менеджер">менеджер</option>
+                <option value="разработчик">разработчик</option>
+                <option value="дизайнер">дизайнер</option>
+                <option value="аналитик">аналитик</option>
+              </select>
             </div>
-          </div>
-
-          <!-- Отображаемое имя (необязательно) -->
-          <div class="modal-field">
-            <label class="modal-field-label">отображаемое имя</label>
-            <input
-              v-model="employeeForm.displayName"
-              type="text"
-              class="modal-field-input"
-              :class="{ 'modal-field-input--error': employeeFormErrors.displayName }"
-              placeholder="как отображать имя"
-              @input="clearFieldError('displayName')"
-            />
-            <div v-if="employeeFormErrors.displayName" class="modal-field-error">
-              {{ employeeFormErrors.displayName }}
-            </div>
-          </div>
-
-          <!-- Роль (должность) (необязательно) -->
-          <div class="modal-field">
-            <label class="modal-field-label">должность</label>
-            <input
-              v-model="employeeForm.role"
-              type="text"
-              class="modal-field-input"
-              :class="{ 'modal-field-input--error': employeeFormErrors.role }"
-              placeholder="например: разработчик"
-              @input="clearFieldError('role')"
-            />
-            <div v-if="employeeFormErrors.role" class="modal-field-error">
-              {{ employeeFormErrors.role }}
-            </div>
-          </div>
-
-          <!-- Телефон (необязательно) -->
-          <div class="modal-field">
-            <label class="modal-field-label">телефон</label>
-            <input
-              v-model="employeeForm.phone"
-              type="tel"
-              class="modal-field-input"
-              :class="{ 'modal-field-input--error': employeeFormErrors.phone }"
-              placeholder="+7 (999) 999-99-99"
-              @input="clearFieldError('phone')"
-            />
-            <div v-if="employeeFormErrors.phone" class="modal-field-error">
-              {{ employeeFormErrors.phone }}
-            </div>
-          </div>
-
-          <!-- Дата рождения (необязательно) -->
-          <div class="modal-field">
-            <label class="modal-field-label">дата рождения</label>
-            <input
-              v-model="employeeForm.birthDate"
-              type="date"
-              class="modal-field-input"
-              :class="{ 'modal-field-input--error': employeeFormErrors.birthDate }"
-              @input="clearFieldError('birthDate')"
-            />
-            <div v-if="employeeFormErrors.birthDate" class="modal-field-error">
-              {{ employeeFormErrors.birthDate }}
-            </div>
+            <span v-if="employeeFormErrors.role" class="modal-field-error">{{ employeeFormErrors.role }}</span>
           </div>
 
           <div class="modal-actions">
             <button
-              type="button"
-              class="modal-btn modal-btn--secondary"
-              @click="closeCreateEmployeeModal"
-            >
-              отмена
-            </button>
-            <button
               type="submit"
-              class="modal-btn modal-btn--primary"
+              class="modal-btn modal-btn-create"
               :disabled="isCreatingEmployee"
             >
-              <span v-if="isCreatingEmployee" class="btn-spinner"></span>
-              <span v-else>создать</span>
+              <div class="modal-btn-icon">
+                <svg
+                  v-if="!isCreatingEmployee"
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M12 5v14m7-7H5"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+                <div v-else class="btn-spinner"></div>
+              </div>
+              <span>{{ isCreatingEmployee ? 'создание...' : 'создать сотрудника' }}</span>
             </button>
+            <div class="modal-btn modal-btn-cancel" @click="closeCreateEmployeeModal">
+              <div class="modal-btn-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path
+                    d="M20 5C20.2652 5 20.5196 5.10536 20.7071 5.29289C20.8946 5.48043 21 5.73478 21 6C21 6.26522 20.8946 6.51957 20.7071 6.70711C20.5196 6.89464 20.2652 7 20 7H19L18.997 7.071L18.064 20.142C18.0281 20.6466 17.8023 21.1188 17.4321 21.4636C17.0619 21.8083 16.5749 22 16.069 22H7.93C7.42414 22 6.93707 21.8083 6.56688 21.4636C6.1967 21.1188 5.97092 20.6466 5.935 20.142L5.002 7.072L5 7H4C3.73478 7 3.48043 6.89464 3.29289 6.70711C3.10536 6.51957 3 6.26522 3 6C3 5.73478 3.10536 5.48043 3.29289 5.29289C3.48043 5.10536 3.73478 5 4 5H20ZM16.997 7H7.003L7.931 20H16.069L16.997 7ZM14 2C14.2652 2 14.5196 2.10536 14.7071 2.29289C14.8946 2.48043 15 2.73478 15 3C15 3.26522 14.8946 3.51957 14.7071 3.70711C14.5196 3.89464 14.2652 4 14 4H10C9.73478 4 9.48043 3.89464 9.29289 3.70711C9.10536 3.51957 9 3.26522 9 3C9 2.73478 9.10536 2.48043 9.29289 2.29289C9.48043 2.10536 9.73478 2 10 2H14Z"
+                    fill="#912138"
+                  />
+                </svg>
+              </div>
+              <span>отмена</span>
+            </div>
           </div>
         </form>
       </div>
-    </div>
+      </div>
+    </Teleport>
 
     <!-- Модальное окно с данными для входа -->
-    <div
-      v-if="showCredentialsModal"
-      class="modal-overlay"
-      @click="closeCredentialsModal"
-    >
-      <div class="modal-content modal-content--credentials" @click.stop>
+    <Teleport to="body">
+      <div
+        v-if="showCredentialsModal"
+        class="modal-overlay"
+        @click="closeCredentialsModal"
+      >
+        <div class="create-employee-modal create-employee-modal--credentials" @click.stop>
         <div class="modal-header">
-          <h2 class="modal-title">сотрудник создан</h2>
-          <button class="modal-close" @click="closeCredentialsModal" type="button" aria-label="Закрыть">
-            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <button class="modal-close-btn" @click="closeCredentialsModal" aria-label="Закрыть">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path
+                d="M18 6L6 18M6 6L18 18"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
             </svg>
           </button>
+          <h2 class="modal-title">сотрудник создан</h2>
+          <div class="modal-subtitle">Сохраните данные для входа</div>
         </div>
 
         <div class="credentials-content">
@@ -393,25 +392,44 @@
             </div>
           </div>
 
-          <div class="credentials-actions">
+          <div class="modal-actions">
             <router-link
               to="/auth"
-              class="modal-btn modal-btn--primary"
+              class="modal-btn modal-btn-create"
               @click="closeCredentialsModal"
             >
-              перейти к входу
+              <div class="modal-btn-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path
+                    d="M12 5v14m7-7H5"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </div>
+              <span>перейти к входу</span>
             </router-link>
-            <button
-              type="button"
-              class="modal-btn modal-btn--secondary"
-              @click="closeCredentialsModal"
-            >
-              закрыть
-            </button>
+            <div class="modal-btn modal-btn-cancel" @click="closeCredentialsModal">
+              <div class="modal-btn-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path
+                    d="M18 6L6 18M6 6L18 18"
+                    stroke="#912138"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </div>
+              <span>закрыть</span>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -435,17 +453,13 @@ const isCreatingEmployee = ref(false);
 const createdEmployeeCredentials = ref<CreateEmployeeResponse | null>(null);
 
 // Форма создания сотрудника
-const employeeForm = reactive<CreateEmployeeRequest & { middleName?: string; displayName?: string; birthDate?: string; role?: string; phone?: string }>({
+const employeeForm = reactive<CreateEmployeeRequest & { role?: string }>({
   email: '',
   login: '',
   password: '',
   firstName: '',
   lastName: '',
-  middleName: '',
-  displayName: '',
-  birthDate: '',
   role: '',
-  phone: '',
   companyRole: 'employee' as CompanyRole,
 });
 
@@ -599,11 +613,7 @@ function openCreateEmployeeModal(): void {
     password: '',
     firstName: '',
     lastName: '',
-    middleName: '',
-    displayName: '',
-    birthDate: '',
     role: '',
-    phone: '',
     companyRole: 'employee' as CompanyRole,
   });
   Object.keys(employeeFormErrors).forEach(key => delete employeeFormErrors[key]);
@@ -615,6 +625,18 @@ function openCreateEmployeeModal(): void {
 function closeCreateEmployeeModal(): void {
   showCreateEmployeeModal.value = false;
   document.body.style.overflow = '';
+}
+
+// Закрытие модального окна при клике на overlay
+function closeModalOnOverlay(event: MouseEvent): void {
+  const target = event.target as HTMLElement;
+  if (target.classList.contains('modal-overlay')) {
+    if (showCredentialsModal.value) {
+      closeCredentialsModal();
+    } else if (showCreateEmployeeModal.value) {
+      closeCreateEmployeeModal();
+    }
+  }
 }
 
 // Очистка ошибки поля
@@ -646,7 +668,7 @@ async function handleCreateEmployee(): Promise<void> {
     employeeFormErrors.password = 'Пароль обязателен';
   }
   if (!employeeForm.companyRole) {
-    employeeFormErrors.companyRole = 'Роль в компании обязательна';
+    employeeFormErrors.companyRole = 'Тип обязателен';
   }
 
   if (Object.keys(employeeFormErrors).length > 0) {
@@ -667,20 +689,8 @@ async function handleCreateEmployee(): Promise<void> {
     };
 
     // Добавляем необязательные поля, если они заполнены
-    if (employeeForm.middleName?.trim()) {
-      data.middleName = employeeForm.middleName.trim();
-    }
-    if (employeeForm.displayName?.trim()) {
-      data.displayName = employeeForm.displayName.trim();
-    }
-    if (employeeForm.birthDate) {
-      data.birthDate = employeeForm.birthDate;
-    }
     if (employeeForm.role?.trim()) {
       data.role = employeeForm.role.trim();
-    }
-    if (employeeForm.phone?.trim()) {
-      data.phone = employeeForm.phone.trim();
     }
 
     const response = await createEmployee(data);
@@ -1143,191 +1153,265 @@ onMounted(() => {
   backdrop-filter: blur(5px);
   -webkit-backdrop-filter: blur(5px);
   display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 10000;
-  padding: 20px;
-  overflow-y: auto;
+  align-items: stretch;
+  justify-content: flex-end;
+  z-index: 1000;
+  overflow: hidden;
 }
 
-.modal-content {
+.create-employee-modal {
   background: rgba(4, 9, 16, 0.95);
   backdrop-filter: blur(30px);
   -webkit-backdrop-filter: blur(30px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 40px;
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0;
   width: 100%;
-  max-width: 600px;
-  max-height: 90vh;
+  max-width: 720px;
+  max-height: 100vh;
+  height: 100vh;
   overflow-y: auto;
-  padding: 32px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-  animation: modalFadeIn 0.3s ease;
+  overflow-x: hidden;
+  padding: clamp(1.5rem, 3vw, 2rem) clamp(1.5rem, 3vw, 2.5rem);
+  display: flex;
+  flex-direction: column;
+  gap: clamp(1.5rem, 3vw, 2rem);
+  box-shadow: -10px 0 40px rgba(0, 0, 0, 0.5);
+  box-sizing: border-box;
+  animation: slideInRight 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.modal-content--credentials {
+.create-employee-modal--credentials {
   max-width: 500px;
 }
 
-@keyframes modalFadeIn {
+@keyframes slideInRight {
   from {
+    transform: translateX(100%);
     opacity: 0;
-    transform: scale(0.95);
   }
   to {
+    transform: translateX(0);
     opacity: 1;
-    transform: scale(1);
   }
 }
 
 .modal-header {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
-  padding-bottom: 16px;
+  flex-direction: column;
+  gap: clamp(0.5rem, 1vw, 0.75rem);
+  padding-bottom: clamp(1rem, 2vw, 1.5rem);
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  position: relative;
 }
 
-.modal-title {
-  font-family: 'Involve', Arial, sans-serif;
-  font-size: 24px;
-  font-weight: 600;
-  color: #e1eaf8;
-  margin: 0;
-  text-transform: lowercase;
-}
-
-.modal-close {
+.modal-close-btn {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: clamp(2rem, 4vw, 2.5rem);
+  height: clamp(2rem, 4vw, 2.5rem);
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 50%;
+  border-radius: clamp(0.5rem, 1vw, 0.75rem);
   color: #e1eaf8;
   cursor: pointer;
-  transition: all 0.2s ease;
-  padding: 0;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
 }
 
-.modal-close:hover {
+.modal-close-btn:hover {
   background: rgba(255, 255, 255, 0.1);
-  transform: scale(1.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: scale(1.05);
 }
 
-.modal-close svg {
-  width: 18px;
-  height: 18px;
+.modal-close-btn svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.modal-title {
+  color: #ffffff;
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-weight: 600;
+  font-family: 'Involve', Arial, sans-serif;
+  margin: 0;
+  line-height: 1.3;
+  letter-spacing: -0.02em;
+}
+
+.modal-subtitle {
+  color: rgba(225, 234, 248, 0.7);
+  font-size: clamp(0.875rem, 1.5vw, 1rem);
+  font-weight: 400;
+  font-family: 'Involve', Arial, sans-serif;
+  line-height: 1.5;
+  margin: 0;
 }
 
 .modal-form {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: clamp(1.5rem, 3vw, 2rem);
 }
 
 .modal-field {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: clamp(0.5rem, 1vw, 0.75rem);
 }
 
 .modal-field-label {
-  font-family: 'Involve', Arial, sans-serif;
-  font-size: 14px;
+  font-size: clamp(0.875rem, 1.5vw, 1rem);
   font-weight: 500;
+  font-family: 'Involve', Arial, sans-serif;
   color: #e1eaf8;
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 0.25rem;
+  line-height: 1.5;
 }
 
-.required {
+.modal-field-required {
   color: #912138;
   font-weight: 600;
 }
 
-.modal-field-input {
-  width: 100%;
-  padding: 12px 16px;
+.modal-input-wrapper {
+  position: relative;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 20px;
-  color: #e1eaf8;
-  font-family: 'Involve', Arial, sans-serif;
-  font-size: 16px;
-  transition: all 0.3s ease;
-  outline: none;
+  border-radius: clamp(0.75rem, 1.5vw, 1rem);
+  padding: clamp(0.75rem, 1.5vw, 1rem) clamp(1rem, 2vw, 1.25rem);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.modal-field-input:focus {
+.modal-input-wrapper:focus-within {
   background: rgba(255, 255, 255, 0.08);
   border-color: rgba(145, 33, 56, 0.5);
   box-shadow: 0 0 0 3px rgba(145, 33, 56, 0.1);
 }
 
+.modal-field-input {
+  width: 100%;
+  font-size: clamp(0.9375rem, 1.5vw, 1.125rem);
+  font-weight: 400;
+  font-family: 'Involve', Arial, sans-serif;
+  color: #ffffff;
+  background: transparent;
+  border: none;
+  outline: none;
+  padding: 0;
+  line-height: 1.5;
+}
+
 .modal-field-input--error {
+  color: #ff6b6b;
+}
+
+.modal-input-wrapper:has(.modal-field-input--error) {
   border-color: #ff6b6b;
   background: rgba(255, 107, 107, 0.1);
 }
 
 .modal-field-input::placeholder {
-  color: rgba(225, 234, 248, 0.4);
+  color: rgba(225, 234, 248, 0.5);
+}
+
+.modal-input-wrapper select.modal-field-input {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L6 6L11 1' stroke='%23e1eaf8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right clamp(1rem, 2vw, 1.25rem) center;
+  padding-right: clamp(2rem, 4vw, 2.5rem);
 }
 
 .modal-field-error {
   font-family: 'Involve', Arial, sans-serif;
   font-size: 13px;
   color: #ff6b6b;
-  margin-top: -4px;
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  line-height: 1.4;
+}
+
+.modal-field-error::before {
+  content: '⚠';
+  font-size: 14px;
 }
 
 .modal-actions {
   display: flex;
-  gap: 12px;
-  justify-content: flex-end;
-  margin-top: 8px;
+  gap: clamp(0.75rem, 1.5vw, 1rem);
+  padding-top: clamp(1rem, 2vw, 1.5rem);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  margin-top: auto;
 }
 
 .modal-btn {
-  padding: 12px 24px;
-  border-radius: 40px;
-  font-family: 'Involve', Arial, sans-serif;
-  font-size: 16px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  border: none;
+  border-radius: clamp(0.75rem, 1.5vw, 1rem);
+  padding: clamp(0.75rem, 1.5vw, 1rem) clamp(1.5rem, 3vw, 2rem);
+  height: auto;
+  min-height: clamp(2.75rem, 5.5vw, 3.5rem);
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  min-width: 120px;
+  gap: clamp(0.5rem, 1vw, 0.75rem);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  font-size: clamp(0.9375rem, 1.5vw, 1.125rem);
+  font-weight: 500;
+  font-family: 'Involve', Arial, sans-serif;
+  border: 1px solid transparent;
+  flex: 1;
+  text-decoration: none;
 }
 
-.modal-btn--primary {
-  background: rgba(145, 33, 56, 0.7);
-  color: #e1eaf8;
-  border: 1px solid rgba(145, 33, 56, 0.5);
+.modal-btn-create {
+  background: #912138;
+  color: #ffffff;
+  border-color: rgba(145, 33, 56, 0.5);
 }
 
-.modal-btn--primary:hover:not(:disabled) {
-  background: rgba(145, 33, 56, 0.9);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(145, 33, 56, 0.4);
+.modal-btn-create:hover:not(:disabled) {
+  background: #a02a43;
+  border-color: rgba(145, 33, 56, 0.7);
+  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(145, 33, 56, 0.3);
 }
 
-.modal-btn--secondary {
+.modal-btn-cancel {
   background: rgba(255, 255, 255, 0.05);
   color: #e1eaf8;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.1);
 }
 
-.modal-btn--secondary:hover {
+.modal-btn-cancel:hover {
   background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+.modal-btn-icon {
+  width: clamp(1.25rem, 2.5vw, 1.5rem);
+  height: clamp(1.25rem, 2.5vw, 1.5rem);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: inherit;
+}
+
+.modal-btn-icon svg {
+  width: 100%;
+  height: 100%;
 }
 
 .modal-btn:disabled {
@@ -1338,8 +1422,8 @@ onMounted(() => {
 .btn-spinner {
   width: 16px;
   height: 16px;
-  border: 2px solid rgba(225, 234, 248, 0.3);
-  border-top-color: #e1eaf8;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #ffffff;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -1510,35 +1594,40 @@ onMounted(() => {
     font-size: 14px;
   }
 
-  .modal-content {
-    padding: 24px;
-    border-radius: 24px;
-    max-height: 95vh;
+  .modal-overlay {
+    align-items: flex-start;
+    justify-content: center;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    z-index: 10010;
   }
 
-  .modal-title {
-    font-size: 20px;
+  .create-employee-modal {
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    min-height: 100vh;
+    max-height: none;
+    border-left: none;
+    border-radius: 0;
+    padding: 12px 16px;
+    gap: 20px;
+    box-shadow: none;
   }
 
   .modal-field {
-    gap: 6px;
-  }
-
-  .modal-field-input {
-    padding: 10px 14px;
-    font-size: 14px;
+    gap: clamp(0.5rem, 1vw, 0.75rem);
   }
 
   .modal-actions {
     flex-direction: column;
+    gap: clamp(0.75rem, 1.5vw, 1rem);
+    gap: 12px;
   }
 
   .modal-btn {
     width: 100%;
-  }
-
-  .credentials-actions {
-    flex-direction: column;
+    justify-content: center;
   }
 }
 </style>
