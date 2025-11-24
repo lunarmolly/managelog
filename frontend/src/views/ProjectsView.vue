@@ -451,7 +451,7 @@
                   <circle cx="1.5" cy="7.5" r="1.5" fill="#292D32" />
                   <circle cx="1.5" cy="12.5" r="1.5" fill="#292D32" />
                 </svg>
-              </div>
+                  </div>
             </div>
           </div>
           <div class="project-card-description">{{ project.description }}</div>
