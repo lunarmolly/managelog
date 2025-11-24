@@ -133,14 +133,14 @@
             </svg>
           </button>
           <h2 class="modal-title">добавить сотрудника</h2>
-          <div class="modal-subtitle">Заполните информацию о новом сотруднике</div>
+          <div class="modal-subtitle">заполните информацию о новом сотруднике</div>
         </div>
 
         <form @submit.prevent="handleCreateEmployee" class="modal-form">
           <!-- Имя -->
           <div class="modal-field">
             <label class="modal-field-label" for="employee-firstName">
-              Имя
+              имя
               <span class="modal-field-required">*</span>
             </label>
             <div class="modal-input-wrapper">
@@ -150,7 +150,7 @@
                 type="text"
                 class="modal-field-input"
                 :class="{ 'modal-field-input--error': employeeFormErrors.firstName }"
-                placeholder="Введите имя"
+                placeholder="введите имя"
                 required
                 @input="clearFieldError('firstName')"
               />
@@ -161,7 +161,7 @@
           <!-- Фамилия -->
           <div class="modal-field">
             <label class="modal-field-label" for="employee-lastName">
-              Фамилия
+              фамилия
               <span class="modal-field-required">*</span>
             </label>
             <div class="modal-input-wrapper">
@@ -171,7 +171,7 @@
                 type="text"
                 class="modal-field-input"
                 :class="{ 'modal-field-input--error': employeeFormErrors.lastName }"
-                placeholder="Введите фамилию"
+                placeholder="введите фамилию"
                 required
                 @input="clearFieldError('lastName')"
               />
@@ -182,7 +182,7 @@
           <!-- Email -->
           <div class="modal-field">
             <label class="modal-field-label" for="employee-email">
-              Email
+              email
               <span class="modal-field-required">*</span>
             </label>
             <div class="modal-input-wrapper">
@@ -203,7 +203,7 @@
           <!-- Логин -->
           <div class="modal-field">
             <label class="modal-field-label" for="employee-login">
-              Логин
+              логин
               <span class="modal-field-required">*</span>
             </label>
             <div class="modal-input-wrapper">
@@ -213,7 +213,7 @@
                 type="text"
                 class="modal-field-input"
                 :class="{ 'modal-field-input--error': employeeFormErrors.login }"
-                placeholder="Введите логин"
+                placeholder="введите логин"
                 required
                 @input="clearFieldError('login')"
               />
@@ -224,7 +224,7 @@
           <!-- Пароль -->
           <div class="modal-field">
             <label class="modal-field-label" for="employee-password">
-              Пароль
+              пароль
               <span class="modal-field-required">*</span>
             </label>
             <div class="modal-input-wrapper">
@@ -234,7 +234,7 @@
                 type="password"
                 class="modal-field-input"
                 :class="{ 'modal-field-input--error': employeeFormErrors.password }"
-                placeholder="Минимум 8 символов"
+                placeholder="минимум 8 символов"
                 required
                 @input="clearFieldError('password')"
               />
@@ -245,7 +245,7 @@
           <!-- Тип -->
           <div class="modal-field">
             <label class="modal-field-label" for="employee-companyRole">
-              Тип
+              тип
               <span class="modal-field-required">*</span>
             </label>
             <div class="modal-select-wrapper">
@@ -283,7 +283,7 @@
 
           <!-- Роль -->
           <div class="modal-field">
-            <label class="modal-field-label" for="employee-role">Роль</label>
+            <label class="modal-field-label" for="employee-role">роль</label>
             <div class="modal-select-wrapper">
               <div 
                 class="modal-select-btn" 
@@ -537,11 +537,11 @@ const isRoleMenuOpen = ref(false);
 // Опции для типов
 const companyRoleOptions = computed(() => {
   const options: Array<{ value: CompanyRole; label: string }> = [
-    { value: 'employee', label: 'Сотрудник' },
-    { value: 'manager', label: 'Руководитель' },
+    { value: 'employee', label: 'сотрудник' },
+    { value: 'manager', label: 'руководитель' },
   ];
   if (currentUserRole.value === 'owner') {
-    options.push({ value: 'owner', label: 'Владелец' });
+    options.push({ value: 'owner', label: 'владелец' });
   }
   return options;
 });
