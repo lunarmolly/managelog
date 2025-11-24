@@ -87,8 +87,8 @@
             {{ getMemberFullName(user) }}
           </div>
 
-          <!-- Роль в компании (не показываем employee) -->
-          <div v-if="user.companyRole && user.companyRole !== 'employee'" class="member-company-role">
+          <!-- Роль в компании (показываем owner и manager) -->
+          <div v-if="user.companyRole === 'owner' || user.companyRole === 'manager'" class="member-company-role">
             <span class="company-role-badge" :class="`company-role-badge--${user.companyRole}`">
               {{ getCompanyRoleLabel(user.companyRole) }}
             </span>
@@ -1330,9 +1330,9 @@ onUnmounted(() => {
 }
 
 .company-role-badge--manager {
-  background: rgba(33, 150, 243, 0.2);
-  color: #2196f3;
-  border: 1px solid rgba(33, 150, 243, 0.3);
+  background: rgba(82, 82, 91, 0.15);
+  color: #52525b;
+  border: 1px solid rgba(82, 82, 91, 0.25);
 }
 
 .company-role-badge--employee {

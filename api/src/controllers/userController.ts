@@ -194,7 +194,7 @@ export async function getCompanyUsers(req: AuthRequest, res: Response): Promise<
     }
 
     // Получаем всех участников компании
-    const company = await Company.findById(user.company).populate('members', 'id email login firstName lastName displayName avatar role phone');
+    const company = await Company.findById(user.company).populate('members', 'id email login firstName lastName displayName avatar role phone companyRole');
     if (!company) {
       res.status(404).json({
         detail: 'Компания не найдена',
