@@ -867,7 +867,7 @@ watch(
 .tasks-view {
   display: flex;
   min-height: 100vh;
-  background: #040910;
+  background: transparent;
   color: #e1eaf8;
   font-family: 'Involve', Arial, sans-serif;
 }
