@@ -988,7 +988,7 @@ watch(
   padding: 4px 8px;
   height: 24px;
   box-sizing: border-box;
-  gap: 0;
+  gap: 8px;
   flex-shrink: 0;
 }
 
@@ -1003,6 +1003,7 @@ watch(
   padding: 0;
   outline: none;
   line-height: normal;
+  min-width: 0;
 }
 
 .search-input::placeholder {
