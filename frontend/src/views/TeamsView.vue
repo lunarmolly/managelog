@@ -17,9 +17,10 @@
 
     <div v-else class="teams-grid">
       <div
-        v-for="user in companyUsers"
+        v-for="user in sortedCompanyUsers"
         :key="user.id"
         class="team-member-card"
+        :class="{ 'team-member-card--current-user': user.id === currentUserId }"
         @click="goToUserProfile(user.id)"
       >
         <!-- Аватар -->
@@ -62,14 +63,25 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
-import { getCompanyUsers, type CompanyUser } from '@/api/user';
+import { getCompanyUsers, getUserInfo, type CompanyUser } from '@/api/user';
 
 const router = useRouter();
 
 const companyUsers = ref<CompanyUser[]>([]);
+const currentUserId = ref<string | null>(null);
 const isLoading = ref(true);
+
+// Отсортированный список сотрудников (текущий пользователь первым)
+const sortedCompanyUsers = computed(() => {
+  if (!currentUserId.value) return companyUsers.value;
+  
+  const currentUser = companyUsers.value.find(u => u.id === currentUserId.value);
+  const otherUsers = companyUsers.value.filter(u => u.id !== currentUserId.value);
+  
+  return currentUser ? [currentUser, ...otherUsers] : companyUsers.value;
+});
 
 // Формирование полного URL аватара
 function getAvatarUrl(avatar: string | null | undefined): string {
@@ -142,13 +154,33 @@ function formatPhoneNumber(phone: string): string {
 
 // Переход на страницу профиля пользователя
 function goToUserProfile(userId: string): void {
-  router.push(`/user/${userId}`);
+  // Если это текущий пользователь, переходим на страницу редактирования профиля
+  if (userId === currentUserId.value) {
+    router.push('/profile');
+  } else {
+    router.push(`/user/${userId}`);
+  }
+}
+
+// Загрузка информации о текущем пользователе
+async function loadCurrentUser(): Promise<void> {
+  try {
+    const userInfo = await getUserInfo();
+    currentUserId.value = userInfo.id;
+  } catch (error: any) {
+    console.error('Ошибка загрузки информации о текущем пользователе:', error);
+    if (error.status === 401 || error.status === 403) {
+      localStorage.removeItem('auth_tokens');
+      router.push('/auth');
+    }
+  }
 }
 
 // Загрузка сотрудников компании
 async function loadCompanyUsers(): Promise<void> {
   try {
     isLoading.value = true;
+    await loadCurrentUser();
     companyUsers.value = await getCompanyUsers();
   } catch (error: any) {
     console.error('Ошибка загрузки сотрудников компании:', error);
@@ -259,13 +291,23 @@ onMounted(() => {
   align-items: flex-start;
   border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
   cursor: pointer;
 }
 
 .team-member-card:hover {
   transform: translateY(-4px);
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+}
+
+.team-member-card--current-user {
+  border: 2px solid rgba(145, 33, 56, 0.5);
+  box-shadow: 0 8px 32px rgba(145, 33, 56, 0.2);
+}
+
+.team-member-card--current-user:hover {
+  border-color: rgba(145, 33, 56, 0.7);
+  box-shadow: 0 12px 40px rgba(145, 33, 56, 0.3);
 }
 
 .member-avatar {
