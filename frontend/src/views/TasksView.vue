@@ -1,5 +1,33 @@
 <template>
   <div class="tasks-view">
+    <!-- Мобильная панель сверху -->
+    <div class="tasks-mobile-header">
+      <button class="back-btn" @click="$router.push('/projects')">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span>к проектам</span>
+      </button>
+      <h2 class="mobile-project-name">{{ project?.name || 'Загрузка...' }}</h2>
+      <div class="mobile-actions">
+        <button class="info-btn" @click="showProjectInfo = !showProjectInfo">
+          информация
+        </button>
+        <div class="search-box-mobile">
+          <input
+            v-model="searchQuery"
+            type="text"
+            placeholder="найти"
+            class="search-input"
+          />
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" class="search-icon">
+            <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2"/>
+            <path d="m21 21-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+
     <!-- Левая панель -->
     <div class="tasks-sidebar">
       <button class="back-btn" @click="$router.push('/projects')">
@@ -83,110 +111,114 @@
               class="task-card"
               @click="openTaskModal(task)"
             >
-              <div class="task-card-header">
-                <label class="task-checkbox-wrapper">
+              <!-- 1. Чекбокс -->
+              <div class="task-card-top">
+                <label class="task-checkbox-wrapper" @click.stop>
                   <input
                     type="checkbox"
                     :checked="task.isCompleted"
-                    @click.stop
                     @change="toggleTaskComplete(task)"
                     :disabled="!canCompleteTask(task)"
                     class="task-checkbox"
                   />
                   <span class="task-checkbox-custom"></span>
                 </label>
-                <h4 class="task-name">{{ task.name }}</h4>
+                
+                <!-- 2. Название -->
+                <h4 class="task-name" @click.stop="openTaskModal(task)">{{ task.name }}</h4>
+                
+                <!-- 3. Важная или нет -->
+                <button 
+                  class="task-important-btn"
+                  :class="{ 'active': task.isImportant }"
+                  @click.stop="toggleTaskImportant(task)"
+                  :title="task.isImportant ? 'убрать важность' : 'отметить важной'"
+                >
+                  <img 
+                    :src="task.isImportant ? '/images/icons/tasks/fire-active.svg' : '/images/icons/tasks/fire-unactive.svg'" 
+                    :alt="task.isImportant ? 'важная задача' : 'не важная задача'" 
+                  />
+                </button>
               </div>
 
-              <!-- Метаданные задачи -->
-              <div class="task-meta">
-                <div class="task-meta-row">
-                  <!-- Файлы -->
-                  <div v-if="task.files.length > 0" class="task-files">
-                    <div
-                      v-for="file in task.files"
-                      :key="file.url"
-                      class="task-file"
-                    >
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
-                        <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        <path d="M14 2V8H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                      </svg>
-                      <span>{{ file.name }}</span>
-                    </div>
+              <!-- 4. Отслеживание времени -->
+              <div class="task-timer-section">
+                <button 
+                  class="task-timer-btn"
+                  :class="{ 
+                    'running': activeTimerTaskId === task.id,
+                    'has-time': task.timeSpent && task.timeSpent > 0
+                  }"
+                  @click.stop="toggleTimer(task)"
+                  :disabled="task.isCompleted"
+                >
+                  <svg v-if="activeTimerTaskId === task.id" width="12" height="12" viewBox="0 0 24 24" fill="none">
+                    <rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor"/>
+                  </svg>
+                  <svg v-else width="12" height="12" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                    <path d="M12 6V12L16 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  </svg>
+                  <span>{{ getDisplayTime(task) }}</span>
+                </button>
+              </div>
+
+              <!-- 5. Дедлайн -->
+              <div class="task-deadline-section">
+                <button 
+                  class="task-deadline-btn"
+                  :class="{ 
+                    'empty': !task.deadline, 
+                    'filled': task.deadline && !isDeadlineOverdue(task.deadline, task.isCompleted),
+                    'overdue': isDeadlineOverdue(task.deadline, task.isCompleted)
+                  }"
+                  @click.stop="openDeadlinePicker(task, $event)"
+                  :title="task.deadline ? 'изменить дедлайн' : 'установить дедлайн'"
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                    <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2"/>
+                    <path d="M16 2V6M8 2V6M3 10H21" stroke="currentColor" stroke-width="2"/>
+                  </svg>
+                  <span>{{ task.deadline ? formatDate(task.deadline) : 'установить дедлайн' }}</span>
+                </button>
+              </div>
+
+              <!-- 6. Участники (кроме наблюдателей) -->
+              <div v-if="getTaskActiveParticipants(task).length > 0" class="task-participants">
+                <div
+                  v-for="(participant, index) in getTaskActiveParticipants(task)"
+                  :key="participant.id"
+                  class="participant-avatar"
+                  :style="{ 
+                    zIndex: getTaskActiveParticipants(task).length - index,
+                    marginLeft: index > 0 ? '-12px' : '0'
+                  }"
+                  @click.stop
+                >
+                  <img
+                    v-if="participant.avatar"
+                    :src="getAvatarUrl(participant.avatar)"
+                    :alt="participant.displayName || participant.firstName || ''"
+                  />
+                  <div v-else class="participant-placeholder">
+                    {{ (participant.displayName || participant.firstName || participant.login || '?')[0].toUpperCase() }}
                   </div>
-                  <!-- Важная задача -->
-                  <button 
-                    class="task-important-btn"
-                    :class="{ 'active': task.isImportant }"
-                    @click.stop="toggleTaskImportant(task)"
-                    :title="task.isImportant ? 'убрать важность' : 'отметить важной'"
-                  >
-                    <img 
-                      :src="task.isImportant ? '/images/icons/tasks/fire-active.svg' : '/images/icons/tasks/fire-unactive.svg'" 
-                      :alt="task.isImportant ? 'важная задача' : 'не важная задача'" 
-                    />
-                  </button>
-                </div>
-                <div class="task-meta-row">
-                  <!-- Время -->
-                  <button 
-                    class="task-time"
-                    :class="{ 'empty': !task.timeSpent }"
-                    @click.stop="openTimePicker(task)"
-                    :title="task.timeSpent ? 'изменить время' : 'установить время'"
-                  >
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
-                      <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
-                      <path d="M12 6V12L16 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                    </svg>
-                    <span>{{ task.timeSpent ? formatTime(task.timeSpent) : '0:00' }}</span>
-                  </button>
-                  <!-- Дедлайн -->
-                  <button 
-                    class="task-deadline"
-                    :class="{ 'empty': !task.deadline }"
-                    @click.stop="openDeadlinePicker(task)"
-                    :title="task.deadline ? 'изменить дедлайн' : 'установить дедлайн'"
-                  >
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
-                      <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2"/>
-                      <path d="M16 2V6M8 2V6M3 10H21" stroke="currentColor" stroke-width="2"/>
-                    </svg>
-                    <span>{{ task.deadline ? formatDate(task.deadline) : 'установить' }}</span>
-                  </button>
                 </div>
               </div>
 
-              <!-- Постановщик и исполнитель -->
-              <div v-if="task.creator || task.assignee" class="task-participants">
+              <!-- 7. Прикрепленные файлы -->
+              <div v-if="task.files.length > 0" class="task-files-section">
                 <div
-                  v-if="task.creator"
-                  class="participant-avatar"
-                  :style="{ zIndex: 2 }"
+                  v-for="file in task.files"
+                  :key="file.url"
+                  class="task-file-item"
+                  @click.stop="downloadFile(file.url, file.name)"
                 >
-                  <img
-                    v-if="task.creator.avatar"
-                    :src="getAvatarUrl(task.creator.avatar)"
-                    :alt="task.creator.displayName || task.creator.firstName || ''"
-                  />
-                  <div v-else class="participant-placeholder">
-                    {{ (task.creator.displayName || task.creator.firstName || task.creator.login || '?')[0].toUpperCase() }}
-                  </div>
-                </div>
-                <div
-                  v-if="task.assignee"
-                  class="participant-avatar"
-                  :style="{ zIndex: 1, marginLeft: task.creator ? '-15px' : '0' }"
-                >
-                  <img
-                    v-if="task.assignee.avatar"
-                    :src="getAvatarUrl(task.assignee.avatar)"
-                    :alt="task.assignee.displayName || task.assignee.firstName || ''"
-                  />
-                  <div v-else class="participant-placeholder">
-                    {{ (task.assignee.displayName || task.assignee.firstName || task.assignee.login || '?')[0].toUpperCase() }}
-                  </div>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                    <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M14 2V8H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                  <span class="task-file-name">{{ file.name }}</span>
                 </div>
               </div>
             </div>
@@ -522,6 +554,50 @@
             </div>
           </div>
 
+          <!-- Загрузка файлов -->
+          <div class="modal-field">
+            <label class="modal-field-label" for="task-files">прикрепленные файлы</label>
+            <div class="modal-file-upload">
+              <input
+                id="task-files"
+                ref="taskFilesInput"
+                type="file"
+                multiple
+                accept="*/*"
+                @change="handleFileSelect"
+                class="modal-file-input"
+              />
+              <label for="task-files" class="modal-file-label">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span>выбрать файлы (до 10 МБ)</span>
+              </label>
+              <div v-if="selectedFiles.length > 0" class="modal-file-list">
+                <div
+                  v-for="(file, index) in selectedFiles"
+                  :key="index"
+                  class="modal-file-item"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                    <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M14 2V8H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                  <span class="modal-file-name">{{ file.name }}</span>
+                  <button
+                    type="button"
+                    class="modal-file-remove"
+                    @click="removeFile(index)"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                      <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- Кнопки действий -->
           <div class="modal-actions">
             <div class="modal-btn modal-btn-create" @click="createTask">
@@ -787,10 +863,12 @@ import {
   getColumns,
   createColumn as createColumnApi,
   getTasks,
+  getTask as getTaskApi,
   createTask as createTaskApi,
   updateTask as updateTaskApi,
   completeTask as completeTaskApi,
   deleteTask as deleteTaskApi,
+  uploadTaskFile,
   type Column,
   type Task,
   type UserInfo,
@@ -855,6 +933,16 @@ const showEditSubtasksModal = ref(false);
 const showEditChecklistModal = ref(false);
 const generatedDescription = ref('');
 const isImportantTask = ref(false);
+
+// Таймер для отслеживания времени
+const activeTimerTaskId = ref<string | null>(null);
+const timerStartTime = ref<number | null>(null);
+const timerInterval = ref<number | null>(null);
+const timerElapsedMinutes = ref<number>(0);
+
+// Файлы для загрузки
+const selectedFiles = ref<File[]>([]);
+const taskFilesInput = ref<HTMLInputElement | null>(null);
 
 const newColumn = ref({
   name: '',
@@ -1035,6 +1123,13 @@ function formatTime(minutes: number): string {
   return `0:${mins.toString().padStart(2, '0')}`;
 }
 
+function isDeadlineOverdue(deadline: string | null | undefined, isCompleted: boolean): boolean {
+  if (!deadline || isCompleted) return false;
+  const deadlineDate = new Date(deadline);
+  const now = new Date();
+  return deadlineDate < now;
+}
+
 function getTaskParticipants(task: Task): CompanyUser[] {
   const participants: CompanyUser[] = [];
   if (task.assignee) {
@@ -1044,6 +1139,96 @@ function getTaskParticipants(task: Task): CompanyUser[] {
     participants.push(...task.watchers);
   }
   return participants;
+}
+
+function getTaskActiveParticipants(task: Task): CompanyUser[] {
+  const participants: CompanyUser[] = [];
+  if (task.creator) {
+    participants.push(task.creator);
+  }
+  if (task.assignee) {
+    participants.push(task.assignee);
+  }
+  // Наблюдатели не включаются
+  return participants;
+}
+
+function getDisplayTime(task: Task): string {
+  if (activeTimerTaskId.value === task.id) {
+    // Показываем время с таймера
+    const totalMinutes = (task.timeSpent || 0) + timerElapsedMinutes.value;
+    return formatTime(totalMinutes);
+  }
+  return task.timeSpent ? formatTime(task.timeSpent) : '0:00';
+}
+
+function toggleTimer(task: Task) {
+  if (task.isCompleted) return;
+  
+  if (activeTimerTaskId.value === task.id) {
+    // Останавливаем таймер
+    stopTimer(task);
+  } else {
+    // Останавливаем предыдущий таймер, если есть
+    if (activeTimerTaskId.value) {
+      const previousTask = tasks.value.find(t => t.id === activeTimerTaskId.value);
+      if (previousTask) {
+        stopTimer(previousTask);
+      }
+    }
+    // Запускаем новый таймер
+    startTimer(task);
+  }
+}
+
+function startTimer(task: Task) {
+  activeTimerTaskId.value = task.id;
+  timerStartTime.value = Date.now();
+  timerElapsedMinutes.value = 0;
+  
+  timerInterval.value = window.setInterval(() => {
+    if (timerStartTime.value) {
+      const elapsed = Math.floor((Date.now() - timerStartTime.value) / 1000 / 60);
+      timerElapsedMinutes.value = elapsed;
+    }
+  }, 1000);
+}
+
+async function stopTimer(task: Task) {
+  if (!activeTimerTaskId.value || activeTimerTaskId.value !== task.id) return;
+  
+  if (timerInterval.value) {
+    clearInterval(timerInterval.value);
+    timerInterval.value = null;
+  }
+  
+  // Сохраняем время
+  const totalMinutes = (task.timeSpent || 0) + timerElapsedMinutes.value;
+  try {
+    const updatedTask = await updateTaskApi(projectId.value, task.id, {
+      timeSpent: totalMinutes,
+    });
+    const index = tasks.value.findIndex((t) => t.id === updatedTask.id);
+    if (index !== -1) {
+      tasks.value[index] = updatedTask;
+    }
+  } catch (error: any) {
+    console.error('Ошибка сохранения времени:', error);
+  }
+  
+  activeTimerTaskId.value = null;
+  timerStartTime.value = null;
+  timerElapsedMinutes.value = 0;
+}
+
+function downloadFile(url: string, name: string) {
+  const link = document.createElement('a');
+  link.href = url.startsWith('http') ? url : `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'}${url}`;
+  link.download = name;
+  link.target = '_blank';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
 }
 
 function canEditTask(task: Task): boolean {
@@ -1284,6 +1469,12 @@ function closeCreateTaskModal() {
   creatorSearchQuery.value = '';
   assigneeSearchQuery.value = '';
   watchersSearchQuery.value = '';
+  selectedFiles.value = [];
+  if (taskFilesInput.value) {
+    taskFilesInput.value.value = '';
+  }
+  generatedDescription.value = '';
+  isImportantTask.value = false;
 }
 
 function openCreateSubtaskModal(task: Task) {
@@ -1371,6 +1562,31 @@ async function loadData() {
   }
 }
 
+function handleFileSelect(event: Event) {
+  const input = event.target as HTMLInputElement;
+  if (!input.files) return;
+  
+  const files = Array.from(input.files);
+  const maxSize = 10 * 1024 * 1024; // 10 МБ
+  
+  for (const file of files) {
+    if (file.size > maxSize) {
+      alert(`Файл "${file.name}" превышает максимальный размер 10 МБ`);
+      continue;
+    }
+    selectedFiles.value.push(file);
+  }
+  
+  // Очищаем input для возможности повторного выбора того же файла
+  if (taskFilesInput.value) {
+    taskFilesInput.value.value = '';
+  }
+}
+
+function removeFile(index: number) {
+  selectedFiles.value.splice(index, 1);
+}
+
 async function createTask() {
   try {
     if (!newTask.value.name.trim()) {
@@ -1387,13 +1603,37 @@ async function createTask() {
       watcherIds: newTask.value.watcherIds,
       subtasks: newTask.value.subtasks,
       deadline: newTask.value.deadline ? new Date(newTask.value.deadline).toISOString() : undefined,
+      isImportant: isImportantTask.value,
     };
 
     const createdTask = await createTaskApi(projectId.value, taskData);
-    tasks.value.push(createdTask);
+    
+    // Загружаем файлы, если они есть
+    if (selectedFiles.value.length > 0) {
+      for (const file of selectedFiles.value) {
+        try {
+          await uploadTaskFile(projectId.value, createdTask.id, file);
+        } catch (error: any) {
+          console.error(`Ошибка загрузки файла ${file.name}:`, error);
+        }
+      }
+      // Перезагружаем задачу, чтобы получить обновленный список файлов
+      const updatedTask = await getTaskApi(projectId.value, createdTask.id);
+      const index = tasks.value.findIndex(t => t.id === createdTask.id);
+      if (index !== -1) {
+        tasks.value[index] = updatedTask;
+      } else {
+        tasks.value.push(updatedTask);
+      }
+    } else {
+      tasks.value.push(createdTask);
+    }
     
     // Добавляем участников задачи в участники проекта
     await addTaskParticipantsToProject();
+    
+    // Очищаем выбранные файлы
+    selectedFiles.value = [];
     
     closeCreateTaskModal();
   } catch (error: any) {
@@ -1551,19 +1791,41 @@ async function updateTaskTime(task: Task, minutes: number) {
   }
 }
 
-function openDeadlinePicker(task: Task) {
+function openDeadlinePicker(task: Task, event?: MouseEvent) {
   if (!canEditTask(task)) return;
+  
+  // Находим кнопку дедлайна в DOM
+  const button = event?.target as HTMLElement;
+  const buttonElement = button?.closest('.task-deadline-btn') as HTMLElement;
+  
+  if (!buttonElement) return;
+  
+  // Получаем позицию кнопки
+  const rect = buttonElement.getBoundingClientRect();
   
   // Создаем временный input для выбора даты и времени
   const input = document.createElement('input');
   input.type = 'datetime-local';
   input.value = task.deadline ? new Date(task.deadline).toISOString().slice(0, 16) : '';
+  
+  // Позиционируем input на месте кнопки
   input.style.position = 'fixed';
+  input.style.left = `${rect.left}px`;
+  input.style.top = `${rect.top}px`;
+  input.style.width = `${rect.width}px`;
+  input.style.height = `${rect.height}px`;
   input.style.opacity = '0';
-  input.style.pointerEvents = 'none';
+  input.style.pointerEvents = 'auto';
+  input.style.zIndex = '10000';
+  input.style.cursor = 'pointer';
+  
   document.body.appendChild(input);
   
-  input.showPicker();
+  // Фокусируем и открываем picker
+  input.focus();
+  if (typeof input.showPicker === 'function') {
+    input.showPicker();
+  }
   
   input.addEventListener('change', () => {
     if (input.value) {
@@ -1572,16 +1834,24 @@ function openDeadlinePicker(task: Task) {
     } else {
       updateTaskDeadline(task, null);
     }
-    document.body.removeChild(input);
+    if (document.body.contains(input)) {
+      document.body.removeChild(input);
+    }
   });
   
-  input.addEventListener('cancel', () => {
-    document.body.removeChild(input);
+  input.addEventListener('blur', () => {
+    setTimeout(() => {
+      if (document.body.contains(input)) {
+        document.body.removeChild(input);
+      }
+    }, 200);
   });
   
   // Если showPicker не поддерживается, используем prompt
   if (typeof input.showPicker !== 'function') {
-    document.body.removeChild(input);
+    if (document.body.contains(input)) {
+      document.body.removeChild(input);
+    }
     const currentDate = task.deadline ? new Date(task.deadline).toISOString().slice(0, 16) : '';
     const dateTimeInput = prompt('Введите дату и время в формате ГГГГ-ММ-ДДТЧЧ:ММ (например, 2024-11-03T19:00):', currentDate);
     if (dateTimeInput === null) return;
@@ -1673,6 +1943,14 @@ onMounted(() => {
 
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside);
+  // Останавливаем таймер при размонтировании
+  if (timerInterval.value) {
+    clearInterval(timerInterval.value);
+    timerInterval.value = null;
+  }
+  activeTimerTaskId.value = null;
+  timerStartTime.value = null;
+  timerElapsedMinutes.value = 0;
 });
 
 watch(
@@ -1696,10 +1974,15 @@ watch(showCreateTaskModal, (isOpen) => {
 <style scoped>
 .tasks-view {
   display: flex;
+  flex-direction: row;
   min-height: 100vh;
   background: transparent;
   color: #e1eaf8;
   font-family: 'Involve', Arial, sans-serif;
+}
+
+.tasks-mobile-header {
+  display: none;
 }
 
 .tasks-sidebar {
@@ -1872,10 +2155,13 @@ watch(showCreateTaskModal, (isOpen) => {
   display: flex;
   gap: 12px;
   min-width: fit-content;
+  overflow-x: auto;
+  padding-bottom: 20px;
 }
 
 .kanban-column {
   min-width: 224px;
+  width: 224px;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(145, 33, 56, 0.5);
   border-radius: 40px;
@@ -1884,6 +2170,7 @@ watch(showCreateTaskModal, (isOpen) => {
   flex-direction: column;
   position: relative;
   box-shadow: 0px 41px 4px 0px inset rgba(255, 255, 255, 0.25);
+  flex-shrink: 0;
 }
 
 .column-header {
@@ -1941,17 +2228,20 @@ watch(showCreateTaskModal, (isOpen) => {
   gap: 8px;
 }
 
-.task-card-header {
+.task-card-top {
   display: flex;
-  align-items: center;
-  gap: 12px;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
 }
 
 .task-checkbox-wrapper {
   position: relative;
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
   flex-shrink: 0;
   cursor: pointer;
+  margin-top: 2px;
 }
 
 .task-checkbox {
@@ -1963,8 +2253,8 @@ watch(showCreateTaskModal, (isOpen) => {
 
 .task-checkbox-custom {
   display: inline-block;
-  width: 24px;
-  height: 24px;
+  width: 18px;
+  height: 18px;
   border: 2px solid #292d32;
   border-radius: 4px;
   background: transparent;
@@ -1980,10 +2270,10 @@ watch(showCreateTaskModal, (isOpen) => {
 .task-checkbox:checked + .task-checkbox-custom::after {
   content: '';
   position: absolute;
-  left: 6px;
-  top: 2px;
-  width: 6px;
-  height: 12px;
+  left: 5px;
+  top: 1px;
+  width: 5px;
+  height: 10px;
   border: solid white;
   border-width: 0 2px 2px 0;
   transform: rotate(45deg);
@@ -2001,6 +2291,9 @@ watch(showCreateTaskModal, (isOpen) => {
   margin: 0;
   flex: 1;
   line-height: 1.2;
+  cursor: pointer;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 .task-progress {
@@ -2085,32 +2378,28 @@ watch(showCreateTaskModal, (isOpen) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
+  width: auto;
+  height: auto;
   background: transparent;
   border: none;
-  border-radius: 50px;
   padding: 0;
   cursor: pointer;
   transition: all 0.2s ease;
   flex-shrink: 0;
   
   img {
-    width: 16px;
-    height: 16px;
+    width: 18px;
+    height: 18px;
   }
   
   &:hover {
-    background: rgba(41, 45, 50, 0.1);
+    opacity: 0.8;
   }
   
   &.active {
-    background: #912138;
-    padding: 4px;
-    
     img {
-      width: 12px;
-      height: 12px;
+      width: 18px;
+      height: 18px;
     }
   }
 }
@@ -2147,19 +2436,233 @@ watch(showCreateTaskModal, (isOpen) => {
   }
 }
 
+.task-time {
+  &.filled {
+    background: #85afe4;
+    color: #213491;
+    
+    svg {
+      color: #213491;
+    }
+    
+    &:hover {
+      background: #6b9dd4;
+    }
+  }
+}
+
 .task-deadline {
   color: #ce9eff;
   
   &.empty {
     color: #ce9eff;
   }
+  
+  &.filled {
+    background: rgba(41, 45, 50, 0.3);
+    color: #ce9eff;
+    
+    svg {
+      color: #ce9eff;
+    }
+    
+    &:hover {
+      background: rgba(41, 45, 50, 0.5);
+    }
+  }
+  
+  &.overdue {
+    background: #912138;
+    color: #ffffff;
+    
+    svg {
+      color: #ffffff;
+    }
+    
+    &:hover {
+      background: #7a1a2d;
+    }
+  }
+}
+
+.task-timer-section,
+.task-deadline-section {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.task-timer-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  height: 24px;
+  background: rgba(41, 45, 50, 0.3);
+  border: none;
+  border-radius: 50px;
+  font-size: 12px;
+  color: #e1eaf8;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: 'Involve', Arial, sans-serif;
+  width: fit-content;
+  
+  svg {
+    width: 10.667px;
+    height: 10.667px;
+    flex-shrink: 0;
+  }
+  
+  &:hover:not(:disabled) {
+    background: rgba(41, 45, 50, 0.5);
+  }
+  
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  
+  &.running {
+    background: #85afe4;
+    color: #213491;
+    animation: pulse 2s infinite;
+    
+    svg {
+      color: #213491;
+    }
+  }
+  
+  &.has-time:not(.running) {
+    background: #85afe4;
+    color: #213491;
+    
+    svg {
+      color: #213491;
+    }
+    
+    &:hover {
+      background: #6b9dd4;
+    }
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+.task-deadline-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  height: 24px;
+  background: rgba(41, 45, 50, 0.3);
+  border: none;
+  border-radius: 50px;
+  font-size: 12px;
+  color: #ce9eff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: 'Involve', Arial, sans-serif;
+  width: fit-content;
+  font-weight: 500;
+  
+  svg {
+    width: 10.667px;
+    height: 10.667px;
+    flex-shrink: 0;
+    color: #ce9eff;
+  }
+  
+  &:hover {
+    background: rgba(41, 45, 50, 0.5);
+  }
+  
+  &.empty {
+    opacity: 0.7;
+    font-style: italic;
+    color: #b794f6;
+    
+    svg {
+      color: #b794f6;
+    }
+  }
+  
+  &.filled {
+    background: rgba(206, 158, 255, 0.2);
+    color: #ce9eff;
+    font-weight: 600;
+    
+    svg {
+      color: #ce9eff;
+    }
+  }
+  
+  &.overdue {
+    background: #912138;
+    color: #ffffff;
+    font-weight: 600;
+    
+    svg {
+      color: #ffffff;
+    }
+    
+    &:hover {
+      background: #7a1a2d;
+    }
+  }
+}
+
+.task-files-section {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+}
+
+.task-file-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  background: rgba(41, 45, 50, 0.2);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background: rgba(41, 45, 50, 0.3);
+  }
+  
+  svg {
+    width: 14px;
+    height: 14px;
+    color: #e1eaf8;
+    flex-shrink: 0;
+  }
+}
+
+.task-file-name {
+  font-size: 12px;
+  color: #e1eaf8;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
 }
 
 .task-participants {
   display: flex;
   align-items: center;
+  justify-content: center;
   height: 32px;
-  width: 70px;
+  width: 100%;
   position: relative;
   margin-top: auto;
 }
@@ -2170,24 +2673,13 @@ watch(showCreateTaskModal, (isOpen) => {
   border-radius: 50%;
   border: 2px solid rgba(42, 39, 22, 0);
   overflow: hidden;
-  position: absolute;
+  position: relative;
   flex-shrink: 0;
-  top: 2px;
 
   img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-  }
-  
-  &:nth-child(1) {
-    left: 0;
-    z-index: 2;
-  }
-  
-  &:nth-child(2) {
-    left: 27.5px;
-    z-index: 1;
   }
 }
 
@@ -2431,6 +2923,98 @@ watch(showCreateTaskModal, (isOpen) => {
 .modal-description-textarea::-webkit-scrollbar-thumb {
   background: rgba(225, 234, 248, 0.3);
   border-radius: 3px;
+}
+
+.modal-file-upload {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.modal-file-input {
+  display: none;
+}
+
+.modal-file-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px dashed rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #e1eaf8;
+  font-size: 14px;
+  
+  &:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(145, 33, 56, 0.5);
+  }
+  
+  svg {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+  }
+}
+
+.modal-file-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.modal-file-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  
+  svg {
+    width: 14px;
+    height: 14px;
+    color: #e1eaf8;
+    flex-shrink: 0;
+  }
+}
+
+.modal-file-name {
+  flex: 1;
+  font-size: 13px;
+  color: #e1eaf8;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.modal-file-remove {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  color: #e1eaf8;
+  opacity: 0.6;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  
+  &:hover {
+    opacity: 1;
+    background: rgba(145, 33, 56, 0.3);
+  }
+  
+  svg {
+    width: 16px;
+    height: 16px;
+  }
 }
 
 .modal-description-textarea::-webkit-scrollbar-thumb:hover {
@@ -2688,12 +3272,11 @@ watch(showCreateTaskModal, (isOpen) => {
 }
 
 .task-important-btn {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: clamp(0.75rem, 1.5vw, 1rem);
-  padding: clamp(0.5rem, 1vw, 0.75rem);
-  width: clamp(3rem, 6vw, 3.5rem);
-  height: clamp(3rem, 6vw, 3.5rem);
+  background: transparent;
+  border: none;
+  padding: 0;
+  width: auto;
+  height: auto;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2703,20 +3286,16 @@ watch(showCreateTaskModal, (isOpen) => {
 }
 
 .task-important-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.2);
-  transform: translateY(-2px) scale(1.05);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  opacity: 0.8;
 }
 
 .task-important-btn.active {
-  border-color: rgba(145, 33, 56, 0.5);
-  box-shadow: 0 0 0 3px rgba(145, 33, 56, 0.1);
+  opacity: 1;
 }
 
 .task-important-btn img {
-  width: 100%;
-  height: 100%;
+  width: 12px;
+  height: 12px;
 }
 
 .modal-close {
@@ -3429,6 +4008,113 @@ watch(showCreateTaskModal, (isOpen) => {
     left: 16px;
     right: 16px;
     max-width: calc(100vw - 32px);
+  }
+}
+
+/* Мобильная версия */
+@media (max-width: 768px) {
+  .tasks-view {
+    flex-direction: column;
+  }
+
+  .tasks-mobile-header {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+    background: rgba(145, 33, 56, 0.5);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .tasks-mobile-header .back-btn {
+    font-size: 16px;
+    height: auto;
+  }
+
+  .mobile-project-name {
+    font-size: 24px;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0;
+    line-height: normal;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+
+  .mobile-actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+
+  .mobile-actions .info-btn {
+    width: auto;
+    padding: 6px 16px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .search-box-mobile {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #912138;
+    border-radius: 16px;
+    padding: 4px 8px;
+    height: 32px;
+    box-sizing: border-box;
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .search-box-mobile .search-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: #e1eaf8;
+    font-size: 14px;
+    font-weight: 400;
+    font-family: 'Involve', Arial, sans-serif;
+    padding: 0;
+    outline: none;
+    line-height: normal;
+    min-width: 0;
+  }
+
+  .search-box-mobile .search-icon {
+    width: 18px;
+    height: 18px;
+    color: #e1eaf8;
+    flex-shrink: 0;
+    pointer-events: none;
+  }
+
+  .tasks-sidebar {
+    display: none;
+  }
+
+  .tasks-main {
+    padding: 16px 0 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .kanban-board {
+    display: flex;
+    gap: 12px;
+    padding: 0 16px 20px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+  }
+
+  .kanban-column {
+    min-width: 95vw;
+    width: 95vw;
+    scroll-snap-align: start;
+    flex-shrink: 0;
   }
 }
 </style>
