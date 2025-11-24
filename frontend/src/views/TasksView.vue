@@ -44,7 +44,7 @@
           placeholder="найти"
           class="search-input"
         />
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" class="search-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" class="search-icon">
           <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2"/>
           <path d="m21 21-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
         </svg>
@@ -797,12 +797,15 @@ watch(
 
 .tasks-sidebar {
   width: 186px;
+  min-width: 186px;
   padding: 24px 12px;
   background: rgba(145, 33, 56, 0.5);
   border-top-right-radius: 40px;
   display: flex;
   flex-direction: column;
   gap: 24px;
+  box-sizing: border-box;
+  flex-shrink: 0;
 }
 
 .back-btn {
@@ -814,8 +817,12 @@ watch(
   color: #e1eaf8;
   cursor: pointer;
   font-size: 20px;
+  font-weight: 400;
   font-family: 'Involve', Arial, sans-serif;
   padding: 0;
+  height: 24px;
+  line-height: normal;
+  white-space: nowrap;
 }
 
 .project-info {
@@ -829,8 +836,11 @@ watch(
   font-weight: 700;
   color: #ffffff;
   margin: 0;
-  line-height: 1;
+  line-height: normal;
   letter-spacing: 0.32px;
+  font-family: 'Involve', Arial, sans-serif;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 .info-btn {
@@ -841,8 +851,12 @@ watch(
   border-radius: 16px;
   cursor: pointer;
   font-size: 15px;
+  font-weight: 400;
   font-family: 'Involve', Arial, sans-serif;
   text-align: center;
+  line-height: normal;
+  width: 100%;
+  min-height: 24px;
 }
 
 .projects-list {
@@ -857,12 +871,15 @@ watch(
   color: #e1eaf8;
   margin: 0;
   letter-spacing: 0.2px;
+  line-height: normal;
+  font-family: 'Involve', Arial, sans-serif;
 }
 
 .projects-list-items {
   display: flex;
   flex-direction: column;
   gap: 0;
+  position: relative;
 }
 
 .project-item {
@@ -871,11 +888,25 @@ watch(
   justify-content: space-between;
   gap: 8px;
   padding: 0;
+  min-height: 40px;
   height: 40px;
   cursor: pointer;
   color: #e1eaf8;
   font-size: 15px;
+  font-weight: 400;
   font-family: 'Involve', Arial, sans-serif;
+  position: relative;
+  line-height: normal;
+}
+
+.project-item:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.2);
 }
 
 .project-item-name {
@@ -885,26 +916,39 @@ watch(
 .search-box {
   position: relative;
   margin-top: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #912138;
+  border-radius: 16px;
+  padding: 4px 8px;
+  height: 24px;
+  box-sizing: border-box;
+  gap: 0;
 }
 
 .search-input {
-  width: 100%;
-  padding: 4px 8px;
-  background: #912138;
+  flex: 1;
+  background: transparent;
   border: none;
-  border-radius: 16px;
   color: #e1eaf8;
   font-size: 15px;
+  font-weight: 400;
   font-family: 'Involve', Arial, sans-serif;
-  padding-right: 32px;
+  padding: 0;
+  outline: none;
+  line-height: normal;
+}
+
+.search-input::placeholder {
+  color: #e1eaf8;
 }
 
 .search-icon {
-  position: absolute;
-  right: 8px;
-  top: 50%;
-  transform: translateY(-50%);
+  width: 18px;
+  height: 18px;
   color: #e1eaf8;
+  flex-shrink: 0;
   pointer-events: none;
 }
 
