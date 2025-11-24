@@ -757,7 +757,7 @@
             </div>
             
             <!-- Список доступных участников -->
-            <div v-if="participantSearchQuery || selectedParticipants.length === 0" class="participants-list">
+            <div v-if="filteredCompanyUsers.length > 0 || participantSearchQuery || isLoadingCompanyUsers" class="participants-list">
               <div v-if="isLoadingCompanyUsers" class="participants-empty">
                 загрузка...
               </div>
