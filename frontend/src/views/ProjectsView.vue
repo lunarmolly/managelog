@@ -684,7 +684,6 @@
         <div class="modal-field">
           <label class="modal-field-label">
             участники проекта
-            <span class="modal-field-label-hint">(необязательно)</span>
           </label>
           
           <div class="participants-selector">
@@ -899,7 +898,7 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import { getProjects, createProject, updateProject, deleteProject, type Project as ApiProject, type ProjectCreateRequest, type ProjectUpdateRequest } from '@/api/projects';
-import { getCompanyUsers, type CompanyUser } from '@/api/user';
+import { getCompanyUsers, getUserInfo, type CompanyUser } from '@/api/user';
 import { useRouter } from 'vue-router';
 
 // Определение мобильного устройства
@@ -1011,6 +1010,7 @@ const companyUsers = ref<CompanyUser[]>([]);
 const selectedParticipants = ref<string[]>([]);
 const participantSearchQuery = ref('');
 const isLoadingCompanyUsers = ref(false);
+const currentUserId = ref<string | null>(null);
 
 // Массив иконок для проектов (хранятся на фронте)
 const projectIcons: ProjectIcon[] = [
@@ -1519,6 +1519,17 @@ function transformApiProject(apiProject: ApiProject): Project {
 async function loadCompanyUsers(): Promise<void> {
   try {
     isLoadingCompanyUsers.value = true;
+    
+    // Загружаем ID текущего пользователя, если еще не загружен
+    if (!currentUserId.value) {
+      try {
+        const userInfo = await getUserInfo();
+        currentUserId.value = userInfo.id;
+      } catch (error: any) {
+        console.error('Ошибка загрузки информации о пользователе:', error);
+      }
+    }
+    
     companyUsers.value = await getCompanyUsers();
   } catch (error: any) {
     console.error('Ошибка загрузки сотрудников компании:', error);
@@ -1531,13 +1542,16 @@ async function loadCompanyUsers(): Promise<void> {
   }
 }
 
-// Фильтрация сотрудников по поисковому запросу
+// Фильтрация сотрудников по поисковому запросу (исключаем текущего пользователя)
 const filteredCompanyUsers = computed(() => {
+  // Исключаем текущего пользователя из списка
+  const availableUsers = companyUsers.value.filter(user => user.id !== currentUserId.value);
+  
   if (!participantSearchQuery.value.trim()) {
-    return companyUsers.value.filter(user => !selectedParticipants.value.includes(user.id));
+    return availableUsers.filter(user => !selectedParticipants.value.includes(user.id));
   }
   const query = participantSearchQuery.value.toLowerCase().trim();
-  return companyUsers.value.filter(user => {
+  return availableUsers.filter(user => {
     const name = (user.displayName || user.firstName || user.login || '').toLowerCase();
     const role = (user.role || '').toLowerCase();
     return (name.includes(query) || role.includes(query)) && !selectedParticipants.value.includes(user.id);
