@@ -507,13 +507,76 @@ const sortedColumns = computed(() => {
 });
 
 const filteredTasks = computed(() => {
-  if (!searchQuery.value) return tasks.value;
-  const query = searchQuery.value.toLowerCase();
-  return tasks.value.filter(
-    (task) =>
-      task.name.toLowerCase().includes(query) ||
-      (task.description && task.description.toLowerCase().includes(query))
-  );
+  if (!searchQuery.value || searchQuery.value.trim() === '') {
+    return tasks.value;
+  }
+  
+  const query = searchQuery.value.toLowerCase().trim();
+  
+  return tasks.value.filter((task) => {
+    // Поиск по названию задачи
+    if (task.name.toLowerCase().includes(query)) {
+      return true;
+    }
+    
+    // Поиск по описанию
+    if (task.description && task.description.toLowerCase().includes(query)) {
+      return true;
+    }
+    
+    // Поиск по подзадачам
+    if (task.subtasks && task.subtasks.some(subtask => 
+      subtask.name.toLowerCase().includes(query)
+    )) {
+      return true;
+    }
+    
+    // Поиск по участникам (создатель, исполнитель, наблюдатели)
+    if (task.creator) {
+      const creatorName = (
+        task.creator.displayName || 
+        task.creator.firstName || 
+        task.creator.login || 
+        ''
+      ).toLowerCase();
+      if (creatorName.includes(query)) {
+        return true;
+      }
+    }
+    
+    if (task.assignee) {
+      const assigneeName = (
+        task.assignee.displayName || 
+        task.assignee.firstName || 
+        task.assignee.login || 
+        ''
+      ).toLowerCase();
+      if (assigneeName.includes(query)) {
+        return true;
+      }
+    }
+    
+    if (task.watchers && task.watchers.some(watcher => {
+      const watcherName = (
+        watcher.displayName || 
+        watcher.firstName || 
+        watcher.login || 
+        ''
+      ).toLowerCase();
+      return watcherName.includes(query);
+    })) {
+      return true;
+    }
+    
+    // Поиск по названиям файлов
+    if (task.files && task.files.some(file => 
+      file.name.toLowerCase().includes(query)
+    )) {
+      return true;
+    }
+    
+    return false;
+  });
 });
 
 function getTasksForColumn(columnId: string): Task[] {
@@ -799,6 +862,7 @@ watch(
   width: 186px;
   min-width: 186px;
   padding: 24px 12px;
+  padding-bottom: 24px;
   background: rgba(145, 33, 56, 0.5);
   border-top-right-radius: 40px;
   display: flex;
@@ -915,7 +979,7 @@ watch(
 
 .search-box {
   position: relative;
-  margin-top: auto;
+  margin-top: 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -925,6 +989,7 @@ watch(
   height: 24px;
   box-sizing: border-box;
   gap: 0;
+  flex-shrink: 0;
 }
 
 .search-input {
