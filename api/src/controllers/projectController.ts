@@ -417,3 +417,79 @@ export async function deleteProject(req: AuthRequest, res: Response): Promise<vo
   }
 }
 
+export async function getCommonProjects(req: AuthRequest, res: Response): Promise<void> {
+  try {
+    const currentUserId = req.user?.userId;
+    if (!currentUserId) {
+      res.status(401).json({
+        detail: 'Пользователь не авторизован',
+      });
+      return;
+    }
+
+    const targetUserId = req.params.userId;
+    if (!targetUserId) {
+      res.status(400).json({
+        detail: 'ID пользователя не указан',
+      });
+      return;
+    }
+
+    // Получаем проекты, где оба пользователя участвуют (как создатель или участник)
+    const projects = await Project.find({
+      $and: [
+        {
+          $or: [
+            { creator: currentUserId },
+            { participants: currentUserId },
+          ],
+        },
+        {
+          $or: [
+            { creator: targetUserId },
+            { participants: targetUserId },
+          ],
+        },
+      ],
+    })
+      .populate('creator', 'id email login firstName lastName displayName avatar')
+      .populate('participants', 'id email login firstName lastName displayName avatar')
+      .sort({ createdAt: -1 });
+
+    res.json(projects.map(project => ({
+      id: project._id.toString(),
+      name: project.name,
+      description: project.description || null,
+      creator: {
+        id: (project.creator as any)._id.toString(),
+        email: (project.creator as any).email,
+        login: (project.creator as any).login || '',
+        firstName: (project.creator as any).firstName || null,
+        lastName: (project.creator as any).lastName || null,
+        displayName: (project.creator as any).displayName || (project.creator as any).firstName || null,
+        avatar: (project.creator as any).avatar ? `/api/v1/avatars/${(project.creator as any).avatar}` : null,
+      },
+      participants: (project.participants as any[]).map((participant: any) => ({
+        id: participant._id.toString(),
+        email: participant.email,
+        login: participant.login || '',
+        firstName: participant.firstName || null,
+        lastName: participant.lastName || null,
+        displayName: participant.displayName || participant.firstName || null,
+        avatar: participant.avatar ? `/api/v1/avatars/${participant.avatar}` : null,
+      })),
+      status: project.status,
+      requiresAction: project.requiresAction,
+      icon: project.icon,
+      color: project.color,
+      createdAt: project.createdAt.toISOString(),
+      updatedAt: project.updatedAt.toISOString(),
+    })));
+  } catch (error: any) {
+    console.error('Get common projects error:', error);
+    res.status(500).json({
+      detail: 'Внутренняя ошибка сервера',
+    });
+  }
+}
+

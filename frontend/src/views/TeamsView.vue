@@ -20,6 +20,7 @@
         v-for="user in companyUsers"
         :key="user.id"
         class="team-member-card"
+        @click="goToUserProfile(user.id)"
       >
         <!-- Аватар -->
         <div class="member-avatar">
@@ -66,6 +67,7 @@ import { useRouter } from 'vue-router';
 import { getCompanyUsers, type CompanyUser } from '@/api/user';
 
 const router = useRouter();
+
 const companyUsers = ref<CompanyUser[]>([]);
 const isLoading = ref(true);
 
@@ -136,6 +138,11 @@ function formatPhoneNumber(phone: string): string {
   }
   
   return phone;
+}
+
+// Переход на страницу профиля пользователя
+function goToUserProfile(userId: string): void {
+  router.push(`/user/${userId}`);
 }
 
 // Загрузка сотрудников компании
@@ -253,6 +260,7 @@ onMounted(() => {
   border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
+  cursor: pointer;
 }
 
 .team-member-card:hover {

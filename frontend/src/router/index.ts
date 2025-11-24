@@ -37,6 +37,19 @@ const routes: RouteRecordRaw[] = [
     component: () => import('../views/TeamsView.vue'),
   },
   {
+    path: '/user/:id',
+    name: 'user-profile',
+    component: () => import('../views/UserProfileView.vue'),
+    beforeEnter: (to, from, next) => {
+      const tokens = localStorage.getItem('auth_tokens');
+      if (!tokens) {
+        next('/auth');
+      } else {
+        next();
+      }
+    },
+  },
+  {
     path: '/privacy',
     name: 'privacy',
     component: () => import('../views/PrivacyView.vue'),

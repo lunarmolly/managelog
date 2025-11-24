@@ -5,6 +5,7 @@ import {
   createProject,
   updateProject,
   deleteProject,
+  getCommonProjects,
 } from '../controllers/projectController.js';
 import { authenticateToken } from '../middleware/auth.js';
 
@@ -25,6 +26,28 @@ const router = Router();
  *         description: Пользователь не авторизован
  */
 router.get('/', authenticateToken, getProjects);
+
+/**
+ * @swagger
+ * /api/v1/projects/common/{userId}:
+ *   get:
+ *     summary: Получить общие проекты с пользователем
+ *     tags: [Projects]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Список общих проектов
+ *       401:
+ *         description: Пользователь не авторизован
+ */
+router.get('/common/:userId', authenticateToken, getCommonProjects);
 
 /**
  * @swagger

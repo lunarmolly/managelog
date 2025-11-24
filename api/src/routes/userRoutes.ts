@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getUserInfo, updateUserInfo, getCompanyUsers } from '../controllers/userController.js';
+import { getUserInfo, updateUserInfo, getCompanyUsers, getUserById } from '../controllers/userController.js';
 import { authenticateToken } from '../middleware/auth.js';
 
 const router = Router();
@@ -172,6 +172,32 @@ router.put('/', authenticateToken, updateUserInfo);
  *         description: Пользователь не привязан к компании
  */
 router.get('/company/users', authenticateToken, getCompanyUsers);
+
+/**
+ * @swagger
+ * /api/v1/user/{id}:
+ *   get:
+ *     summary: Получить информацию о пользователе по ID (только сотрудники компании)
+ *     tags: [User]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Информация о пользователе
+ *       401:
+ *         description: Пользователь не авторизован
+ *       403:
+ *         description: Нет доступа к информации о пользователе
+ *       404:
+ *         description: Пользователь не найден
+ */
+router.get('/:id', authenticateToken, getUserById);
 
 export default router;
 

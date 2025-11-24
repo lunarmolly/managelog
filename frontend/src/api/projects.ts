@@ -154,3 +154,13 @@ export async function deleteProject(id: string): Promise<{ message: string }> {
   });
 }
 
+/**
+ * Получить общие проекты с пользователем
+ */
+export async function getCommonProjects(userId: string): Promise<Project[]> {
+  return handleRequest<Project[]>(`${API_BASE_URL}/projects/common/${userId}`, {
+    method: 'GET',
+    headers: getAuthHeaders(),
+  });
+}
+

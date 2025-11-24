@@ -75,6 +75,93 @@ export async function getUserInfo(req: AuthRequest, res: Response): Promise<void
   }
 }
 
+export async function getUserById(req: AuthRequest, res: Response): Promise<void> {
+  try {
+    const currentUserId = req.user?.userId;
+    if (!currentUserId) {
+      res.status(401).json({
+        detail: 'Пользователь не авторизован',
+      });
+      return;
+    }
+
+    const targetUserId = req.params.id;
+    if (!targetUserId) {
+      res.status(400).json({
+        detail: 'ID пользователя не указан',
+      });
+      return;
+    }
+
+    // Проверяем, что пользователь существует и находится в той же компании
+    const currentUser = await User.findById(currentUserId).select('company');
+    if (!currentUser || !currentUser.company) {
+      res.status(404).json({
+        detail: 'Текущий пользователь не привязан к компании',
+      });
+      return;
+    }
+
+    const targetUser = await User.findById(targetUserId).select('-password').populate('company', 'name owner');
+    if (!targetUser) {
+      res.status(404).json({
+        detail: 'Пользователь не найден',
+      });
+      return;
+    }
+
+    // Проверяем, что пользователи в одной компании
+    if (targetUser.company && targetUser.company._id.toString() !== currentUser.company.toString()) {
+      res.status(403).json({
+        detail: 'Нет доступа к информации о пользователе',
+      });
+      return;
+    }
+
+    // Форматируем birthDate
+    let birthDateFormatted: string | null = null;
+    if (targetUser.birthDate) {
+      const date = new Date(targetUser.birthDate);
+      if (!isNaN(date.getTime())) {
+        birthDateFormatted = date.toISOString().split('T')[0];
+      }
+    }
+
+    // Получаем информацию о компании
+    let companyInfo = null;
+    if (targetUser.company) {
+      const company = targetUser.company as any;
+      companyInfo = {
+        id: company._id.toString(),
+        name: company.name,
+        isOwner: company.owner?.toString() === targetUserId,
+      };
+    }
+
+    res.json({
+      id: targetUser._id.toString(),
+      email: targetUser.email,
+      login: targetUser.login || '',
+      firstName: targetUser.firstName || null,
+      lastName: targetUser.lastName || null,
+      middleName: targetUser.middleName || null,
+      displayName: targetUser.displayName || targetUser.firstName || null,
+      birthDate: birthDateFormatted,
+      role: targetUser.role || null,
+      phone: targetUser.phone || null,
+      avatar: targetUser.avatar ? `/api/v1/avatars/${targetUser.avatar}` : null,
+      company: companyInfo,
+      createdAt: targetUser.createdAt ? targetUser.createdAt.toISOString() : null,
+      updatedAt: targetUser.updatedAt ? targetUser.updatedAt.toISOString() : null,
+    });
+  } catch (error: any) {
+    console.error('Get user by ID error:', error);
+    res.status(500).json({
+      detail: 'Внутренняя ошибка сервера',
+    });
+  }
+}
+
 export async function getCompanyUsers(req: AuthRequest, res: Response): Promise<void> {
   try {
     const userId = req.user?.userId;

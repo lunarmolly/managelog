@@ -139,3 +139,13 @@ export async function getCompanyUsers(): Promise<CompanyUser[]> {
   });
 }
 
+/**
+ * Получить информацию о пользователе по ID (только сотрудники компании)
+ */
+export async function getUserById(userId: string): Promise<UserInfo> {
+  return handleRequest<UserInfo>(`${API_BASE_URL}/user/${userId}`, {
+    method: 'GET',
+    headers: getAuthHeaders(),
+  });
+}
+
