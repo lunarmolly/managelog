@@ -20,10 +20,9 @@
         <h3 class="projects-list-title">актуальные проекты</h3>
         <div class="projects-list-items">
           <div
-            v-for="proj in projects.slice(0, 4)"
+            v-for="proj in displayedProjects"
             :key="proj.id"
             class="project-item"
-            :class="{ active: proj.id === projectId }"
             @click="navigateToProject(proj.id)"
           >
             <span class="project-item-name">{{ proj.name }}</span>
@@ -31,7 +30,7 @@
               <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
           </div>
-          <div v-if="projects.length > 4" class="project-item">
+          <div v-if="hasMoreProjects" class="project-item">
             <span class="project-item-name">еще</span>
           </div>
         </div>
@@ -504,6 +503,21 @@ const newColumn = ref({
 
 const sortedColumns = computed(() => {
   return [...columns.value].sort((a, b) => a.order - b.order);
+});
+
+const availableProjects = computed(() => {
+  // Исключаем текущий проект из списка
+  return projects.value.filter(proj => proj.id !== projectId.value);
+});
+
+const displayedProjects = computed(() => {
+  // Показываем до 5 проектов
+  return availableProjects.value.slice(0, 5);
+});
+
+const hasMoreProjects = computed(() => {
+  // Проверяем, есть ли еще проекты после первых 5
+  return availableProjects.value.length > 5;
 });
 
 const filteredTasks = computed(() => {
