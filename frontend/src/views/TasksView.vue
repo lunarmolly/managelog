@@ -409,7 +409,7 @@
                   @click="showWatchersSelect = !showWatchersSelect"
                 >
                   <img src="/images/icons/tasks/watcher.svg" alt="наблюдатели" />
-                  <span>{{ newTask.watcherIds.length > 0 ? `${newTask.watcherIds.length} наблюдателей` : 'наблюдатели' }}</span>
+                  <span>{{ getWatchersDisplayText() }}</span>
                 </button>
                 <!-- Выпадающий список наблюдателей -->
                 <div v-if="showWatchersSelect" class="task-modal-participants-dropdown">
@@ -427,9 +427,9 @@
                       v-for="user in filteredWatcherUsers"
                       :key="user.id"
                       class="task-modal-participant-option"
+                      :class="{ 'selected': newTask.watcherIds.includes(user.id) }"
                       @click="toggleWatcher(user.id)"
                     >
-                      <input type="checkbox" :checked="newTask.watcherIds.includes(user.id)" @change.stop />
                       <img v-if="user.avatar" :src="getAvatarUrl(user.avatar)" :alt="user.displayName || user.firstName || ''" />
                       <div v-else class="task-modal-participant-avatar-placeholder">
                         {{ (user.displayName || user.firstName || user.login || '?')[0].toUpperCase() }}
@@ -1073,6 +1073,17 @@ function getAssigneeName(): string {
   if (!newTask.value.assigneeId) return '';
   const user = companyUsers.value.find(u => u.id === newTask.value.assigneeId);
   return user ? (user.displayName || user.firstName || user.login || '') : '';
+}
+
+function getWatchersDisplayText(): string {
+  if (newTask.value.watcherIds.length === 0) {
+    return 'наблюдатели';
+  }
+  if (newTask.value.watcherIds.length === 1) {
+    const user = companyUsers.value.find(u => u.id === newTask.value.watcherIds[0]);
+    return user ? (user.displayName || user.firstName || user.login || '') : 'наблюдатель';
+  }
+  return `${newTask.value.watcherIds.length} наблюдателей`;
 }
 
 async function addUserToProjectIfNeeded(userId: string) {
@@ -2692,6 +2703,10 @@ watch(
 
 .task-modal-participant-option:hover {
   background: rgba(255, 255, 255, 0.1);
+}
+
+.task-modal-participant-option.selected {
+  background: rgba(145, 33, 56, 0.3);
 }
 
 .task-modal-participant-option img,
