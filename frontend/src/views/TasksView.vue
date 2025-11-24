@@ -84,92 +84,109 @@
               @click="openTaskModal(task)"
             >
               <div class="task-card-header">
-                <input
-                  type="checkbox"
-                  :checked="task.isCompleted"
-                  @click.stop
-                  @change="toggleTaskComplete(task)"
-                  :disabled="!canCompleteTask(task)"
-                  class="task-checkbox"
-                />
+                <label class="task-checkbox-wrapper">
+                  <input
+                    type="checkbox"
+                    :checked="task.isCompleted"
+                    @click.stop
+                    @change="toggleTaskComplete(task)"
+                    :disabled="!canCompleteTask(task)"
+                    class="task-checkbox"
+                  />
+                  <span class="task-checkbox-custom"></span>
+                </label>
                 <h4 class="task-name">{{ task.name }}</h4>
               </div>
 
-              <!-- Прогресс подзадач -->
-              <div v-if="task.subtasks.length > 0" class="task-progress">
-                <div class="progress-bar">
-                  <div 
-                    class="progress-fill" 
-                    :style="{ width: `${(getCompletedSubtasksCount(task) / task.subtasks.length) * 100}%` }"
-                  ></div>
-                </div>
-                <span class="progress-text">{{ getCompletedSubtasksCount(task) }}/{{ task.subtasks.length }}</span>
-              </div>
-
-              <!-- Файлы -->
-              <div v-if="task.files.length > 0" class="task-files">
-                <div
-                  v-for="file in task.files"
-                  :key="file.url"
-                  class="task-file"
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                    <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    <path d="M14 2V8H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                  </svg>
-                  <span>{{ file.name }}</span>
-                </div>
-              </div>
-
-              <!-- Кнопка подзадачи -->
-              <button class="task-subtask-btn" @click.stop="openCreateSubtaskModal(task)">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
-                  <path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                </svg>
-                <span>подзадача</span>
-              </button>
-
               <!-- Метаданные задачи -->
               <div class="task-meta">
-                <div v-if="task.timeSpent" class="task-time">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
-                    <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
-                    <path d="M12 6V12L16 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                  </svg>
-                  <span>{{ formatTime(task.timeSpent) }}</span>
+                <div class="task-meta-row">
+                  <!-- Файлы -->
+                  <div v-if="task.files.length > 0" class="task-files">
+                    <div
+                      v-for="file in task.files"
+                      :key="file.url"
+                      class="task-file"
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                        <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M14 2V8H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                      <span>{{ file.name }}</span>
+                    </div>
+                  </div>
+                  <!-- Важная задача -->
+                  <button 
+                    class="task-important-btn"
+                    :class="{ 'active': task.isImportant }"
+                    @click.stop="toggleTaskImportant(task)"
+                    :title="task.isImportant ? 'убрать важность' : 'отметить важной'"
+                  >
+                    <img 
+                      :src="task.isImportant ? '/images/icons/tasks/fire-active.svg' : '/images/icons/tasks/fire-unactive.svg'" 
+                      :alt="task.isImportant ? 'важная задача' : 'не важная задача'" 
+                    />
+                  </button>
                 </div>
-                <div v-if="task.deadline" class="task-deadline">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
-                    <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2"/>
-                    <path d="M16 2V6M8 2V6M3 10H21" stroke="currentColor" stroke-width="2"/>
-                  </svg>
-                  <span>{{ formatDate(task.deadline) }}</span>
+                <div class="task-meta-row">
+                  <!-- Время -->
+                  <button 
+                    class="task-time"
+                    :class="{ 'empty': !task.timeSpent }"
+                    @click.stop="openTimePicker(task)"
+                    :title="task.timeSpent ? 'изменить время' : 'установить время'"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                      <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                      <path d="M12 6V12L16 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    <span>{{ task.timeSpent ? formatTime(task.timeSpent) : '0:00' }}</span>
+                  </button>
+                  <!-- Дедлайн -->
+                  <button 
+                    class="task-deadline"
+                    :class="{ 'empty': !task.deadline }"
+                    @click.stop="openDeadlinePicker(task)"
+                    :title="task.deadline ? 'изменить дедлайн' : 'установить дедлайн'"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                      <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2"/>
+                      <path d="M16 2V6M8 2V6M3 10H21" stroke="currentColor" stroke-width="2"/>
+                    </svg>
+                    <span>{{ task.deadline ? formatDate(task.deadline) : 'установить' }}</span>
+                  </button>
                 </div>
               </div>
 
-              <!-- Участники -->
-              <div v-if="getTaskParticipants(task).length > 0" class="task-participants">
+              <!-- Постановщик и исполнитель -->
+              <div v-if="task.creator || task.assignee" class="task-participants">
                 <div
-                  v-for="(participant, index) in getTaskParticipants(task).slice(0, 3)"
-                  :key="participant.id"
+                  v-if="task.creator"
                   class="participant-avatar"
-                  :style="{ zIndex: 10 - index, marginLeft: index > 0 ? '-15px' : '0' }"
+                  :style="{ zIndex: 2 }"
                 >
                   <img
-                    v-if="participant.avatar"
-                    :src="getAvatarUrl(participant.avatar)"
-                    :alt="participant.displayName || participant.firstName || ''"
+                    v-if="task.creator.avatar"
+                    :src="getAvatarUrl(task.creator.avatar)"
+                    :alt="task.creator.displayName || task.creator.firstName || ''"
                   />
                   <div v-else class="participant-placeholder">
-                    {{ (participant.displayName || participant.firstName || participant.login || '?')[0].toUpperCase() }}
+                    {{ (task.creator.displayName || task.creator.firstName || task.creator.login || '?')[0].toUpperCase() }}
                   </div>
                 </div>
                 <div
-                  v-if="getTaskParticipants(task).length > 3"
-                  class="participant-avatar participant-more"
-                  :style="{ zIndex: 7, marginLeft: '-15px' }"
+                  v-if="task.assignee"
+                  class="participant-avatar"
+                  :style="{ zIndex: 1, marginLeft: task.creator ? '-15px' : '0' }"
                 >
-                  +{{ getTaskParticipants(task).length - 3 }}
+                  <img
+                    v-if="task.assignee.avatar"
+                    :src="getAvatarUrl(task.assignee.avatar)"
+                    :alt="task.assignee.displayName || task.assignee.firstName || ''"
+                  />
+                  <div v-else class="participant-placeholder">
+                    {{ (task.assignee.displayName || task.assignee.firstName || task.assignee.login || '?')[0].toUpperCase() }}
+                  </div>
                 </div>
               </div>
             </div>
@@ -1002,13 +1019,11 @@ function formatDate(dateString: string | null | undefined): string {
   if (!dateString) return '';
   const date = new Date(dateString);
   if (isNaN(date.getTime())) return '';
-  return date.toLocaleDateString('ru-RU', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+  const day = date.getDate().toString().padStart(2, '0');
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const hours = date.getHours().toString().padStart(2, '0');
+  const minutes = date.getMinutes().toString().padStart(2, '0');
+  return `${day}.${month} ${hours}:${minutes}`;
 }
 
 function formatTime(minutes: number): string {
@@ -1481,6 +1496,126 @@ async function toggleTaskComplete(task: Task) {
   }
 }
 
+async function toggleTaskImportant(task: Task) {
+  if (!canEditTask(task)) return;
+
+  try {
+    const updatedTask = await updateTaskApi(projectId.value, task.id, {
+      isImportant: !task.isImportant,
+    });
+    const index = tasks.value.findIndex((t) => t.id === updatedTask.id);
+    if (index !== -1) {
+      tasks.value[index] = updatedTask;
+    }
+  } catch (error: any) {
+    console.error('Ошибка изменения важности задачи:', error);
+  }
+}
+
+function openTimePicker(task: Task) {
+  if (!canEditTask(task)) return;
+  
+  const timeInput = prompt('Введите время в формате ЧЧ:ММ (например, 3:24):');
+  if (timeInput === null) return;
+  
+  const timeMatch = timeInput.match(/^(\d+):(\d+)$/);
+  if (!timeMatch) {
+    alert('Неверный формат времени. Используйте формат ЧЧ:ММ');
+    return;
+  }
+  
+  const hours = parseInt(timeMatch[1], 10);
+  const minutes = parseInt(timeMatch[2], 10);
+  
+  if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
+    alert('Неверное время. Часы: 0-23, минуты: 0-59');
+    return;
+  }
+  
+  const totalMinutes = hours * 60 + minutes;
+  updateTaskTime(task, totalMinutes);
+}
+
+async function updateTaskTime(task: Task, minutes: number) {
+  try {
+    const updatedTask = await updateTaskApi(projectId.value, task.id, {
+      timeSpent: minutes,
+    });
+    const index = tasks.value.findIndex((t) => t.id === updatedTask.id);
+    if (index !== -1) {
+      tasks.value[index] = updatedTask;
+    }
+  } catch (error: any) {
+    console.error('Ошибка обновления времени задачи:', error);
+    alert(error.message || 'Ошибка обновления времени задачи');
+  }
+}
+
+function openDeadlinePicker(task: Task) {
+  if (!canEditTask(task)) return;
+  
+  // Создаем временный input для выбора даты и времени
+  const input = document.createElement('input');
+  input.type = 'datetime-local';
+  input.value = task.deadline ? new Date(task.deadline).toISOString().slice(0, 16) : '';
+  input.style.position = 'fixed';
+  input.style.opacity = '0';
+  input.style.pointerEvents = 'none';
+  document.body.appendChild(input);
+  
+  input.showPicker();
+  
+  input.addEventListener('change', () => {
+    if (input.value) {
+      const deadline = new Date(input.value);
+      updateTaskDeadline(task, deadline.toISOString());
+    } else {
+      updateTaskDeadline(task, null);
+    }
+    document.body.removeChild(input);
+  });
+  
+  input.addEventListener('cancel', () => {
+    document.body.removeChild(input);
+  });
+  
+  // Если showPicker не поддерживается, используем prompt
+  if (typeof input.showPicker !== 'function') {
+    document.body.removeChild(input);
+    const currentDate = task.deadline ? new Date(task.deadline).toISOString().slice(0, 16) : '';
+    const dateTimeInput = prompt('Введите дату и время в формате ГГГГ-ММ-ДДТЧЧ:ММ (например, 2024-11-03T19:00):', currentDate);
+    if (dateTimeInput === null) return;
+    
+    if (dateTimeInput.trim() === '') {
+      updateTaskDeadline(task, null);
+      return;
+    }
+    
+    const deadline = new Date(dateTimeInput);
+    if (isNaN(deadline.getTime())) {
+      alert('Неверная дата');
+      return;
+    }
+    
+    updateTaskDeadline(task, deadline.toISOString());
+  }
+}
+
+async function updateTaskDeadline(task: Task, deadline: string | null) {
+  try {
+    const updatedTask = await updateTaskApi(projectId.value, task.id, {
+      deadline: deadline || undefined,
+    });
+    const index = tasks.value.findIndex((t) => t.id === updatedTask.id);
+    if (index !== -1) {
+      tasks.value[index] = updatedTask;
+    }
+  } catch (error: any) {
+    console.error('Ошибка обновления дедлайна задачи:', error);
+    alert(error.message || 'Ошибка обновления дедлайна задачи');
+  }
+}
+
 async function deleteTask() {
   if (!selectedTask.value) return;
 
@@ -1812,11 +1947,51 @@ watch(showCreateTaskModal, (isOpen) => {
   gap: 12px;
 }
 
+.task-checkbox-wrapper {
+  position: relative;
+  display: inline-block;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
 .task-checkbox {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.task-checkbox-custom {
+  display: inline-block;
   width: 24px;
   height: 24px;
-  cursor: pointer;
-  flex-shrink: 0;
+  border: 2px solid #292d32;
+  border-radius: 4px;
+  background: transparent;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.task-checkbox:checked + .task-checkbox-custom {
+  background: #912138;
+  border-color: #912138;
+}
+
+.task-checkbox:checked + .task-checkbox-custom::after {
+  content: '';
+  position: absolute;
+  left: 6px;
+  top: 2px;
+  width: 6px;
+  height: 12px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.task-checkbox:disabled + .task-checkbox-custom {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .task-name {
@@ -1859,43 +2034,85 @@ watch(showCreateTaskModal, (isOpen) => {
   letter-spacing: -1.4px;
 }
 
-.task-files {
+.task-meta {
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: 4px;
+  width: 100%;
+  padding: 4px 0;
+}
+
+.task-meta-row {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+}
+
+.task-files {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
 }
 
 .task-file {
   display: flex;
   align-items: center;
-  gap: 5px;
-  padding: 0 8px;
-  height: 18px;
-  background: rgba(84, 81, 81, 0.3);
-  border-radius: 5px;
+  gap: 4px;
+  padding: 4px;
+  height: 24px;
+  background: rgba(41, 45, 50, 0.3);
+  border-radius: 50px;
   font-size: 12px;
-  color: #292d32;
+  color: #e1eaf8;
+  white-space: nowrap;
+  
+  svg {
+    width: 10.667px;
+    height: 10.667px;
+    flex-shrink: 0;
+  }
+  
+  span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100px;
+  }
 }
 
-.task-subtask-btn {
+.task-important-btn {
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px 8px;
-  background: rgba(41, 45, 50, 0.3);
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: transparent;
   border: none;
   border-radius: 50px;
-  color: #e1eaf8;
-  font-size: 12px;
+  padding: 0;
   cursor: pointer;
-  width: fit-content;
-}
-
-.task-meta {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  flex-wrap: wrap;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  
+  img {
+    width: 16px;
+    height: 16px;
+  }
+  
+  &:hover {
+    background: rgba(41, 45, 50, 0.1);
+  }
+  
+  &.active {
+    background: #912138;
+    padding: 4px;
+    
+    img {
+      width: 12px;
+      height: 12px;
+    }
+  }
 }
 
 .task-time,
@@ -1904,21 +2121,47 @@ watch(showCreateTaskModal, (isOpen) => {
   align-items: center;
   gap: 4px;
   padding: 4px;
-  background: #85afe4;
+  height: 24px;
+  background: rgba(41, 45, 50, 0.3);
+  border: none;
   border-radius: 50px;
   font-size: 12px;
-  color: #213491;
+  color: #e1eaf8;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: 'Involve', Arial, sans-serif;
+  
+  svg {
+    width: 10.667px;
+    height: 10.667px;
+    flex-shrink: 0;
+  }
+  
+  &:hover {
+    background: rgba(41, 45, 50, 0.5);
+  }
+  
+  &.empty {
+    opacity: 0.6;
+    font-style: italic;
+  }
 }
 
 .task-deadline {
-  background: rgba(41, 45, 50, 0.3);
   color: #ce9eff;
+  
+  &.empty {
+    color: #ce9eff;
+  }
 }
 
 .task-participants {
   display: flex;
   align-items: center;
   height: 32px;
+  width: 70px;
+  position: relative;
+  margin-top: auto;
 }
 
 .participant-avatar {
@@ -1927,13 +2170,24 @@ watch(showCreateTaskModal, (isOpen) => {
   border-radius: 50%;
   border: 2px solid rgba(42, 39, 22, 0);
   overflow: hidden;
-  position: relative;
+  position: absolute;
   flex-shrink: 0;
+  top: 2px;
 
   img {
     width: 100%;
     height: 100%;
     object-fit: cover;
+  }
+  
+  &:nth-child(1) {
+    left: 0;
+    z-index: 2;
+  }
+  
+  &:nth-child(2) {
+    left: 27.5px;
+    z-index: 1;
   }
 }
 

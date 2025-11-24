@@ -46,6 +46,7 @@ export interface Task {
   assignee?: UserInfo | null;
   watchers: UserInfo[];
   isCompleted: boolean;
+  isImportant?: boolean;
   subtasks: TaskSubtask[];
   files: TaskFile[];
   timeSpent?: number | null;
@@ -78,6 +79,7 @@ export interface TaskUpdateRequest {
   deadline?: string;
   order?: number;
   creatorId?: string; // Смена постановщика
+  isImportant?: boolean;
 }
 
 export interface ColumnCreateRequest {
