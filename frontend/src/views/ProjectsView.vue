@@ -433,6 +433,7 @@
           v-for="project in filteredAndSortedProjects"
           :key="project.id"
           class="project-card"
+          @click="goToProject(project.id)"
         >
           <div class="project-card-header">
             <div
@@ -1764,9 +1765,7 @@ function handleClickOutsideProjectMenu(event: MouseEvent) {
 function goToProject(projectId: string) {
   activeProjectMenuId.value = null;
   menuPosition.value = null;
-  // TODO: Реализовать переход к проекту
-  console.log('Переход к проекту:', projectId);
-  // window.location.href = `#project-${projectId}`;
+  router.push(`/projects/${projectId}/tasks`);
 }
 
 // Редактирование проекта

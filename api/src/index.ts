@@ -9,6 +9,8 @@ import profileRoutes from './routes/profileRoutes.js';
 import avatarRoutes from './routes/avatarRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import projectRoutes from './routes/projectRoutes.js';
+import taskRoutes from './routes/taskRoutes.js';
+import columnRoutes from './routes/columnRoutes.js';
 import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -125,10 +127,19 @@ app.use('/api/v1/user', userRoutes);
 // Роуты проектов
 app.use('/api/v1/projects', projectRoutes);
 
+// Роуты задач (вложенные в проекты)
+app.use('/api/v1/projects/:projectId/tasks', taskRoutes);
+
+// Роуты колонок (вложенные в проекты)
+app.use('/api/v1/projects/:projectId/columns', columnRoutes);
+
 // Статическая раздача аватаров (должна быть ДО роутов аватара, чтобы не конфликтовать)
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 app.use('/api/v1/avatars', express.static(path.join(__dirname, '../uploads/avatars')));
+
+// Статическая раздача файлов задач
+app.use('/api/v1/tasks/files', express.static(path.join(__dirname, '../uploads/tasks')));
 
 // Обработка 404
 app.use((req: Request, res: Response) => {

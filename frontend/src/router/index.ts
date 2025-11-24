@@ -27,6 +27,19 @@ const routes: RouteRecordRaw[] = [
     component: () => import('../views/ProjectsView.vue'),
   },
   {
+    path: '/projects/:id/tasks',
+    name: 'tasks',
+    component: () => import('../views/TasksView.vue'),
+    beforeEnter: (to, from, next) => {
+      const tokens = localStorage.getItem('auth_tokens');
+      if (!tokens) {
+        next('/auth');
+      } else {
+        next();
+      }
+    },
+  },
+  {
     path: '/crm',
     name: 'crm',
     component: () => import('../views/CrmView.vue'),

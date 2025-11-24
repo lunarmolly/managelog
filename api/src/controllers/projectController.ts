@@ -1,5 +1,6 @@
 import { Response } from 'express';
 import { Project, ProjectStatus } from '../models/Project.js';
+import { Column } from '../models/Column.js';
 import { AuthRequest } from '../middleware/auth.js';
 
 export async function getProjects(req: AuthRequest, res: Response): Promise<void> {
@@ -196,6 +197,23 @@ export async function createProject(req: AuthRequest, res: Response): Promise<vo
     });
 
     await project.save();
+
+    // Создаем стандартные колонки для проекта
+    const defaultColumns = [
+      { name: 'Бэклог', order: 0 },
+      { name: 'В работе', order: 1 },
+      { name: 'На проверке', order: 2 },
+      { name: 'Готово', order: 3 },
+    ];
+
+    for (const columnData of defaultColumns) {
+      const column = new Column({
+        name: columnData.name,
+        project: project._id,
+        order: columnData.order,
+      });
+      await column.save();
+    }
 
     const populatedProject = await Project.findById(project._id)
       .populate('creator', 'id email login firstName lastName displayName avatar')
