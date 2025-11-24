@@ -42,6 +42,8 @@ export async function getUserInfo(req: AuthRequest, res: Response): Promise<void
 
     // Получаем информацию о компании
     let companyInfo = null;
+    let companyRole: 'owner' | 'manager' | 'employee' | null = user.companyRole || null;
+    
     if (user.company) {
       const company = user.company as any;
       companyInfo = {
@@ -49,6 +51,16 @@ export async function getUserInfo(req: AuthRequest, res: Response): Promise<void
         name: company.name,
         isOwner: company.owner?.toString() === userId,
       };
+      
+      // Если роль не установлена, но пользователь является владельцем компании
+      if (!companyRole && companyInfo.isOwner) {
+        companyRole = 'owner';
+      }
+    }
+    
+    // Если роль все еще не установлена, устанавливаем по умолчанию 'employee'
+    if (!companyRole) {
+      companyRole = 'employee';
     }
     
     res.json({
@@ -64,6 +76,7 @@ export async function getUserInfo(req: AuthRequest, res: Response): Promise<void
       phone: user.phone || null,
       avatar: user.avatar ? `/api/v1/avatars/${user.avatar}` : null,
       company: companyInfo,
+      companyRole: companyRole,
       createdAt: user.createdAt ? user.createdAt.toISOString() : null,
       updatedAt: user.updatedAt ? user.updatedAt.toISOString() : null,
     });
@@ -190,18 +203,34 @@ export async function getCompanyUsers(req: AuthRequest, res: Response): Promise<
     }
 
     // Формируем список пользователей
-    const users = (company.members as any[]).map((member: any) => ({
-      id: member._id.toString(),
-      email: member.email,
-      login: member.login || '',
-      firstName: member.firstName || null,
-      lastName: member.lastName || null,
-      middleName: member.middleName || null,
-      displayName: member.displayName || member.firstName || null,
-      role: member.role || null,
-      phone: member.phone || null,
-      avatar: member.avatar ? `/api/v1/avatars/${member.avatar}` : null,
-    }));
+    const users = (company.members as any[]).map((member: any) => {
+      // Определяем роль в компании
+      let companyRole: 'owner' | 'manager' | 'employee' | null = member.companyRole || null;
+      
+      // Если роль не установлена, но пользователь является владельцем компании
+      if (!companyRole && company.owner && company.owner._id.toString() === member._id.toString()) {
+        companyRole = 'owner';
+      }
+      
+      // Если роль все еще не установлена, устанавливаем по умолчанию 'employee'
+      if (!companyRole) {
+        companyRole = 'employee';
+      }
+      
+      return {
+        id: member._id.toString(),
+        email: member.email,
+        login: member.login || '',
+        firstName: member.firstName || null,
+        lastName: member.lastName || null,
+        middleName: member.middleName || null,
+        displayName: member.displayName || member.firstName || null,
+        role: member.role || null,
+        phone: member.phone || null,
+        companyRole: companyRole,
+        avatar: member.avatar ? `/api/v1/avatars/${member.avatar}` : null,
+      };
+    });
 
     res.json(users);
   } catch (error: any) {

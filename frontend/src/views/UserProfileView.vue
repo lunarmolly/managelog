@@ -50,7 +50,14 @@
               </div>
             </div>
 
-            <!-- Роль -->
+            <!-- Роль в компании -->
+            <div v-if="userInfo.companyRole" class="user-profile-company-role-wrapper">
+              <div class="user-profile-company-role-badge" :class="`user-profile-company-role-badge--${userInfo.companyRole}`">
+                {{ getCompanyRoleLabel(userInfo.companyRole) }}
+              </div>
+            </div>
+
+            <!-- Роль (должность) -->
             <div v-if="userInfo.role" class="user-profile-role-wrapper">
               <div class="user-profile-role-badge">
                 <svg class="role-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -141,7 +148,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { getUserById, type UserInfo } from '@/api/user';
+import { getUserById, type UserInfo, type CompanyRole } from '@/api/user';
 import { getCommonProjects, type Project, type ProjectStatus } from '@/api/projects';
 
 const route = useRoute();
@@ -234,6 +241,17 @@ function getStatusLabel(status: ProjectStatus): string {
     cancelled: 'отменен',
   };
   return labels[status] || status;
+}
+
+// Получение текста роли в компании
+function getCompanyRoleLabel(role: CompanyRole | null | undefined): string {
+  if (!role) return '';
+  const labels: Record<CompanyRole, string> = {
+    owner: 'владелец',
+    manager: 'руководитель',
+    employee: 'сотрудник',
+  };
+  return labels[role] || role;
 }
 
 // Массив иконок проектов

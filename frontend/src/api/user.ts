@@ -6,6 +6,8 @@ export interface CompanyInfo {
   isOwner: boolean;
 }
 
+export type CompanyRole = 'owner' | 'manager' | 'employee';
+
 export interface UserInfo {
   id: string;
   email: string;
@@ -19,6 +21,7 @@ export interface UserInfo {
   phone?: string | null;
   avatar?: string | null;
   company?: CompanyInfo | null;
+  companyRole?: CompanyRole | null;
   createdAt: string | null;
   updatedAt: string | null;
 }
@@ -34,6 +37,7 @@ export interface CompanyUser {
   role?: string | null;
   phone?: string | null;
   avatar?: string | null;
+  companyRole?: CompanyRole | null;
 }
 
 export interface UserUpdateRequest {

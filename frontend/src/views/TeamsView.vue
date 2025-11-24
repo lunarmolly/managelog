@@ -76,7 +76,14 @@
             {{ getMemberFullName(user) }}
           </div>
 
-          <!-- Роль -->
+          <!-- Роль в компании (не показываем employee) -->
+          <div v-if="user.companyRole && user.companyRole !== 'employee'" class="member-company-role">
+            <span class="company-role-badge" :class="`company-role-badge--${user.companyRole}`">
+              {{ getCompanyRoleLabel(user.companyRole) }}
+            </span>
+          </div>
+
+          <!-- Роль (должность) -->
           <div v-if="user.role" class="member-role">
             {{ user.role }}
           </div>
@@ -99,7 +106,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
-import { getCompanyUsers, getUserInfo, type CompanyUser } from '@/api/user';
+import { getCompanyUsers, getUserInfo, type CompanyUser, type CompanyRole } from '@/api/user';
 
 const router = useRouter();
 
@@ -186,6 +193,17 @@ function getMemberInitial(user: CompanyUser): string {
   if (user.lastName) return user.lastName.charAt(0).toUpperCase();
   if (user.login) return user.login.charAt(0).toUpperCase();
   return '?';
+}
+
+// Получение текста роли в компании
+function getCompanyRoleLabel(role: CompanyRole | null | undefined): string {
+  if (!role) return '';
+  const labels: Record<CompanyRole, string> = {
+    owner: 'владелец',
+    manager: 'руководитель',
+    employee: 'сотрудник',
+  };
+  return labels[role] || role;
 }
 
 // Форматирование телефона
@@ -537,6 +555,39 @@ onMounted(() => {
   line-height: 1.3;
   word-break: break-word;
   letter-spacing: -0.01em;
+}
+
+.member-company-role {
+  margin-bottom: 4px;
+}
+
+.company-role-badge {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-family: 'Involve', Arial, sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  text-transform: lowercase;
+  letter-spacing: 0.01em;
+}
+
+.company-role-badge--owner {
+  background: rgba(145, 33, 56, 0.2);
+  color: #912138;
+  border: 1px solid rgba(145, 33, 56, 0.3);
+}
+
+.company-role-badge--manager {
+  background: rgba(33, 150, 243, 0.2);
+  color: #2196f3;
+  border: 1px solid rgba(33, 150, 243, 0.3);
+}
+
+.company-role-badge--employee {
+  background: rgba(41, 45, 50, 0.1);
+  color: rgba(41, 45, 50, 0.7);
+  border: 1px solid rgba(41, 45, 50, 0.2);
 }
 
 .member-role {

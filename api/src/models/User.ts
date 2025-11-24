@@ -14,6 +14,7 @@ export interface IUser extends Document {
   phone?: string;
   avatar?: string;
   company?: mongoose.Types.ObjectId; // Компания пользователя
+  companyRole?: 'owner' | 'manager' | 'employee'; // Роль в компании
   createdAt: Date;
   updatedAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
@@ -89,6 +90,11 @@ const UserSchema = new Schema<IUser>(
     company: {
       type: Schema.Types.ObjectId,
       ref: 'Company',
+      default: null,
+    },
+    companyRole: {
+      type: String,
+      enum: ['owner', 'manager', 'employee'],
       default: null,
     },
   },

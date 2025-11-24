@@ -16,6 +16,7 @@ interface TestUser {
   lastName: string;
   displayName?: string;
   role?: string;
+  companyRole?: 'owner' | 'manager' | 'employee';
 }
 
 const testUsers: TestUser[] = [
@@ -27,6 +28,7 @@ const testUsers: TestUser[] = [
     lastName: 'Петров',
     displayName: 'Алекс',
     role: 'разработчик',
+    companyRole: 'employee',
   },
   {
     email: 'maria.design@managelog.test',
@@ -36,6 +38,7 @@ const testUsers: TestUser[] = [
     lastName: 'Иванова',
     displayName: 'Маша',
     role: 'дизайнер',
+    companyRole: 'employee',
   },
   {
     email: 'ivan.manager@managelog.test',
@@ -45,6 +48,7 @@ const testUsers: TestUser[] = [
     lastName: 'Сидоров',
     displayName: 'Ваня',
     role: 'менеджер',
+    companyRole: 'manager',
   },
   {
     email: 'anna.analyst@managelog.test',
@@ -54,6 +58,7 @@ const testUsers: TestUser[] = [
     lastName: 'Козлова',
     displayName: 'Аня',
     role: 'аналитик',
+    companyRole: 'employee',
   },
   {
     email: 'dmitry.lead@managelog.test',
@@ -63,6 +68,7 @@ const testUsers: TestUser[] = [
     lastName: 'Смирнов',
     displayName: 'Дима',
     role: 'менеджер',
+    companyRole: 'manager',
   },
 ];
 
@@ -105,9 +111,16 @@ async function addTestUsers(): Promise<void> {
         if (user) {
           console.log(`\n⚠️  Пользователь уже существует: ${testUser.login} (${testUser.email})`);
           
-          // Обновляем компанию, если пользователь не в ней
-          if (!user.company || user.company.toString() !== company._id.toString()) {
+          // Обновляем компанию и роль, если пользователь не в ней или роль не установлена
+          const needsUpdate = !user.company || 
+                              user.company.toString() !== company._id.toString() ||
+                              (testUser.companyRole && user.companyRole !== testUser.companyRole);
+          
+          if (needsUpdate) {
             user.company = company._id;
+            if (testUser.companyRole) {
+              user.companyRole = testUser.companyRole;
+            }
             await user.save();
             
             // Добавляем в members компании, если его там нет
@@ -116,7 +129,7 @@ async function addTestUsers(): Promise<void> {
             }
             
             updatedCount++;
-            console.log(`   ✅ Пользователь добавлен в компанию`);
+            console.log(`   ✅ Пользователь добавлен в компанию${testUser.companyRole ? ` с ролью "${testUser.companyRole}"` : ''}`);
           } else {
             skippedCount++;
             console.log(`   ⏭️  Пользователь уже в компании`);
@@ -136,6 +149,7 @@ async function addTestUsers(): Promise<void> {
             displayName: testUser.displayName || testUser.firstName,
             role: testUser.role,
             company: company._id,
+            companyRole: testUser.companyRole || 'employee',
           });
 
           await user.save();

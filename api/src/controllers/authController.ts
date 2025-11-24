@@ -174,8 +174,9 @@ export async function register(req: Request, res: Response): Promise<void> {
 
     await company.save();
 
-    // Обновляем пользователя - привязываем к компании
+    // Обновляем пользователя - привязываем к компании и устанавливаем роль владельца
     user.company = company._id;
+    user.companyRole = 'owner';
     await user.save();
 
     // Автоматическая авторизация после регистрации
