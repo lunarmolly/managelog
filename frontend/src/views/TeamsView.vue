@@ -832,6 +832,7 @@ onMounted(() => {
   margin-left: auto;
   margin-right: auto;
   gap: 24px;
+  flex-wrap: wrap;
 }
 
 .create-employee-btn {
@@ -1289,6 +1290,11 @@ onMounted(() => {
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+.modal-input-wrapper:hover {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
 .modal-input-wrapper:focus-within {
   background: rgba(255, 255, 255, 0.08);
   border-color: rgba(145, 33, 56, 0.5);
@@ -1324,10 +1330,42 @@ onMounted(() => {
 .modal-input-wrapper select.modal-field-input {
   cursor: pointer;
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L6 6L11 1' stroke='%23e1eaf8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M5 7.5L10 12.5L15 7.5' stroke='%23e1eaf8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right clamp(1rem, 2vw, 1.25rem) center;
-  padding-right: clamp(2rem, 4vw, 2.5rem);
+  background-size: 20px 20px;
+  padding-right: clamp(2.75rem, 5.5vw, 3.5rem);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.modal-input-wrapper:hover select.modal-field-input {
+  background-image: url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M5 7.5L10 12.5L15 7.5' stroke='%23ffffff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+
+.modal-input-wrapper:focus-within select.modal-field-input {
+  background-image: url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M5 7.5L10 12.5L15 7.5' stroke='%23912138' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+
+.modal-input-wrapper select.modal-field-input option {
+  background: rgba(4, 9, 16, 0.98);
+  color: #e1eaf8;
+  padding: clamp(0.75rem, 1.5vw, 1rem) clamp(1rem, 2vw, 1.25rem);
+  font-family: 'Involve', Arial, sans-serif;
+  font-size: clamp(0.9375rem, 1.5vw, 1.125rem);
+  border: none;
+}
+
+.modal-input-wrapper select.modal-field-input option:hover,
+.modal-input-wrapper select.modal-field-input option:focus {
+  background: rgba(145, 33, 56, 0.2);
+}
+
+.modal-input-wrapper select.modal-field-input option:checked {
+  background: rgba(145, 33, 56, 0.3);
+  color: #ffffff;
+  font-weight: 500;
 }
 
 .modal-field-error {
@@ -1529,8 +1567,21 @@ onMounted(() => {
     min-height: auto;
   }
 
+  .teams-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
   .teams-title {
     font-size: 36px;
+    width: 100%;
+  }
+
+  .create-employee-btn {
+    width: 100%;
+    justify-content: center;
   }
 
   .teams-search {
