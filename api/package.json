@@ -9,7 +9,8 @@
     "start": "node dist/index.js",
     "typecheck": "tsc --noEmit",
     "delete-user": "tsx scripts/delete-user.ts",
-    "add-test-users": "tsx scripts/add-test-users.ts"
+    "add-test-users": "tsx scripts/add-test-users.ts",
+    "delete-all-users-except": "tsx scripts/delete-all-users-except.ts"
   },
   "dependencies": {
     "@types/multer": "^2.0.0",
