@@ -712,7 +712,7 @@
                       :alt="getParticipantName(participantId)"
                     />
                     <div v-else class="participant-avatar-placeholder-small">
-                      {{ getParticipantName(participantId).charAt(0).toUpperCase() }}
+                      {{ getParticipantInitial(companyUsers.find(u => u.id === participantId)) }}
                     </div>
                   </div>
                   <span>{{ getParticipantName(participantId) }}</span>
@@ -775,15 +775,15 @@
                   <img
                     v-if="user.avatar"
                     :src="getAvatarUrl(user.avatar)"
-                    :alt="user.displayName || user.firstName || user.login"
+                    :alt="getParticipantFullName(user)"
                   />
                   <div v-else class="participant-avatar-placeholder">
-                    {{ (user.displayName || user.firstName || user.login || '?').charAt(0).toUpperCase() }}
+                    {{ getParticipantInitial(user) }}
                   </div>
                 </div>
                 <div class="participant-info">
                   <div class="participant-name">
-                    {{ user.displayName || user.firstName || user.login || 'Неизвестно' }}
+                    {{ getParticipantFullName(user) }}
                   </div>
                   <div v-if="user.role" class="participant-role">{{ user.role }}</div>
                 </div>
@@ -1552,9 +1552,9 @@ const filteredCompanyUsers = computed(() => {
   }
   const query = participantSearchQuery.value.toLowerCase().trim();
   return availableUsers.filter(user => {
-    const name = (user.displayName || user.firstName || user.login || '').toLowerCase();
+    const fullName = getParticipantFullName(user).toLowerCase();
     const role = (user.role || '').toLowerCase();
-    return (name.includes(query) || role.includes(query)) && !selectedParticipants.value.includes(user.id);
+    return (fullName.includes(query) || role.includes(query)) && !selectedParticipants.value.includes(user.id);
   });
 });
 
@@ -1587,10 +1587,35 @@ function clearSelectedParticipants(): void {
   selectedParticipants.value = [];
 }
 
-// Получение имени участника
+// Получение имени участника для выбранных (Имя Роль)
 function getParticipantName(userId: string): string {
   const user = companyUsers.value.find(u => u.id === userId);
-  return user ? (user.displayName || user.firstName || user.login || 'Неизвестно') : 'Неизвестно';
+  if (!user) return 'Неизвестно';
+  
+  // Формируем "Имя Роль"
+  const parts: string[] = [];
+  if (user.firstName) parts.push(user.firstName);
+  if (user.role) parts.push(user.role);
+  
+  return parts.length > 0 ? parts.join(' ') : (user.login || 'Неизвестно');
+}
+
+// Получение полного имени для отображения в списке (Имя Фамилия)
+function getParticipantFullName(user: CompanyUser): string {
+  const parts: string[] = [];
+  if (user.firstName) parts.push(user.firstName);
+  if (user.lastName) parts.push(user.lastName);
+  
+  return parts.length > 0 ? parts.join(' ') : (user.login || 'Неизвестно');
+}
+
+// Получение первой буквы для аватара
+function getParticipantInitial(user: CompanyUser | undefined): string {
+  if (!user) return '?';
+  if (user.firstName) return user.firstName.charAt(0).toUpperCase();
+  if (user.lastName) return user.lastName.charAt(0).toUpperCase();
+  if (user.login) return user.login.charAt(0).toUpperCase();
+  return '?';
 }
 
 // Формирование полного URL аватара
