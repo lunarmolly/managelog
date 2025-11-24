@@ -248,20 +248,35 @@
               Тип
               <span class="modal-field-required">*</span>
             </label>
-            <div class="modal-input-wrapper">
-              <select
-                id="employee-companyRole"
-                v-model="employeeForm.companyRole"
-                class="modal-field-input"
-                :class="{ 'modal-field-input--error': employeeFormErrors.companyRole }"
-                required
-                @change="clearFieldError('companyRole')"
+            <div class="modal-select-wrapper">
+              <div 
+                class="modal-select-btn" 
+                :class="{ 
+                  active: isCompanyRoleMenuOpen, 
+                  'modal-select-btn--error': employeeFormErrors.companyRole,
+                  'modal-select-btn--filled': employeeForm.companyRole
+                }" 
+                @click.stop="toggleCompanyRoleMenu"
               >
-                <option value="">Выберите тип</option>
-                <option value="employee">Сотрудник</option>
-                <option value="manager">Руководитель</option>
-                <option v-if="currentUserRole === 'owner'" value="owner">Владелец</option>
-              </select>
+                <span class="modal-select-text">{{ companyRoleButtonText }}</span>
+                <svg class="modal-select-arrow" :class="{ 'modal-select-arrow--open': isCompanyRoleMenuOpen }" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+              <div v-if="isCompanyRoleMenuOpen" class="modal-select-dropdown active" @click.stop>
+                <div
+                  v-for="option in companyRoleOptions"
+                  :key="option.value"
+                  class="modal-select-item"
+                  :class="{ active: employeeForm.companyRole === option.value }"
+                  @click.stop="selectCompanyRole(option.value)"
+                >
+                  <span>{{ option.label }}</span>
+                  <svg v-if="employeeForm.companyRole === option.value" class="modal-select-check" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </div>
+              </div>
             </div>
             <span v-if="employeeFormErrors.companyRole" class="modal-field-error">{{ employeeFormErrors.companyRole }}</span>
           </div>
@@ -269,20 +284,35 @@
           <!-- Роль -->
           <div class="modal-field">
             <label class="modal-field-label" for="employee-role">Роль</label>
-            <div class="modal-input-wrapper">
-              <select
-                id="employee-role"
-                v-model="employeeForm.role"
-                class="modal-field-input"
-                :class="{ 'modal-field-input--error': employeeFormErrors.role }"
-                @change="clearFieldError('role')"
+            <div class="modal-select-wrapper">
+              <div 
+                class="modal-select-btn" 
+                :class="{ 
+                  active: isRoleMenuOpen, 
+                  'modal-select-btn--error': employeeFormErrors.role,
+                  'modal-select-btn--filled': employeeForm.role
+                }" 
+                @click.stop="toggleRoleMenu"
               >
-                <option value="">Выберите роль</option>
-                <option value="менеджер">менеджер</option>
-                <option value="разработчик">разработчик</option>
-                <option value="дизайнер">дизайнер</option>
-                <option value="аналитик">аналитик</option>
-              </select>
+                <span class="modal-select-text">{{ roleButtonText }}</span>
+                <svg class="modal-select-arrow" :class="{ 'modal-select-arrow--open': isRoleMenuOpen }" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M6 9L12 15L18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+              <div v-if="isRoleMenuOpen" class="modal-select-dropdown active" @click.stop>
+                <div
+                  v-for="option in roleOptions"
+                  :key="option"
+                  class="modal-select-item"
+                  :class="{ active: employeeForm.role === option }"
+                  @click.stop="selectRole(option)"
+                >
+                  <span>{{ option }}</span>
+                  <svg v-if="employeeForm.role === option" class="modal-select-check" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </div>
+              </div>
             </div>
             <span v-if="employeeFormErrors.role" class="modal-field-error">{{ employeeFormErrors.role }}</span>
           </div>
@@ -434,7 +464,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, reactive } from 'vue';
+import { ref, onMounted, onUnmounted, computed, reactive } from 'vue';
 import { useRouter } from 'vue-router';
 import { getCompanyUsers, getUserInfo, createEmployee, type CompanyUser, type CompanyRole, type CreateEmployeeRequest, type CreateEmployeeResponse } from '@/api/user';
 
@@ -464,6 +494,37 @@ const employeeForm = reactive<CreateEmployeeRequest & { role?: string }>({
 });
 
 const employeeFormErrors = reactive<Record<string, string>>({});
+
+// Состояния выпадающих меню
+const isCompanyRoleMenuOpen = ref(false);
+const isRoleMenuOpen = ref(false);
+
+// Опции для типов
+const companyRoleOptions = computed(() => {
+  const options: Array<{ value: CompanyRole; label: string }> = [
+    { value: 'employee', label: 'Сотрудник' },
+    { value: 'manager', label: 'Руководитель' },
+  ];
+  if (currentUserRole.value === 'owner') {
+    options.push({ value: 'owner', label: 'Владелец' });
+  }
+  return options;
+});
+
+// Опции для ролей
+const roleOptions = ['менеджер', 'разработчик', 'дизайнер', 'аналитик'];
+
+// Текст на кнопке выбора типа
+const companyRoleButtonText = computed(() => {
+  if (!employeeForm.companyRole) return '';
+  const option = companyRoleOptions.value.find(opt => opt.value === employeeForm.companyRole);
+  return option ? option.label : '';
+});
+
+// Текст на кнопке выбора роли
+const roleButtonText = computed(() => {
+  return employeeForm.role || '';
+});
 
 // Проверка, может ли пользователь создавать сотрудников
 const canCreateEmployee = computed(() => {
@@ -617,6 +678,8 @@ function openCreateEmployeeModal(): void {
     companyRole: 'employee' as CompanyRole,
   });
   Object.keys(employeeFormErrors).forEach(key => delete employeeFormErrors[key]);
+  isCompanyRoleMenuOpen.value = false;
+  isRoleMenuOpen.value = false;
   showCreateEmployeeModal.value = true;
   document.body.style.overflow = 'hidden';
 }
@@ -643,6 +706,43 @@ function closeModalOnOverlay(event: MouseEvent): void {
 function clearFieldError(field: string): void {
   if (employeeFormErrors[field]) {
     delete employeeFormErrors[field];
+  }
+}
+
+// Управление меню типа
+function toggleCompanyRoleMenu(): void {
+  isCompanyRoleMenuOpen.value = !isCompanyRoleMenuOpen.value;
+  if (isCompanyRoleMenuOpen.value) {
+    isRoleMenuOpen.value = false;
+  }
+}
+
+function selectCompanyRole(value: CompanyRole): void {
+  employeeForm.companyRole = value;
+  isCompanyRoleMenuOpen.value = false;
+  clearFieldError('companyRole');
+}
+
+// Управление меню роли
+function toggleRoleMenu(): void {
+  isRoleMenuOpen.value = !isRoleMenuOpen.value;
+  if (isRoleMenuOpen.value) {
+    isCompanyRoleMenuOpen.value = false;
+  }
+}
+
+function selectRole(value: string): void {
+  employeeForm.role = value;
+  isRoleMenuOpen.value = false;
+  clearFieldError('role');
+}
+
+// Закрытие меню при клике вне
+function handleClickOutsideMenus(event: MouseEvent): void {
+  const target = event.target as HTMLElement;
+  if (!target.closest('.modal-select-wrapper')) {
+    isCompanyRoleMenuOpen.value = false;
+    isRoleMenuOpen.value = false;
   }
 }
 
@@ -792,6 +892,11 @@ async function loadCompanyUsers(): Promise<void> {
 
 onMounted(() => {
   loadCompanyUsers();
+  document.addEventListener('click', handleClickOutsideMenus);
+});
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutsideMenus);
 });
 </script>
 
@@ -1382,6 +1487,175 @@ onMounted(() => {
 .modal-field-error::before {
   content: '⚠';
   font-size: 14px;
+}
+
+/* Кастомные dropdown для выбора типа и роли */
+.modal-select-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.modal-select-btn {
+  height: clamp(2.75rem, 5.5vw, 3.5rem);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: clamp(0.75rem, 1.5vw, 1rem);
+  background: rgba(255, 255, 255, 0.05);
+  padding: 0 clamp(1rem, 2vw, 1.25rem);
+  color: #e1eaf8;
+  font-family: 'Involve', Arial, sans-serif;
+  font-size: clamp(0.9375rem, 1.5vw, 1.125rem);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  width: 100%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: clamp(0.5rem, 1vw, 0.75rem);
+  box-sizing: border-box;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.modal-select-btn:hover {
+  border-color: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.modal-select-btn.active {
+  border-color: rgba(145, 33, 56, 0.5);
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 0 3px rgba(145, 33, 56, 0.1);
+}
+
+.modal-select-btn--error {
+  border-color: #ff6b6b;
+  background: rgba(255, 107, 107, 0.1);
+}
+
+.modal-select-btn--filled {
+  color: #ffffff;
+}
+
+.modal-select-text {
+  flex: 1;
+  text-align: left;
+  color: inherit;
+  min-height: 1.5em;
+  display: flex;
+  align-items: center;
+}
+
+.modal-select-btn:not(.modal-select-btn--filled) .modal-select-text {
+  color: rgba(225, 234, 248, 0.5);
+}
+
+.modal-select-arrow {
+  width: 20px;
+  height: 20px;
+  color: rgba(225, 234, 248, 0.6);
+  transition: transform 0.3s ease;
+  flex-shrink: 0;
+}
+
+.modal-select-arrow--open {
+  transform: rotate(180deg);
+  color: rgba(145, 33, 56, 0.8);
+}
+
+.modal-select-btn:hover .modal-select-arrow {
+  color: rgba(225, 234, 248, 0.9);
+}
+
+.modal-select-btn.active .modal-select-arrow {
+  color: rgba(145, 33, 56, 0.8);
+}
+
+.modal-select-dropdown {
+  position: absolute;
+  top: calc(100% + clamp(0.5rem, 1vw, 0.75rem));
+  left: 0;
+  right: 0;
+  background: rgba(145, 33, 56, 0.98);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: clamp(0.875rem, 1.5vw, 1.25rem);
+  padding: clamp(0.75rem, 1.5vw, 1rem) 0;
+  min-width: 100%;
+  z-index: 10001;
+  display: none;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+  animation: fadeInDown 0.2s ease-out;
+  max-height: calc(100vh - 200px);
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.modal-select-dropdown.active {
+  display: block;
+}
+
+.modal-select-dropdown::-webkit-scrollbar {
+  width: 6px;
+}
+
+.modal-select-dropdown::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.modal-select-dropdown::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 3px;
+}
+
+.modal-select-dropdown::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.modal-select-item {
+  padding: clamp(0.75rem, 1.5vw, 1rem) clamp(1.25rem, 2.5vw, 1.75rem);
+  color: #e1eaf8;
+  font-size: clamp(0.875rem, 1.25vw, 0.9375rem);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: clamp(0.75rem, 1.5vw, 1rem);
+  border-radius: clamp(0.5rem, 1vw, 0.625rem);
+  margin: 0 clamp(0.5rem, 1vw, 0.75rem) clamp(0.25rem, 0.5vw, 0.375rem);
+  min-height: clamp(2.5rem, 5vw, 3rem);
+  text-transform: lowercase;
+}
+
+.modal-select-item:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+}
+
+.modal-select-item.active {
+  background: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+}
+
+.modal-select-check {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  color: #ffffff;
+  stroke-width: 2.5;
 }
 
 .modal-actions {
