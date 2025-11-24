@@ -156,6 +156,35 @@ export function clearTokens(): void {
   localStorage.removeItem('auth_tokens');
 }
 
+export async function refreshTokens(): Promise<{ access_token: string; refresh_token: string } | null> {
+  const tokens = getTokens();
+  if (!tokens || !tokens.refresh_token) {
+    return null;
+  }
+
+  try {
+    const response = await handleRequest<LoginResponse>(`${API_BASE_URL}/auth/refresh/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        refresh_token: tokens.refresh_token,
+      }),
+    });
+
+    if (response.tokens) {
+      saveTokens(response.tokens);
+      return response.tokens;
+    }
+    return null;
+  } catch (error) {
+    console.error('Refresh tokens error:', error);
+    clearTokens();
+    return null;
+  }
+}
+
 export async function logout(): Promise<void> {
   const tokens = getTokens();
   if (!tokens) {

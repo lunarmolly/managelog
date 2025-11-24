@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { login, register, logout } from '../controllers/authController.js';
+import { login, register, logout, refresh } from '../controllers/authController.js';
 import { authenticateToken } from '../middleware/auth.js';
 
 const router = Router();
@@ -130,5 +130,40 @@ router.post('/register/', register);
  */
 router.post('/logout', authenticateToken, logout);
 router.post('/logout/', authenticateToken, logout);
+
+/**
+ * @swagger
+ * /api/v1/auth/refresh/:
+ *   post:
+ *     summary: Обновление токенов доступа
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - refresh_token
+ *             properties:
+ *               refresh_token:
+ *                 type: string
+ *                 description: Refresh токен для обновления access токена
+ *     responses:
+ *       200:
+ *         description: Токены успешно обновлены
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/LoginResponse'
+ *       400:
+ *         description: Refresh токен не предоставлен
+ *       403:
+ *         description: Недействительный или истекший refresh токен
+ *       500:
+ *         description: Внутренняя ошибка сервера
+ */
+router.post('/refresh', refresh);
+router.post('/refresh/', refresh);
 
 export default router;

@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { User } from '../models/User.js';
 import { Company } from '../models/Company.js';
-import { generateAccessToken, generateRefreshToken, TokenPayload } from '../utils/jwt.js';
+import { generateAccessToken, generateRefreshToken, verifyRefreshToken, TokenPayload } from '../utils/jwt.js';
 import { validateLoginRequest, validateRegisterRequest } from '../utils/validation.js';
 import { AuthRequest } from '../middleware/auth.js';
 
@@ -224,6 +224,60 @@ export async function register(req: Request, res: Response): Promise<void> {
         error: error.toString(),
         stack: error.stack,
       }),
+    });
+  }
+}
+
+export async function refresh(req: Request, res: Response): Promise<void> {
+  try {
+    const { refresh_token } = req.body;
+
+    if (!refresh_token) {
+      res.status(400).json({
+        detail: 'Refresh токен не предоставлен',
+      });
+      return;
+    }
+
+    try {
+      // Проверяем refresh токен
+      const decoded = verifyRefreshToken(refresh_token);
+      
+      // Проверяем, что пользователь существует
+      const user = await User.findById(decoded.userId);
+      if (!user) {
+        res.status(401).json({
+          detail: 'Пользователь не найден',
+        });
+        return;
+      }
+
+      // Генерируем новые токены
+      const tokenPayload: TokenPayload = {
+        userId: user._id.toString(),
+        email: user.email,
+        login: user.login,
+      };
+
+      const accessToken = generateAccessToken(tokenPayload);
+      const newRefreshToken = generateRefreshToken(tokenPayload);
+
+      res.json({
+        status: 'success',
+        tokens: {
+          access_token: accessToken,
+          refresh_token: newRefreshToken,
+        },
+      });
+    } catch (error: any) {
+      res.status(403).json({
+        detail: 'Недействительный или истекший refresh токен',
+      });
+    }
+  } catch (error: any) {
+    console.error('Refresh error:', error);
+    res.status(500).json({
+      detail: 'Внутренняя ошибка сервера',
     });
   }
 }

@@ -1,3 +1,5 @@
+import { refreshTokens } from './auth';
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api/v1';
 
 export type ProjectStatus = 'new' | 'in_progress' | 'completed' | 'on_hold' | 'cancelled';
@@ -52,8 +54,23 @@ export interface ApiError {
   errors?: Record<string, string[]>;
 }
 
-async function handleResponse<T>(response: Response): Promise<T> {
+async function handleResponse<T>(response: Response, url: string, options: RequestInit, retryCount = 0): Promise<T> {
   if (!response.ok) {
+    // Если получили 401 и это первый раз, пытаемся обновить токены
+    if (response.status === 401 && retryCount === 0) {
+      const refreshed = await refreshTokens();
+      if (refreshed) {
+        // Обновляем заголовок Authorization с новым токеном
+        const newOptions = { ...options };
+        const headers = new Headers(newOptions.headers);
+        headers.set('Authorization', `Bearer ${refreshed.access_token}`);
+        newOptions.headers = headers;
+        // Повторяем запрос с новым токеном
+        const retryResponse = await fetch(url, newOptions);
+        return await handleResponse<T>(retryResponse, url, newOptions, 1);
+      }
+    }
+
     const errorData: ApiError = await response.json().catch(() => ({}));
     throw {
       status: response.status,
@@ -67,7 +84,7 @@ async function handleResponse<T>(response: Response): Promise<T> {
 async function handleRequest<T>(url: string, options: RequestInit): Promise<T> {
   try {
     const response = await fetch(url, options);
-    return await handleResponse<T>(response);
+    return await handleResponse<T>(response, url, options);
   } catch (error: any) {
     if (error.name === 'TypeError' && error.message.includes('fetch')) {
       throw {
