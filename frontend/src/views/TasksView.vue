@@ -199,66 +199,141 @@
     <Teleport to="body">
       <div v-if="showCreateTaskModal" class="modal-overlay" @click="closeCreateTaskModal">
         <div class="create-task-modal" @click.stop>
-          <!-- Кнопка назад -->
-          <div class="modal-back-btn" @click="closeCreateTaskModal">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-              <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            <span>к задачам</span>
+          <div class="modal-header">
+            <button class="modal-close-btn" @click="closeCreateTaskModal" aria-label="Закрыть">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path
+                  d="M18 6L6 18M6 6L18 18"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </button>
+            <h2 class="modal-title">Создать задачу</h2>
+            <div class="modal-subtitle">Заполните информацию о задаче</div>
           </div>
 
-          <div class="modal-content-wrapper">
-            <!-- Название -->
-            <div class="task-modal-title-row">
-              <label class="task-modal-label">название:</label>
+          <!-- Название -->
+          <div class="modal-field">
+            <label class="modal-field-label" for="task-name">
+              Название задачи
+              <span class="modal-field-required">*</span>
+            </label>
+            <div class="modal-input-wrapper">
               <input
+                id="task-name"
                 v-model="newTask.name"
                 type="text"
-                class="task-modal-title-input"
-                placeholder="Lorem ipsum dolor sit amet, consectetur."
+                class="modal-field-input"
+                placeholder="Введите название задачи"
+                required
               />
-              <button class="task-modal-ai-btn" @click="generateDescription" title="сгенерировать описание">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                  <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                  <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                  <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-              </button>
             </div>
+          </div>
 
-            <!-- Описание -->
-            <div class="task-modal-description-wrapper">
+          <!-- Описание -->
+          <div class="modal-field">
+            <label class="modal-field-label" for="task-description">
+              Описание задачи
+            </label>
+            <div class="modal-textarea-wrapper">
               <textarea
+                id="task-description"
                 v-model="newTask.description"
-                class="task-modal-description"
-                placeholder="описание задачи:&#10;постановщик, исполнитель, наблюдатели&#10;описание&#10;чеклисты, подзадачи, отработанное время, дедлайн, удалить задачу, ии-помощь в генерации описания, комментарии, статус"
+                class="modal-description-textarea"
+                placeholder="Опишите задачу..."
+                rows="6"
               ></textarea>
-              <div class="task-modal-scrollbar">
-                <div class="task-modal-scrollbar-thumb"></div>
+              <div class="modal-textarea-footer">
+                <span class="modal-char-count">{{ newTask.description.length }} символов</span>
               </div>
             </div>
+          </div>
 
-            <!-- Кнопка генерации описания -->
-            <button class="task-modal-generate-btn" @click="generateDescription">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-              <span>сгенерировать описание</span>
-            </button>
+          <!-- Генерация описания -->
+          <div class="modal-generate-section">
+            <div class="modal-generate-btn" @click="generateDescription">
+              <div class="modal-generate-btn-icon">
+                <img 
+                  :src="isImportantTask ? '/images/icons/tasks/fire-active.svg' : '/images/icons/tasks/fire-unactive.svg'" 
+                  alt="сгенерировать описание" 
+                />
+              </div>
+              <div class="modal-generate-btn-text">сгенерировать описание</div>
+            </div>
+            <div
+              v-if="generatedDescription"
+              class="modal-generated-description"
+            >
+              <div class="modal-generated-content">
+                <div class="modal-generated-text">{{ generatedDescription }}</div>
+                <div class="modal-generated-actions">
+                  <div class="modal-action-btn modal-action-accept" @click="acceptGeneratedDescription">
+                    <div class="modal-action-btn-icon">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path
+                          d="M20 6L9 17l-5-5"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        />
+                      </svg>
+                    </div>
+                    <span>принять</span>
+                  </div>
+                  <div class="modal-action-btn modal-action-refine" @click="refineGeneratedDescription">
+                    <div class="modal-action-btn-icon">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path
+                          d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        />
+                        <path
+                          d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        />
+                      </svg>
+                    </div>
+                    <span>доработать</span>
+                  </div>
+                  <div class="modal-action-btn modal-action-delete" @click="deleteGeneratedDescription">
+                    <div class="modal-action-btn-icon">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path
+                          d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h14zM10 11v6M14 11v6"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        />
+                      </svg>
+                    </div>
+                    <span>удалить</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
 
-            <!-- Постановщик, исполнитель, наблюдатели -->
+          <!-- Постановщик, исполнитель, наблюдатели -->
+          <div class="modal-field">
+            <label class="modal-field-label">Участники</label>
             <div class="task-modal-participants-row">
               <button
                 class="task-modal-participant-btn"
                 :class="{ 'selected': newTask.creatorId }"
                 @click="showCreatorSelect = !showCreatorSelect"
               >
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                  <circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="2"/>
-                </svg>
+                <img src="/images/icons/tasks/creator.svg" alt="постановщик" />
                 <span>{{ getCreatorName() || 'постановщик' }}</span>
               </button>
               <button
@@ -266,11 +341,7 @@
                 :class="{ 'selected': newTask.assigneeId }"
                 @click="showAssigneeSelect = !showAssigneeSelect"
               >
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                  <circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="2"/>
-                  <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
+                <img src="/images/icons/tasks/executor.svg" alt="исполнитель" />
                 <span>{{ getAssigneeName() || 'исполнитель' }}</span>
               </button>
               <button
@@ -278,11 +349,7 @@
                 :class="{ 'selected': newTask.watcherIds.length > 0 }"
                 @click="showWatchersSelect = !showWatchersSelect"
               >
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                  <circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="2"/>
-                  <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
+                <img src="/images/icons/tasks/watcher.svg" alt="наблюдатели" />
                 <span>{{ newTask.watcherIds.length > 0 ? `${newTask.watcherIds.length} наблюдателей` : 'наблюдатели' }}</span>
               </button>
             </div>
@@ -331,53 +398,62 @@
                 <span>{{ user.displayName || user.firstName || user.login }}</span>
               </div>
             </div>
+          </div>
 
-            <!-- Подзадачи и чеклист -->
-            <button class="task-modal-action-btn" @click="showSubtasksModal = true">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                <path d="M9 11L12 14L22 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M21 12V19A2 2 0 0 1 19 21H5A2 2 0 0 1 3 19V5A2 2 0 0 1 5 3H12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-              <span>подзадача</span>
-            </button>
-            <button class="task-modal-action-btn" @click="showChecklistModal = true">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                <path d="M9 5H5A2 2 0 0 0 3 7V19A2 2 0 0 0 5 21H19A2 2 0 0 0 21 19V7A2 2 0 0 0 19 5H15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M9 3V9M15 3V9M9 12H15M9 15H15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-              </svg>
-              <span>чеклист</span>
-            </button>
-
-            <!-- Дедлайн -->
-            <button class="task-modal-deadline-btn" @click="showDeadlinePicker = !showDeadlinePicker">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2"/>
-                <path d="M16 2V6M8 2V6M3 10H21" stroke="currentColor" stroke-width="2"/>
-              </svg>
-              <span>{{ newTask.deadline ? formatDate(newTask.deadline) : 'дедлайн' }}</span>
-            </button>
-            <div v-if="showDeadlinePicker" class="task-modal-deadline-picker">
-              <input
-                v-model="newTask.deadline"
-                type="datetime-local"
-                class="task-modal-deadline-input"
-              />
+          <!-- Важная задача и дедлайн -->
+          <div class="modal-field-group">
+            <div class="modal-field">
+              <label class="modal-field-label">Важная задача</label>
+              <button 
+                class="task-important-btn"
+                :class="{ 'active': isImportantTask }"
+                @click="isImportantTask = !isImportantTask"
+              >
+                <img 
+                  :src="isImportantTask ? '/images/icons/tasks/fire-active.svg' : '/images/icons/tasks/fire-unactive.svg'" 
+                  alt="важная задача" 
+                />
+              </button>
             </div>
+            <div class="modal-field">
+              <label class="modal-field-label" for="task-deadline">Дедлайн</label>
+              <div class="modal-input-wrapper">
+                <input
+                  id="task-deadline"
+                  v-model="newTask.deadline"
+                  type="datetime-local"
+                  class="modal-field-input"
+                />
+              </div>
+            </div>
+          </div>
 
-            <!-- Кнопки действий -->
-            <div class="task-modal-actions">
-              <button class="task-modal-btn-create" @click="createTask">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                  <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <!-- Кнопки действий -->
+          <div class="modal-actions">
+            <div class="modal-btn modal-btn-create" @click="createTask">
+              <div class="modal-btn-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path
+                    d="M12 5v14m7-7H5"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
                 </svg>
-                <span>создать задачу</span>
-              </button>
-              <button class="task-modal-btn-cancel" @click="closeCreateTaskModal">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                  <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </div>
+              <span>создать задачу</span>
+            </div>
+            <div class="modal-btn modal-btn-cancel" @click="closeCreateTaskModal">
+              <div class="modal-btn-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path
+                    d="M20 5C20.2652 5 20.5196 5.10536 20.7071 5.29289C20.8946 5.48043 21 5.73478 21 6C21 6.26522 20.8946 6.51957 20.7071 6.70711C20.5196 6.89464 20.2652 7 20 7H19L18.997 7.071L18.064 20.142C18.0281 20.6466 17.8023 21.1188 17.4321 21.4636C17.0619 21.8083 16.5749 22 16.069 22H7.93C7.42414 22 6.93707 21.8083 6.56688 21.4636C6.1967 21.1188 5.97092 20.6466 5.935 20.142L5.002 7.072L5 7H4C3.73478 7 3.48043 6.89464 3.29289 6.70711C3.10536 6.51957 3 6.26522 3 6C3 5.73478 3.10536 5.48043 3.29289 5.29289C3.48043 5.10536 3.73478 5 4 5H20ZM16.997 7H7.003L7.931 20H16.069L16.997 7ZM14 2C14.2652 2 14.5196 2.10536 14.7071 2.29289C14.8946 2.48043 15 2.73478 15 3C15 3.26522 14.8946 3.51957 14.7071 3.70711C14.5196 3.89464 14.2652 4 14 4H10C9.73478 4 9.48043 3.89464 9.29289 3.70711C9.10536 3.51957 9 3.26522 9 3C9 2.73478 9.10536 2.48043 9.29289 2.29289C9.48043 2.10536 9.73478 2 10 2H14Z"
+                    fill="#912138"
+                  />
                 </svg>
-                <span>отмена</span>
-              </button>
+              </div>
+              <span>отмена</span>
             </div>
           </div>
         </div>
@@ -388,39 +464,63 @@
     <Teleport to="body">
       <div v-if="showEditTaskModal && selectedTask" class="modal-overlay" @click="closeEditTaskModal">
         <div class="edit-task-modal" @click.stop>
-          <!-- Кнопка назад -->
-          <div class="modal-back-btn" @click="closeEditTaskModal">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-              <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            <span>к задачам</span>
+          <div class="modal-header">
+            <button class="modal-close-btn" @click="closeEditTaskModal" aria-label="Закрыть">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path
+                  d="M18 6L6 18M6 6L18 18"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </button>
+            <h2 class="modal-title">Редактировать задачу</h2>
+            <div class="modal-subtitle">Измените информацию о задаче</div>
           </div>
 
-          <div class="modal-content-wrapper">
-            <!-- Название -->
-            <div class="task-modal-title-row">
-              <label class="task-modal-label">Название:</label>
+          <!-- Название -->
+          <div class="modal-field">
+            <label class="modal-field-label" for="edit-task-name">
+              Название задачи
+              <span class="modal-field-required">*</span>
+            </label>
+            <div class="modal-input-wrapper">
               <input
+                id="edit-task-name"
                 v-model="editTask.name"
                 type="text"
-                class="task-modal-title-input"
+                class="modal-field-input"
                 :disabled="!canEditTask(selectedTask) && !canCompleteTask(selectedTask)"
+                required
               />
             </div>
+          </div>
 
-            <!-- Описание -->
-            <div class="task-modal-description-wrapper">
+          <!-- Описание -->
+          <div class="modal-field">
+            <label class="modal-field-label" for="edit-task-description">
+              Описание задачи
+            </label>
+            <div class="modal-textarea-wrapper">
               <textarea
+                id="edit-task-description"
                 v-model="editTask.description"
-                class="task-modal-description"
+                class="modal-description-textarea"
                 :disabled="!canEditTask(selectedTask) && !canCompleteTask(selectedTask)"
+                placeholder="Опишите задачу..."
+                rows="6"
               ></textarea>
-              <div class="task-modal-scrollbar">
-                <div class="task-modal-scrollbar-thumb"></div>
+              <div class="modal-textarea-footer">
+                <span class="modal-char-count">{{ editTask.description.length }} символов</span>
               </div>
             </div>
+          </div>
 
-            <!-- Постановщик, исполнитель, наблюдатели -->
+          <!-- Постановщик, исполнитель, наблюдатели -->
+          <div class="modal-field">
+            <label class="modal-field-label">Участники</label>
             <div class="task-modal-participants-row">
               <div class="task-modal-participant-display">
                 <img
@@ -459,111 +559,100 @@
                 <span>{{ selectedTask.watchers && selectedTask.watchers.length > 0 ? getCreatorDisplayName(selectedTask.watchers[0]) : 'наблюдатели' }}</span>
               </div>
             </div>
+          </div>
 
-            <!-- Подзадачи -->
-            <button
-              class="task-modal-action-btn"
-              :disabled="!canEditTask(selectedTask) && !canCompleteTask(selectedTask)"
-              @click="showEditSubtasksModal = true"
-            >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                <path d="M9 11L12 14L22 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M21 12V19A2 2 0 0 1 19 21H5A2 2 0 0 1 3 19V5A2 2 0 0 1 5 3H12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-              <span>подзадачи</span>
-            </button>
-
-            <!-- Чеклист -->
-            <button
-              class="task-modal-action-btn"
-              :disabled="!canEditTask(selectedTask) && !canCompleteTask(selectedTask)"
-              @click="showEditChecklistModal = true"
-            >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                <path d="M9 5H5A2 2 0 0 0 3 7V19A2 2 0 0 0 5 21H19A2 2 0 0 0 21 19V7A2 2 0 0 0 19 5H15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M9 3V9M15 3V9M9 12H15M9 15H15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-              </svg>
-              <span>чеклист</span>
-            </button>
-
-            <!-- Время, редактор, дедлайн -->
-            <div class="task-modal-meta-row">
-              <div class="task-modal-meta-item">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                  <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
-                  <path d="M12 6V12L16 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                </svg>
-                <span>{{ editTask.timeSpent ? formatTime(editTask.timeSpent) : '00:00' }}</span>
-              </div>
-              <div class="task-modal-meta-item">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-                <span>редактор</span>
-              </div>
-              <div class="task-modal-meta-item">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                  <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2"/>
-                  <path d="M16 2V6M8 2V6M3 10H21" stroke="currentColor" stroke-width="2"/>
-                </svg>
-                <span>{{ editTask.deadline ? formatDate(editTask.deadline) : 'дд/мм/гггг' }}</span>
-              </div>
-              <div v-if="selectedTask.deadline" class="task-modal-meta-item">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                  <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2"/>
-                  <path d="M16 2V6M8 2V6M3 10H21" stroke="currentColor" stroke-width="2"/>
-                </svg>
-                <span>{{ formatDate(selectedTask.deadline) }}</span>
+          <!-- Время, редактор, дедлайн -->
+          <div class="modal-field-group">
+            <div class="modal-field">
+              <label class="modal-field-label">Время</label>
+              <div class="modal-input-wrapper">
+                <input
+                  v-model="editTask.timeSpent"
+                  type="text"
+                  class="modal-field-input"
+                  :disabled="!canEditTask(selectedTask) && !canCompleteTask(selectedTask)"
+                  placeholder="00:00"
+                />
               </div>
             </div>
-
-            <!-- Кнопки действий -->
-            <div class="task-modal-actions">
-              <button
-                v-if="canEditTask(selectedTask)"
-                class="task-modal-btn-accept"
-                @click="updateTask"
-              >
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                  <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-                <span>принять</span>
-              </button>
-              <button
-                v-if="canEditTask(selectedTask)"
-                class="task-modal-btn-rework"
-                @click="sendToRework"
-              >
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                  <path d="M3 12L9 6M3 12L9 18M3 12H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-                <span>доработать</span>
-              </button>
-              <button
-                v-if="canEditTask(selectedTask)"
-                class="task-modal-btn-delete"
-                @click="deleteTask"
-              >
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                  <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-                <span>удалить</span>
-              </button>
-              <button
-                v-if="canCompleteTask(selectedTask) && !canEditTask(selectedTask)"
-                class="task-modal-btn-complete"
-                @click="completeTask"
-              >
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                  <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-                <span>готово</span>
-              </button>
+            <div class="modal-field">
+              <label class="modal-field-label" for="edit-task-deadline">Дедлайн</label>
+              <div class="modal-input-wrapper">
+                <input
+                  id="edit-task-deadline"
+                  v-model="editTask.deadline"
+                  type="datetime-local"
+                  class="modal-field-input"
+                  :disabled="!canEditTask(selectedTask) && !canCompleteTask(selectedTask)"
+                />
+              </div>
             </div>
+          </div>
 
-            <!-- Комментарии (пустое поле внизу) -->
-            <div class="task-modal-comments"></div>
+          <!-- Кнопки действий -->
+          <div class="modal-actions">
+            <button
+              v-if="canEditTask(selectedTask)"
+              class="modal-btn modal-btn-create"
+              @click="updateTask"
+            >
+              <div class="modal-btn-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path
+                    d="M20 6L9 17l-5-5"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </div>
+              <span>сохранить</span>
+            </button>
+            <button
+              v-if="canCompleteTask(selectedTask) && !canEditTask(selectedTask)"
+              class="modal-btn modal-btn-create"
+              @click="completeTask"
+            >
+              <div class="modal-btn-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path
+                    d="M20 6L9 17l-5-5"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </div>
+              <span>готово</span>
+            </button>
+            <button
+              v-if="canEditTask(selectedTask)"
+              class="modal-btn modal-btn-cancel"
+              @click="deleteTask"
+            >
+              <div class="modal-btn-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path
+                    d="M20 5C20.2652 5 20.5196 5.10536 20.7071 5.29289C20.8946 5.48043 21 5.73478 21 6C21 6.26522 20.8946 6.51957 20.7071 6.70711C20.5196 6.89464 20.2652 7 20 7H19L18.997 7.071L18.064 20.142C18.0281 20.6466 17.8023 21.1188 17.4321 21.4636C17.0619 21.8083 16.5749 22 16.069 22H7.93C7.42414 22 6.93707 21.8083 6.56688 21.4636C6.1967 21.1188 5.97092 20.6466 5.935 20.142L5.002 7.072L5 7H4C3.73478 7 3.48043 6.89464 3.29289 6.70711C3.10536 6.51957 3 6.26522 3 6C3 5.73478 3.10536 5.48043 3.29289 5.29289C3.48043 5.10536 3.73478 5 4 5H20ZM16.997 7H7.003L7.931 20H16.069L16.997 7ZM14 2C14.2652 2 14.5196 2.10536 14.7071 2.29289C14.8946 2.48043 15 2.73478 15 3C15 3.26522 14.8946 3.51957 14.7071 3.70711C14.5196 3.89464 14.2652 4 14 4H10C9.73478 4 9.48043 3.89464 9.29289 3.70711C9.10536 3.51957 9 3.26522 9 3C9 2.73478 9.10536 2.48043 9.29289 2.29289C9.48043 2.10536 9.73478 2 10 2H14Z"
+                    fill="#912138"
+                  />
+                </svg>
+              </div>
+              <span>удалить</span>
+            </button>
+            <button class="modal-btn modal-btn-cancel" @click="closeEditTaskModal">
+              <div class="modal-btn-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path
+                    d="M20 5C20.2652 5 20.5196 5.10536 20.7071 5.29289C20.8946 5.48043 21 5.73478 21 6C21 6.26522 20.8946 6.51957 20.7071 6.70711C20.5196 6.89464 20.2652 7 20 7H19L18.997 7.071L18.064 20.142C18.0281 20.6466 17.8023 21.1188 17.4321 21.4636C17.0619 21.8083 16.5749 22 16.069 22H7.93C7.42414 22 6.93707 21.8083 6.56688 21.4636C6.1967 21.1188 5.97092 20.6466 5.935 20.142L5.002 7.072L5 7H4C3.73478 7 3.48043 6.89464 3.29289 6.70711C3.10536 6.51957 3 6.26522 3 6C3 5.73478 3.10536 5.48043 3.29289 5.29289C3.48043 5.10536 3.73478 5 4 5H20ZM16.997 7H7.003L7.931 20H16.069L16.997 7ZM14 2C14.2652 2 14.5196 2.10536 14.7071 2.29289C14.8946 2.48043 15 2.73478 15 3C15 3.26522 14.8946 3.51957 14.7071 3.70711C14.5196 3.89464 14.2652 4 14 4H10C9.73478 4 9.48043 3.89464 9.29289 3.70711C9.10536 3.51957 9 3.26522 9 3C9 2.73478 9.10536 2.48043 9.29289 2.29289C9.48043 2.10536 9.73478 2 10 2H14Z"
+                    fill="#912138"
+                  />
+                </svg>
+              </div>
+              <span>отмена</span>
+            </button>
           </div>
         </div>
       </div>
@@ -665,6 +754,8 @@ const editTask = ref({
 
 const showEditSubtasksModal = ref(false);
 const showEditChecklistModal = ref(false);
+const generatedDescription = ref('');
+const isImportantTask = ref(false);
 
 const newColumn = ref({
   name: '',
@@ -862,6 +953,8 @@ function openCreateTaskModal(columnId: string) {
     deadline: '',
     subtasks: [],
   };
+  generatedDescription.value = '';
+  isImportantTask.value = false;
   showCreateTaskModal.value = true;
   showCreatorSelect.value = false;
   showAssigneeSelect.value = false;
@@ -900,9 +993,29 @@ function toggleWatcher(userId: string) {
   }
 }
 
-function generateDescription() {
-  // TODO: Реализовать генерацию описания через AI
-  console.log('Generate description');
+async function generateDescription() {
+  try {
+    // TODO: Реализовать генерацию описания через AI
+    generatedDescription.value = 'Сгенерированное описание задачи будет здесь...';
+  } catch (error: any) {
+    console.error('Ошибка генерации описания:', error);
+  }
+}
+
+function acceptGeneratedDescription() {
+  if (generatedDescription.value) {
+    newTask.value.description = generatedDescription.value;
+    generatedDescription.value = '';
+  }
+}
+
+function refineGeneratedDescription() {
+  // TODO: Реализовать доработку описания
+  console.log('Refine description');
+}
+
+function deleteGeneratedDescription() {
+  generatedDescription.value = '';
 }
 
 function closeCreateTaskModal() {
@@ -1578,13 +1691,450 @@ watch(
 
 .modal-header {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: clamp(0.5rem, 1vw, 0.75rem);
+  padding-bottom: clamp(1rem, 2vw, 1.5rem);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  position: relative;
+}
+
+.modal-close-btn {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: clamp(2rem, 4vw, 2.5rem);
+  height: clamp(2rem, 4vw, 2.5rem);
+  display: flex;
   align-items: center;
-  margin-bottom: 24px;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: clamp(0.5rem, 1vw, 0.75rem);
+  color: #e1eaf8;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
+}
+
+.modal-close-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: scale(1.05);
+}
+
+.modal-close-btn svg {
+  width: 1.25rem;
+  height: 1.25rem;
 }
 
 .modal-title {
-  font-size: 24px;
+  color: #ffffff;
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-weight: 600;
+  font-family: 'Involve', Arial, sans-serif;
+  margin: 0;
+  line-height: 1.3;
+  letter-spacing: -0.02em;
+}
+
+.modal-subtitle {
+  color: rgba(225, 234, 248, 0.7);
+  font-size: clamp(0.875rem, 1.5vw, 1rem);
+  font-weight: 400;
+  font-family: 'Involve', Arial, sans-serif;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.modal-field {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.5rem, 1vw, 0.75rem);
+}
+
+.modal-field-group {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(1rem, 2vw, 1.5rem);
+}
+
+.modal-field-label {
+  font-size: clamp(0.875rem, 1.5vw, 1rem);
+  font-weight: 500;
+  font-family: 'Involve', Arial, sans-serif;
+  color: #e1eaf8;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  line-height: 1.5;
+}
+
+.modal-field-required {
+  color: #912138;
+  font-weight: 600;
+}
+
+.modal-input-wrapper {
+  position: relative;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: clamp(0.75rem, 1.5vw, 1rem);
+  padding: clamp(0.75rem, 1.5vw, 1rem) clamp(1rem, 2vw, 1.25rem);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.modal-input-wrapper:focus-within {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(145, 33, 56, 0.5);
+  box-shadow: 0 0 0 3px rgba(145, 33, 56, 0.1);
+}
+
+.modal-field-input {
+  width: 100%;
+  font-size: clamp(0.9375rem, 1.5vw, 1.125rem);
+  font-weight: 400;
+  font-family: 'Involve', Arial, sans-serif;
+  color: #ffffff;
+  background: transparent;
+  border: none;
+  outline: none;
+  padding: 0;
+  line-height: 1.5;
+}
+
+.modal-field-input::placeholder {
+  color: rgba(225, 234, 248, 0.5);
+}
+
+.modal-textarea-wrapper {
+  position: relative;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: clamp(0.75rem, 1.5vw, 1rem);
+  padding: clamp(0.75rem, 1.5vw, 1rem) clamp(1rem, 2vw, 1.25rem);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  min-height: clamp(8rem, 16vw, 10rem);
+}
+
+.modal-textarea-wrapper:focus-within {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(145, 33, 56, 0.5);
+  box-shadow: 0 0 0 3px rgba(145, 33, 56, 0.1);
+}
+
+.modal-description-textarea {
+  width: 100%;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #ffffff;
+  font-size: clamp(0.9375rem, 1.5vw, 1.125rem);
+  font-weight: 400;
+  font-family: 'Involve', Arial, sans-serif;
+  resize: vertical;
+  min-height: clamp(6rem, 12vw, 8rem);
+  max-height: clamp(12rem, 24vw, 16rem);
+  overflow-y: auto;
+  line-height: 1.6;
+  padding: 0;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(225, 234, 248, 0.3) transparent;
+}
+
+.modal-description-textarea::-webkit-scrollbar {
+  width: 6px;
+}
+
+.modal-description-textarea::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.modal-description-textarea::-webkit-scrollbar-thumb {
+  background: rgba(225, 234, 248, 0.3);
+  border-radius: 3px;
+}
+
+.modal-description-textarea::-webkit-scrollbar-thumb:hover {
+  background: rgba(225, 234, 248, 0.5);
+}
+
+.modal-description-textarea::placeholder {
+  color: rgba(225, 234, 248, 0.5);
+}
+
+.modal-textarea-footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: clamp(0.5rem, 1vw, 0.75rem);
+  padding-top: clamp(0.5rem, 1vw, 0.75rem);
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.modal-char-count {
+  font-size: clamp(0.75rem, 1.25vw, 0.875rem);
+  color: rgba(225, 234, 248, 0.6);
+  font-family: 'Involve', Arial, sans-serif;
+}
+
+.modal-generate-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.modal-generate-btn {
+  background: rgba(145, 33, 56, 0.8);
+  border: 1px solid rgba(145, 33, 56, 0.5);
+  border-radius: clamp(0.75rem, 1.5vw, 1rem);
+  padding: clamp(0.625rem, 1.25vw, 0.875rem) clamp(1rem, 2vw, 1.5rem);
+  height: auto;
+  min-height: clamp(2.5rem, 5vw, 3rem);
+  display: flex;
+  align-items: center;
+  gap: clamp(0.5rem, 1vw, 0.75rem);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  width: 100%;
+  justify-content: center;
+}
+
+.modal-generate-btn:hover {
+  background: rgba(145, 33, 56, 1);
+  border-color: rgba(145, 33, 56, 0.7);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(145, 33, 56, 0.3);
+}
+
+.modal-generate-btn-icon {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  color: #ffffff;
+}
+
+.modal-generate-btn-icon img {
+  width: 100%;
+  height: 100%;
+}
+
+.modal-generate-btn-text {
+  color: #e1eaf8;
+  font-size: 0.9375rem;
+  font-weight: 400;
+  font-family: 'Involve', Arial, sans-serif;
+  flex: 1;
+}
+
+.modal-generated-description {
+  background: rgba(145, 33, 56, 0.1);
+  border: 2px solid rgba(145, 33, 56, 0.3);
+  border-radius: clamp(0.75rem, 1.5vw, 1rem);
+  padding: clamp(1rem, 2vw, 1.5rem);
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.75rem, 1.5vw, 1rem);
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.modal-generated-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.modal-generated-text {
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 400;
+  font-family: 'Involve', Arial, sans-serif;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.modal-generated-actions {
+  display: flex;
+  gap: clamp(0.75rem, 1.5vw, 1rem);
+  flex-wrap: wrap;
+}
+
+.modal-action-btn {
+  border-radius: clamp(0.5rem, 1vw, 0.75rem);
+  padding: clamp(0.5rem, 1vw, 0.75rem) clamp(0.75rem, 1.5vw, 1rem);
+  height: auto;
+  min-height: clamp(2.25rem, 4.5vw, 2.75rem);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(0.5rem, 1vw, 0.75rem);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  font-size: clamp(0.875rem, 1.5vw, 1rem);
+  font-weight: 500;
+  font-family: 'Involve', Arial, sans-serif;
+  flex: 1;
+  border: 1px solid transparent;
+}
+
+.modal-action-accept {
+  background: rgba(145, 33, 56, 0.8);
+  color: #ffffff;
+  border-color: rgba(145, 33, 56, 0.5);
+}
+
+.modal-action-accept:hover {
+  background: rgba(145, 33, 56, 1);
+  border-color: rgba(145, 33, 56, 0.7);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(145, 33, 56, 0.3);
+}
+
+.modal-action-refine {
+  background: rgba(255, 255, 255, 0.1);
+  color: #e1eaf8;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.modal-action-refine:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+.modal-action-delete {
+  background: rgba(255, 107, 107, 0.15);
+  color: #ff6b6b;
+  border-color: rgba(255, 107, 107, 0.3);
+}
+
+.modal-action-delete:hover {
+  background: rgba(255, 107, 107, 0.2);
+  border-color: rgba(255, 107, 107, 0.4);
+  transform: translateY(-1px);
+}
+
+.modal-action-btn-icon {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: inherit;
+}
+
+.modal-action-btn-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.modal-actions {
+  display: flex;
+  gap: clamp(0.75rem, 1.5vw, 1rem);
+  padding-top: clamp(1rem, 2vw, 1.5rem);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  margin-top: auto;
+}
+
+.modal-btn {
+  border-radius: clamp(0.75rem, 1.5vw, 1rem);
+  padding: clamp(0.75rem, 1.5vw, 1rem) clamp(1.5rem, 3vw, 2rem);
+  height: auto;
+  min-height: clamp(2.75rem, 5.5vw, 3.5rem);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(0.5rem, 1vw, 0.75rem);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  font-size: clamp(0.9375rem, 1.5vw, 1.125rem);
+  font-weight: 500;
+  font-family: 'Involve', Arial, sans-serif;
+  border: 1px solid transparent;
+  flex: 1;
+}
+
+.modal-btn-create {
+  background: #912138;
+  color: #ffffff;
+  border-color: rgba(145, 33, 56, 0.5);
+}
+
+.modal-btn-create:hover {
+  background: #a02a43;
+  border-color: rgba(145, 33, 56, 0.7);
+  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(145, 33, 56, 0.3);
+}
+
+.modal-btn-cancel {
+  background: rgba(255, 255, 255, 0.05);
+  color: #e1eaf8;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.modal-btn-cancel:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+.modal-btn-icon {
+  width: clamp(1.25rem, 2.5vw, 1.5rem);
+  height: clamp(1.25rem, 2.5vw, 1.5rem);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: inherit;
+}
+
+.modal-btn-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.task-important-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: clamp(0.75rem, 1.5vw, 1rem);
+  padding: clamp(0.5rem, 1vw, 0.75rem);
+  width: clamp(3rem, 6vw, 3.5rem);
+  height: clamp(3rem, 6vw, 3.5rem);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
+}
+
+.task-important-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.task-important-btn.active {
+  border-color: rgba(145, 33, 56, 0.5);
+  box-shadow: 0 0 0 3px rgba(145, 33, 56, 0.1);
+}
+
+.task-important-btn img {
+  width: 100%;
+  height: 100%;
 }
 
 .modal-close {
@@ -1755,6 +2305,17 @@ watch(
   }
 }
 
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
 .modal-back-btn {
   display: flex;
   align-items: center;
@@ -1818,10 +2379,9 @@ watch(
   flex-shrink: 0;
 }
 
-.task-modal-ai-btn svg {
+.task-modal-ai-btn img {
   width: 24px;
   height: 24px;
-  color: #f3d3c2;
 }
 
 .task-modal-description-wrapper {
@@ -1879,11 +2439,18 @@ watch(
   color: #e1eaf8;
   font-size: 15px;
   font-weight: 400;
+  transition: background 0.2s ease;
 }
 
-.task-modal-generate-btn svg {
+.task-modal-generate-btn:hover {
+  background: rgba(145, 33, 56, 0.8);
+}
+
+
+.task-modal-generate-btn img {
   width: 24px;
   height: 24px;
+  flex-shrink: 0;
 }
 
 .task-modal-participants-row {
@@ -1913,7 +2480,7 @@ watch(
   background: rgba(145, 33, 56, 0.3);
 }
 
-.task-modal-participant-btn svg {
+.task-modal-participant-btn img {
   width: 24px;
   height: 24px;
   flex-shrink: 0;
@@ -2004,7 +2571,7 @@ watch(
   cursor: not-allowed;
 }
 
-.task-modal-action-btn svg {
+.task-modal-action-btn img {
   width: 24px;
   height: 24px;
   flex-shrink: 0;
@@ -2026,7 +2593,7 @@ watch(
   width: 212px;
 }
 
-.task-modal-deadline-btn svg {
+.task-modal-deadline-btn img {
   width: 24px;
   height: 24px;
   flex-shrink: 0;
@@ -2145,6 +2712,7 @@ watch(
   min-width: 153px;
 }
 
+.task-modal-meta-item img,
 .task-modal-meta-item svg {
   width: 24px;
   height: 24px;
