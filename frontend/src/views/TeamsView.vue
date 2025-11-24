@@ -396,7 +396,7 @@
               <div class="credential-value">{{ createdEmployeeCredentials?.login }}</div>
               <button
                 class="credential-copy"
-                @click="copyToClipboard(createdEmployeeCredentials?.login || '')"
+                @click="copyToClipboard(createdEmployeeCredentials?.login || '', 'логин')"
                 type="button"
                 aria-label="Копировать логин"
               >
@@ -411,9 +411,34 @@
               <div class="credential-value">{{ createdEmployeeCredentials?.password }}</div>
               <button
                 class="credential-copy"
-                @click="copyToClipboard(createdEmployeeCredentials?.password || '')"
+                @click="copyToClipboard(createdEmployeeCredentials?.password || '', 'пароль')"
                 type="button"
                 aria-label="Копировать пароль"
+              >
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M16 1H4C2.9 1 2 1.9 2 3V17H4V3H16V1ZM19 5H8C6.9 5 6 5.9 6 7V21C6 22.1 6.9 23 8 23H19C20.1 23 21 22.1 21 21V7C21 5.9 20.1 5 19 5ZM19 21H8V7H19V21Z" fill="currentColor"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- QR-код и ссылка для входа -->
+          <div class="credentials-qr-section">
+            <div class="credentials-qr-wrapper">
+              <div class="credentials-qr-label">QR-код для входа:</div>
+              <div class="credentials-qr-code" v-if="loginQrCode">
+                <img :src="loginQrCode" alt="QR-код для входа" />
+              </div>
+              <div v-else class="credentials-qr-loading">Загрузка QR-кода...</div>
+            </div>
+            <div class="credentials-link-wrapper">
+              <div class="credentials-link-label">ссылка для входа:</div>
+              <div class="credentials-link-value">{{ loginLink }}</div>
+              <button
+                class="credential-copy"
+                @click="copyToClipboard(loginLink, 'ссылку')"
+                type="button"
+                aria-label="Копировать ссылку"
               >
                 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M16 1H4C2.9 1 2 1.9 2 3V17H4V3H16V1ZM19 5H8C6.9 5 6 5.9 6 7V21C6 22.1 6.9 23 8 23H19C20.1 23 21 22.1 21 21V7C21 5.9 20.1 5 19 5ZM19 21H8V7H19V21Z" fill="currentColor"/>
@@ -460,12 +485,20 @@
       </div>
       </div>
     </Teleport>
+
+    <!-- Уведомление о копировании -->
+    <Teleport to="body">
+      <div v-if="copyNotification.show" class="copy-notification">
+        {{ copyNotification.text }}
+      </div>
+    </Teleport>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed, reactive } from 'vue';
+import { ref, onMounted, onUnmounted, computed, reactive, watch } from 'vue';
 import { useRouter } from 'vue-router';
+import QRCode from 'qrcode';
 import { getCompanyUsers, getUserInfo, createEmployee, type CompanyUser, type CompanyRole, type CreateEmployeeRequest, type CreateEmployeeResponse } from '@/api/user';
 
 const router = useRouter();
@@ -481,6 +514,8 @@ const showCreateEmployeeModal = ref(false);
 const showCredentialsModal = ref(false);
 const isCreatingEmployee = ref(false);
 const createdEmployeeCredentials = ref<CreateEmployeeResponse | null>(null);
+const loginQrCode = ref<string | null>(null);
+const copyNotification = ref<{ show: boolean; text: string }>({ show: false, text: '' });
 
 // Форма создания сотрудника
 const employeeForm = reactive<CreateEmployeeRequest & { role?: string }>({
@@ -524,6 +559,15 @@ const companyRoleButtonText = computed(() => {
 // Текст на кнопке выбора роли
 const roleButtonText = computed(() => {
   return employeeForm.role || '';
+});
+
+// Ссылка для входа
+const loginLink = computed(() => {
+  if (!createdEmployeeCredentials.value?.login || !createdEmployeeCredentials.value?.password) {
+    return '';
+  }
+  const baseUrl = window.location.origin;
+  return `${baseUrl}/auth?login=${encodeURIComponent(createdEmployeeCredentials.value.login)}&password=${encodeURIComponent(createdEmployeeCredentials.value.password)}`;
 });
 
 // Проверка, может ли пользователь создавать сотрудников
@@ -835,18 +879,86 @@ async function handleCreateEmployee(): Promise<void> {
 function closeCredentialsModal(): void {
   showCredentialsModal.value = false;
   createdEmployeeCredentials.value = null;
+  loginQrCode.value = null;
   document.body.style.overflow = '';
 }
 
 // Копирование в буфер обмена
-async function copyToClipboard(text: string): Promise<void> {
+async function copyToClipboard(text: string, label: string = ''): Promise<void> {
+  if (!text) return;
+  
   try {
     await navigator.clipboard.writeText(text);
-    // Можно добавить уведомление об успешном копировании
+    copyNotification.value = {
+      show: true,
+      text: label ? `${label} скопирован` : 'Скопировано',
+    };
+    setTimeout(() => {
+      copyNotification.value.show = false;
+    }, 2000);
   } catch (err) {
     console.error('Ошибка копирования в буфер обмена:', err);
+    // Fallback для старых браузеров
+    try {
+      const textArea = document.createElement('textarea');
+      textArea.value = text;
+      textArea.style.position = 'fixed';
+      textArea.style.left = '-999999px';
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      copyNotification.value = {
+        show: true,
+        text: label ? `${label} скопирован` : 'Скопировано',
+      };
+      setTimeout(() => {
+        copyNotification.value.show = false;
+      }, 2000);
+    } catch (fallbackErr) {
+      console.error('Ошибка fallback копирования:', fallbackErr);
+      copyNotification.value = {
+        show: true,
+        text: 'Ошибка копирования',
+      };
+      setTimeout(() => {
+        copyNotification.value.show = false;
+      }, 2000);
+    }
   }
 }
+
+// Генерация QR-кода для входа
+async function generateLoginQrCode(): Promise<void> {
+  if (!loginLink.value) {
+    loginQrCode.value = null;
+    return;
+  }
+  
+  try {
+    const qrDataUrl = await QRCode.toDataURL(loginLink.value, {
+      width: 256,
+      margin: 2,
+      color: {
+        dark: '#ffffff',
+        light: '#912138',
+      },
+    });
+    loginQrCode.value = qrDataUrl;
+  } catch (err) {
+    console.error('Ошибка генерации QR-кода:', err);
+    loginQrCode.value = null;
+  }
+}
+
+// Отслеживание изменений ссылки для генерации QR-кода
+watch(loginLink, async (newLink) => {
+  if (newLink) {
+    await generateLoginQrCode();
+  } else {
+    loginQrCode.value = null;
+  }
+}, { immediate: true });
 
 // Переход на страницу профиля пользователя
 function goToUserProfile(userId: string): void {
@@ -1813,6 +1925,115 @@ onUnmounted(() => {
 .credential-copy svg {
   width: 16px;
   height: 16px;
+}
+
+/* QR-код и ссылка для входа */
+.credentials-qr-section {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(1rem, 2vw, 1.5rem);
+  padding: clamp(1rem, 2vw, 1.5rem);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: clamp(0.875rem, 1.5vw, 1.25rem);
+  margin-top: clamp(0.5rem, 1vw, 0.75rem);
+}
+
+.credentials-qr-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(0.75rem, 1.5vw, 1rem);
+}
+
+.credentials-qr-label,
+.credentials-link-label {
+  font-family: 'Involve', Arial, sans-serif;
+  font-size: clamp(0.875rem, 1.5vw, 1rem);
+  font-weight: 500;
+  color: rgba(225, 234, 248, 0.7);
+  text-align: center;
+}
+
+.credentials-qr-code {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(0.75rem, 1.5vw, 1rem);
+  background: #ffffff;
+  border-radius: clamp(0.75rem, 1.5vw, 1rem);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.credentials-qr-code img {
+  width: clamp(200px, 40vw, 256px);
+  height: clamp(200px, 40vw, 256px);
+  display: block;
+}
+
+.credentials-qr-loading {
+  font-family: 'Involve', Arial, sans-serif;
+  font-size: clamp(0.875rem, 1.5vw, 1rem);
+  color: rgba(225, 234, 248, 0.6);
+  padding: clamp(1rem, 2vw, 1.5rem);
+  text-align: center;
+}
+
+.credentials-link-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.5rem, 1vw, 0.75rem);
+}
+
+.credentials-link-value {
+  display: flex;
+  align-items: center;
+  gap: clamp(0.5rem, 1vw, 0.75rem);
+  padding: clamp(0.75rem, 1.5vw, 1rem) clamp(1rem, 2vw, 1.25rem);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: clamp(0.75rem, 1.5vw, 1rem);
+  font-family: 'Involve', Arial, sans-serif;
+  font-size: clamp(0.8125rem, 1.25vw, 0.9375rem);
+  color: #e1eaf8;
+  word-break: break-all;
+  line-height: 1.5;
+}
+
+.credentials-link-wrapper .credential-copy {
+  align-self: flex-end;
+}
+
+/* Уведомление о копировании */
+.copy-notification {
+  position: fixed;
+  bottom: clamp(1.5rem, 3vw, 2rem);
+  right: clamp(1.5rem, 3vw, 2rem);
+  padding: clamp(0.75rem, 1.5vw, 1rem) clamp(1.25rem, 2.5vw, 1.75rem);
+  background: rgba(145, 33, 56, 0.95);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: clamp(0.75rem, 1.5vw, 1rem);
+  color: #ffffff;
+  font-family: 'Involve', Arial, sans-serif;
+  font-size: clamp(0.875rem, 1.5vw, 1rem);
+  font-weight: 500;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  z-index: 10020;
+  animation: slideInUp 0.3s ease-out;
+  pointer-events: none;
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .credentials-actions {
