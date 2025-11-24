@@ -46,12 +46,7 @@
             
             <!-- Компания -->
             <div v-if="userCompanyName" class="profile-company-wrapper">
-              <div class="profile-company-badge">
-                <svg class="company-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M3 21H21M5 21V7L12 3L19 7V21M9 9V21M15 9V21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-                <span class="company-text">{{ userCompanyName }}</span>
-              </div>
+              <div class="profile-company-name">{{ userCompanyName }}</div>
             </div>
           </div>
 
@@ -347,6 +342,7 @@ const saveSuccessMessage = ref<string>('');
 const avatarUrl = ref<string | null>(null);
 const avatarError = ref<string>('');
 const avatarUploaderRef = ref<ComponentPublicInstance & { clearError?: () => void } | null>(null);
+const userCompanyName = ref<string | null>(null);
 
 const roleOptions = ['менеджер', 'разработчик', 'дизайнер', 'аналитик'];
 const isRoleMenuOpen = ref(false);
@@ -526,6 +522,9 @@ async function loadProfile(): Promise<void> {
     } else {
       profileForm.birthDate = '';
     }
+    
+    // Компания
+    userCompanyName.value = profile.company?.name || null;
     
     console.log('Данные установлены в форму:', {
       email: profileForm.email,
@@ -1177,6 +1176,22 @@ onUnmounted(() => {
 
 .role-text {
   text-transform: lowercase;
+}
+
+.profile-company-wrapper {
+  display: flex;
+  justify-content: center;
+  margin-top: 4px;
+}
+
+.profile-company-name {
+  font-family: 'Involve', Arial, sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  color: rgba(41, 45, 50, 0.6);
+  text-align: center;
+  text-transform: lowercase;
+  letter-spacing: 0.3px;
 }
 
 .profile-divider {

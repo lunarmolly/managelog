@@ -13,6 +13,7 @@
           <router-link class="header__logo" to="/dashboard" aria-label="Главная страница">
             <div class="header__logo-icon" aria-hidden="true"></div>
             <span class="header__logo-text">managelog</span>
+            <span v-if="companyName" class="header__logo-company">{{ companyName }}</span>
           </router-link>
 
           <!-- Навигация -->
@@ -181,6 +182,7 @@ import { computed, ref, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { logout, clearTokens } from '../../api/auth';
 import { getProfile, type Profile } from '../../api/profile';
+import { getUserInfo, type UserInfo } from '../../api/user';
 
 const route = useRoute();
 const isProfileOpen = ref(false);
@@ -188,11 +190,16 @@ const hasNotifications = ref(false); // Можно подключить к ре�
 const profile = ref<Profile | null>(null);
 const avatarUrl = ref<string | null>(null);
 const displayName = ref<string>('Пользователь');
+const companyName = ref<string | null>(null);
 
 async function loadProfile(): Promise<void> {
   try {
     const profileData = await getProfile();
     profile.value = profileData;
+    
+    // Загружаем информацию о пользователе (включая компанию)
+    const userData = await getUserInfo();
+    companyName.value = userData.company?.name || null;
     
     // Устанавливаем отображаемое имя
     displayName.value = profileData.displayName || profileData.firstName || profileData.login || 'Пользователь';
@@ -379,6 +386,25 @@ async function handleLogout(): Promise<void> {
   text-transform: lowercase;
   white-space: nowrap;
   line-height: 1;
+}
+
+.header__logo-company {
+  font-size: clamp(0.875rem, 1.5vw, 1rem);
+  font-weight: 400;
+  color: rgba(225, 234, 248, 0.7);
+  letter-spacing: 0.3px;
+  text-transform: lowercase;
+  white-space: nowrap;
+  margin-left: clamp(0.75rem, 1.5vw, 1rem);
+  padding-left: clamp(0.75rem, 1.5vw, 1rem);
+  border-left: 1px solid rgba(225, 234, 248, 0.2);
+  line-height: 1;
+}
+
+@media (max-width: 768px) {
+  .header__logo-company {
+    display: none; /* Скрываем название компании на мобилке */
+  }
 }
 
 /* Navigation */

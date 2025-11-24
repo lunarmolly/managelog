@@ -13,12 +13,8 @@
           <router-link class="logo" to="/dashboard">
             <div class="logo__circle" />
             <span class="logo__text">managelog</span>
+            <span v-if="companyName" class="logo__company">{{ companyName }}</span>
           </router-link>
-          
-          <!-- Название компании -->
-          <div v-if="companyName" class="company-name">
-            <span class="company-name__text">{{ companyName }}</span>
-          </div>
 
           <nav class="nav">
             <router-link
@@ -376,6 +372,18 @@ async function handleLogout(): Promise<void> {
   letter-spacing: 1px;
   white-space: nowrap;
   text-transform: lowercase;
+}
+
+.logo__company {
+  font-size: 16px;
+  font-weight: 400;
+  color: rgba(225, 234, 248, 0.7);
+  letter-spacing: 0.3px;
+  text-transform: lowercase;
+  white-space: nowrap;
+  margin-left: 16px;
+  padding-left: 16px;
+  border-left: 1px solid rgba(225, 234, 248, 0.2);
 }
 
 .nav {
@@ -748,6 +756,10 @@ async function handleLogout(): Promise<void> {
   .logo__circle {
     width: 40px;
     height: 40px;
+  }
+
+  .logo__company {
+    display: none; /* Скрываем название компании на мобилке */
   }
 
   .nav {
