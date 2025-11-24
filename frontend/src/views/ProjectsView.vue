@@ -679,6 +679,138 @@
             </div>
           </div>
         </div>
+        
+        <!-- Участники проекта -->
+        <div class="modal-field">
+          <label class="modal-field-label">
+            участники проекта
+            <span class="modal-field-label-hint">(необязательно)</span>
+          </label>
+          
+          <div class="participants-selector">
+            <!-- Выбранные участники -->
+            <div v-if="selectedParticipants.length > 0" class="selected-participants">
+              <div class="selected-participants-header">
+                <span class="selected-participants-label">выбрано: {{ selectedParticipants.length }}</span>
+                <button
+                  type="button"
+                  class="selected-participants-clear"
+                  @click="clearSelectedParticipants"
+                >
+                  очистить
+                </button>
+              </div>
+              <div class="selected-participants-list">
+                <div
+                  v-for="participantId in selectedParticipants"
+                  :key="participantId"
+                  class="selected-participant-tag"
+                >
+                  <div class="participant-avatar-small">
+                    <img
+                      v-if="companyUsers.find(u => u.id === participantId)?.avatar"
+                      :src="getAvatarUrl(companyUsers.find(u => u.id === participantId)?.avatar || '')"
+                      :alt="getParticipantName(participantId)"
+                    />
+                    <div v-else class="participant-avatar-placeholder-small">
+                      {{ getParticipantName(participantId).charAt(0).toUpperCase() }}
+                    </div>
+                  </div>
+                  <span>{{ getParticipantName(participantId) }}</span>
+                  <button
+                    type="button"
+                    class="selected-participant-remove"
+                    @click="removeParticipant(participantId)"
+                    :aria-label="`Удалить ${getParticipantName(participantId)}`"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path
+                        d="M10.5 3.5L3.5 10.5M3.5 3.5L10.5 10.5"
+                        stroke="currentColor"
+                        stroke-width="1.5"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Поиск участников -->
+            <div class="participants-search">
+              <svg class="participants-search-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path
+                  d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+              <input
+                v-model="participantSearchQuery"
+                type="text"
+                class="participants-search-input"
+                placeholder="найти сотрудника..."
+                @input="handleParticipantSearch"
+              />
+            </div>
+            
+            <!-- Список доступных участников -->
+            <div v-if="participantSearchQuery || selectedParticipants.length === 0" class="participants-list">
+              <div v-if="isLoadingCompanyUsers" class="participants-empty">
+                загрузка...
+              </div>
+              <div v-else-if="filteredCompanyUsers.length === 0" class="participants-empty">
+                {{ participantSearchQuery ? 'ничего не найдено' : 'нет доступных сотрудников' }}
+              </div>
+              <div
+                v-for="user in filteredCompanyUsers"
+                :key="user.id"
+                class="participant-item"
+                :class="{ selected: isParticipantSelected(user.id) }"
+                @click="toggleParticipantSelection(user.id)"
+              >
+                <div class="participant-avatar">
+                  <img
+                    v-if="user.avatar"
+                    :src="getAvatarUrl(user.avatar)"
+                    :alt="user.displayName || user.firstName || user.login"
+                  />
+                  <div v-else class="participant-avatar-placeholder">
+                    {{ (user.displayName || user.firstName || user.login || '?').charAt(0).toUpperCase() }}
+                  </div>
+                </div>
+                <div class="participant-info">
+                  <div class="participant-name">
+                    {{ user.displayName || user.firstName || user.login || 'Неизвестно' }}
+                  </div>
+                  <div v-if="user.role" class="participant-role">{{ user.role }}</div>
+                </div>
+                <div class="participant-checkbox">
+                  <svg
+                    v-if="isParticipantSelected(user.id)"
+                    width="14"
+                    height="14"
+                    viewBox="0 0 14 14"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M11.6667 3.5L5.25 9.91667L2.33334 7"
+                      stroke="#ffffff"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
         <div class="modal-actions">
                 <div class="modal-btn modal-btn-create" @click="submitCreateProject">
             <div class="modal-btn-icon">
@@ -1006,7 +1138,7 @@ const filteredAndSortedProjects = computed(() => {
     filtered = filtered.filter((project) => {
       if (!project.executor) return false;
       return selectedFilters.value.executor.some((executorId) =>
-        project.executor?.includes(executorId)
+        project.executor?.includes(String(executorId))
       );
     });
   }
@@ -1209,8 +1341,10 @@ async function openEditProjectModal(project: Project) {
   selectedIcon.value = project.icon;
   selectedColor.value = project.color;
   
-  // Загружаем участников проекта
-  selectedParticipants.value = Array.isArray(project.executor) ? project.executor.map(id => String(id)) : [];
+  // Загружаем участников проекта из поля executor (которое содержит массив ID участников)
+  selectedParticipants.value = Array.isArray(project.executor) 
+    ? project.executor.map((id: any) => String(id)) 
+    : [];
   
   // Загружаем сотрудников компании, если еще не загружены
   if (companyUsers.value.length === 0) {
@@ -1443,6 +1577,25 @@ function clearSelectedParticipants(): void {
 function getParticipantName(userId: string): string {
   const user = companyUsers.value.find(u => u.id === userId);
   return user ? (user.displayName || user.firstName || user.login || 'Неизвестно') : 'Неизвестно';
+}
+
+// Формирование полного URL аватара
+function getAvatarUrl(avatar: string | null | undefined): string {
+  if (!avatar) return '';
+  
+  // Если уже полный URL, возвращаем как есть
+  if (avatar.startsWith('http')) {
+    return avatar;
+  }
+  
+  // Если относительный путь, формируем полный URL
+  const baseUrl = import.meta.env.VITE_API_BASE_URL?.replace('/api/v1', '') || 'http://localhost:3000';
+  if (avatar.startsWith('/')) {
+    return `${baseUrl}${avatar}`;
+  }
+  
+  // Если просто имя файла, формируем полный путь
+  return `${baseUrl}/api/v1/avatars/${avatar}`;
 }
 
 // Обработка поиска участников
@@ -3816,5 +3969,65 @@ onUnmounted(() => {
 .selected-participant-remove:hover {
   background: rgba(255, 255, 255, 0.1);
   color: #e1eaf8;
+}
+
+.participant-avatar-small {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: rgba(145, 33, 56, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.participant-avatar-small img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.participant-avatar-placeholder-small {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #e1eaf8;
+  font-size: 10px;
+  font-weight: 600;
+  font-family: 'Involve', Arial, sans-serif;
+}
+
+.participant-avatar-small {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: rgba(145, 33, 56, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.participant-avatar-small img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.participant-avatar-placeholder-small {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #e1eaf8;
+  font-size: 10px;
+  font-weight: 600;
+  font-family: 'Involve', Arial, sans-serif;
 }
 </style>
