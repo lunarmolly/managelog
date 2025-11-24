@@ -340,7 +340,7 @@
                   <span>{{ getCreatorName() || 'постановщик' }}</span>
                 </button>
                 <!-- Выпадающий список постановщика -->
-                <div v-if="showCreatorSelect" class="task-modal-participants-dropdown">
+                <div v-if="showCreatorSelect" class="task-modal-participants-dropdown" @click.stop>
                   <div class="task-modal-participants-search">
                     <input
                       v-model="creatorSearchQuery"
@@ -374,9 +374,25 @@
                 >
                   <img src="/images/icons/tasks/executor.svg" alt="исполнитель" />
                   <span>{{ getAssigneeName() || 'исполнитель' }}</span>
+                  <button
+                    v-if="newTask.assigneeId"
+                    class="task-modal-participant-clear"
+                    @click.stop="clearAssignee"
+                    title="Очистить"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path
+                        d="M18 6L6 18M6 6L18 18"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                    </svg>
+                  </button>
                 </button>
                 <!-- Выпадающий список исполнителя -->
-                <div v-if="showAssigneeSelect" class="task-modal-participants-dropdown">
+                <div v-if="showAssigneeSelect" class="task-modal-participants-dropdown" @click.stop>
                   <div class="task-modal-participants-search">
                     <input
                       v-model="assigneeSearchQuery"
@@ -410,9 +426,25 @@
                 >
                   <img src="/images/icons/tasks/watcher.svg" alt="наблюдатели" />
                   <span>{{ getWatchersDisplayText() }}</span>
+                  <button
+                    v-if="newTask.watcherIds.length > 0"
+                    class="task-modal-participant-clear"
+                    @click.stop="clearWatchers"
+                    title="Очистить"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path
+                        d="M18 6L6 18M6 6L18 18"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                    </svg>
+                  </button>
                 </button>
                 <!-- Выпадающий список наблюдателей -->
-                <div v-if="showWatchersSelect" class="task-modal-participants-dropdown">
+                <div v-if="showWatchersSelect" class="task-modal-participants-dropdown" @click.stop>
                   <div class="task-modal-participants-search">
                     <input
                       v-model="watchersSearchQuery"
@@ -729,7 +761,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import {
   getColumns,
@@ -1086,6 +1118,16 @@ function getWatchersDisplayText(): string {
   return `${newTask.value.watcherIds.length} наблюдателей`;
 }
 
+function clearAssignee() {
+  newTask.value.assigneeId = '';
+  assigneeSearchQuery.value = '';
+}
+
+function clearWatchers() {
+  newTask.value.watcherIds = [];
+  watchersSearchQuery.value = '';
+}
+
 async function addUserToProjectIfNeeded(userId: string) {
   if (!project.value) return;
   
@@ -1369,8 +1411,30 @@ async function createColumn() {
   }
 }
 
+function handleClickOutside(event: MouseEvent) {
+  const target = event.target as HTMLElement;
+  
+  // Проверяем, был ли клик вне выпадающих меню
+  if (!target.closest('.task-modal-participants-dropdown') && 
+      !target.closest('.task-modal-participant-btn')) {
+    showCreatorSelect.value = false;
+    showAssigneeSelect.value = false;
+    showWatchersSelect.value = false;
+  }
+}
+
 onMounted(() => {
   loadData();
+  // Добавляем обработчик клика вне меню только когда модальное окно открыто
+  nextTick(() => {
+    if (showCreateTaskModal.value) {
+      document.addEventListener('click', handleClickOutside);
+    }
+  });
+});
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside);
 });
 
 watch(
@@ -1379,6 +1443,16 @@ watch(
     loadData();
   }
 );
+
+watch(showCreateTaskModal, (isOpen) => {
+  if (isOpen) {
+    nextTick(() => {
+      document.addEventListener('click', handleClickOutside);
+    });
+  } else {
+    document.removeEventListener('click', handleClickOutside);
+  }
+});
 </script>
 
 <style scoped>
@@ -2639,6 +2713,36 @@ watch(
   width: 24px;
   height: 24px;
   flex-shrink: 0;
+}
+
+.task-modal-participant-btn span {
+  flex: 1;
+  text-align: left;
+}
+
+.task-modal-participant-clear {
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  color: rgba(225, 234, 248, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  margin-left: auto;
+}
+
+.task-modal-participant-clear:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #e1eaf8;
+}
+
+.task-modal-participant-clear svg {
+  width: 16px;
+  height: 16px;
 }
 
 .task-modal-participants-dropdown {
