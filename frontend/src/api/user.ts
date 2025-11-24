@@ -154,3 +154,38 @@ export async function getUserById(userId: string): Promise<UserInfo> {
   });
 }
 
+export interface CreateEmployeeRequest {
+  email: string;
+  login: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+  middleName?: string;
+  displayName?: string;
+  birthDate?: string;
+  role?: string;
+  phone?: string;
+  companyRole: 'owner' | 'manager' | 'employee';
+}
+
+export interface CreateEmployeeResponse {
+  id: string;
+  email: string;
+  login: string;
+  password: string;
+  firstName: string | null;
+  lastName: string | null;
+  companyRole: 'owner' | 'manager' | 'employee';
+}
+
+/**
+ * Создать нового сотрудника компании (только для owner и manager)
+ */
+export async function createEmployee(data: CreateEmployeeRequest): Promise<CreateEmployeeResponse> {
+  return handleRequest<CreateEmployeeResponse>(`${API_BASE_URL}/user/company/employees`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data),
+  });
+}
+

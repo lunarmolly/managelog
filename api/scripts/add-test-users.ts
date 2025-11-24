@@ -175,11 +175,22 @@ async function addTestUsers(): Promise<void> {
     console.log(`   ⏭️  Пропущено: ${skippedCount}`);
 
     // Выводим список всех участников компании
-    const updatedCompany = await Company.findById(company._id).populate('members', 'login email firstName lastName displayName role');
+    const updatedCompany = await Company.findById(company._id).populate('members', 'login email firstName lastName displayName role companyRole');
     console.log(`\n👥 Все участники компании "${company.name}":`);
     if (updatedCompany && updatedCompany.members) {
       (updatedCompany.members as any[]).forEach((member: any, index: number) => {
-        console.log(`   ${index + 1}. ${member.login} (${member.email}) - ${member.displayName || member.firstName || 'Без имени'} [${member.role || 'без роли'}]`);
+        const fullName = member.displayName || 
+                        (member.firstName && member.lastName ? `${member.firstName} ${member.lastName}` : member.firstName) || 
+                        'Без имени';
+        const role = member.role || 'без должности';
+        const companyRole = member.companyRole || 'employee';
+        const roleLabel = companyRole === 'owner' ? 'владелец' : 
+                         companyRole === 'manager' ? 'руководитель' : 
+                         'сотрудник';
+        console.log(`   ${index + 1}. ${member.login} (${member.email})`);
+        console.log(`      Имя: ${fullName}`);
+        console.log(`      Должность: ${role}`);
+        console.log(`      Роль в компании: ${roleLabel}`);
       });
     }
 

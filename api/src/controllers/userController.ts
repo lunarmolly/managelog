@@ -1,7 +1,7 @@
 import { Response } from 'express';
 import { User } from '../models/User.js';
 import { Company } from '../models/Company.js';
-import { validateProfileUpdate } from '../utils/validation.js';
+import { validateProfileUpdate, validateCreateEmployeeRequest } from '../utils/validation.js';
 import { AuthRequest } from '../middleware/auth.js';
 
 export async function getUserInfo(req: AuthRequest, res: Response): Promise<void> {
@@ -491,6 +491,130 @@ export async function updateUserInfo(req: AuthRequest, res: Response): Promise<v
         error: error.toString(),
         stack: error.stack,
       }),
+    });
+  }
+}
+
+export async function createEmployee(req: AuthRequest, res: Response): Promise<void> {
+  try {
+    const currentUserId = req.user?.userId;
+    if (!currentUserId) {
+      res.status(401).json({
+        detail: 'Пользователь не авторизован',
+      });
+      return;
+    }
+
+    // Проверяем, что текущий пользователь является owner или manager
+    const currentUser = await User.findById(currentUserId).select('company companyRole').populate('company', 'owner members');
+    if (!currentUser || !currentUser.company) {
+      res.status(404).json({
+        detail: 'Текущий пользователь не привязан к компании',
+      });
+      return;
+    }
+
+    const company = currentUser.company as any;
+    const isOwner = company.owner?.toString() === currentUserId;
+    const isManager = currentUser.companyRole === 'manager';
+
+    if (!isOwner && !isManager) {
+      res.status(403).json({
+        detail: 'Только владелец или руководитель компании может создавать сотрудников',
+      });
+      return;
+    }
+
+    // Валидация данных
+    const validation = validateCreateEmployeeRequest(req.body);
+    if (!validation.isValid) {
+      res.status(422).json({
+        detail: 'Ошибка валидации',
+        errors: validation.errors,
+      });
+      return;
+    }
+
+    const { email, login, password, firstName, lastName, middleName, displayName, birthDate, role, phone, companyRole } = req.body;
+
+    // Проверка на существование пользователя
+    const existingUser = await User.findOne({
+      $or: [{ email }, { login }],
+    });
+
+    if (existingUser) {
+      res.status(409).json({
+        detail: 'Пользователь с таким email или логином уже существует',
+        errors: {
+          email: existingUser.email === email ? ['Пользователь с таким email уже существует'] : [],
+          login: existingUser.login === login ? ['Пользователь с таким логином уже существует'] : [],
+        },
+      });
+      return;
+    }
+
+    // Проверка, что нельзя создать owner, если текущий пользователь не owner
+    if (companyRole === 'owner' && !isOwner) {
+      res.status(403).json({
+        detail: 'Только владелец компании может создавать других владельцев',
+        errors: {
+          companyRole: ['Только владелец компании может создавать других владельцев'],
+        },
+      });
+      return;
+    }
+
+    // Создание нового пользователя
+    const user = new User({
+      email,
+      login,
+      password,
+      firstName: firstName?.trim() || undefined,
+      lastName: lastName?.trim() || undefined,
+      middleName: middleName?.trim() || undefined,
+      displayName: displayName?.trim() || undefined,
+      birthDate: birthDate || undefined,
+      role: role?.trim() || undefined,
+      phone: phone?.trim() || undefined,
+      company: company._id,
+      companyRole: companyRole || 'employee',
+    });
+
+    await user.save();
+
+    // Добавляем пользователя в members компании, если его там еще нет
+    if (!company.members.some((m: any) => m.toString() === user._id.toString())) {
+      company.members.push(user._id);
+      await company.save();
+    }
+
+    // Возвращаем данные для входа
+    res.status(201).json({
+      id: user._id.toString(),
+      email: user.email,
+      login: user.login,
+      password: password, // Возвращаем пароль в открытом виде для отображения пользователю
+      firstName: user.firstName || null,
+      lastName: user.lastName || null,
+      companyRole: user.companyRole || 'employee',
+    });
+  } catch (error: any) {
+    console.error('Create employee error:', error);
+    
+    // Обработка ошибок MongoDB (дубликаты и т.д.)
+    if (error.code === 11000) {
+      const field = Object.keys(error.keyPattern)[0];
+      res.status(409).json({
+        detail: `Пользователь с таким ${field === 'email' ? 'email' : 'логином'} уже существует`,
+        errors: {
+          [field]: [`Пользователь с таким ${field === 'email' ? 'email' : 'логином'} уже существует`],
+        },
+      });
+      return;
+    }
+
+    res.status(500).json({
+      detail: 'Внутренняя ошибка сервера',
     });
   }
 }

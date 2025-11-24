@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getUserInfo, updateUserInfo, getCompanyUsers, getUserById } from '../controllers/userController.js';
+import { getUserInfo, updateUserInfo, getCompanyUsers, getUserById, createEmployee } from '../controllers/userController.js';
 import { authenticateToken } from '../middleware/auth.js';
 
 const router = Router();
@@ -172,6 +172,68 @@ router.put('/', authenticateToken, updateUserInfo);
  *         description: Пользователь не привязан к компании
  */
 router.get('/company/users', authenticateToken, getCompanyUsers);
+
+/**
+ * @swagger
+ * /api/v1/user/company/employees:
+ *   post:
+ *     summary: Создать нового сотрудника компании (только для owner и manager)
+ *     tags: [User]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - login
+ *               - password
+ *               - firstName
+ *               - lastName
+ *               - companyRole
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               login:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *                 format: password
+ *               firstName:
+ *                 type: string
+ *               lastName:
+ *                 type: string
+ *               middleName:
+ *                 type: string
+ *               displayName:
+ *                 type: string
+ *               birthDate:
+ *                 type: string
+ *                 format: date
+ *               role:
+ *                 type: string
+ *               phone:
+ *                 type: string
+ *               companyRole:
+ *                 type: string
+ *                 enum: [owner, manager, employee]
+ *     responses:
+ *       201:
+ *         description: Сотрудник успешно создан
+ *       401:
+ *         description: Пользователь не авторизован
+ *       403:
+ *         description: Нет прав для создания сотрудников
+ *       422:
+ *         description: Ошибка валидации
+ *       409:
+ *         description: Пользователь с таким email или логином уже существует
+ */
+router.post('/company/employees', authenticateToken, createEmployee);
 
 /**
  * @swagger
