@@ -330,74 +330,114 @@
           <div class="modal-field">
             <label class="modal-field-label">Участники</label>
             <div class="task-modal-participants-row">
-              <button
-                class="task-modal-participant-btn"
-                :class="{ 'selected': newTask.creatorId }"
-                @click="showCreatorSelect = !showCreatorSelect"
-              >
-                <img src="/images/icons/tasks/creator.svg" alt="постановщик" />
-                <span>{{ getCreatorName() || 'постановщик' }}</span>
-              </button>
-              <button
-                class="task-modal-participant-btn"
-                :class="{ 'selected': newTask.assigneeId }"
-                @click="showAssigneeSelect = !showAssigneeSelect"
-              >
-                <img src="/images/icons/tasks/executor.svg" alt="исполнитель" />
-                <span>{{ getAssigneeName() || 'исполнитель' }}</span>
-              </button>
-              <button
-                class="task-modal-participant-btn"
-                :class="{ 'selected': newTask.watcherIds.length > 0 }"
-                @click="showWatchersSelect = !showWatchersSelect"
-              >
-                <img src="/images/icons/tasks/watcher.svg" alt="наблюдатели" />
-                <span>{{ newTask.watcherIds.length > 0 ? `${newTask.watcherIds.length} наблюдателей` : 'наблюдатели' }}</span>
-              </button>
-            </div>
-
-            <!-- Выпадающие списки участников -->
-            <div v-if="showCreatorSelect" class="task-modal-participants-dropdown">
-              <div
-                v-for="user in projectParticipants"
-                :key="user.id"
-                class="task-modal-participant-option"
-                @click="selectCreator(user.id)"
-              >
-                <img v-if="user.avatar" :src="user.avatar" :alt="user.displayName || user.firstName || ''" />
-                <div v-else class="task-modal-participant-avatar-placeholder">
-                  {{ (user.displayName || user.firstName || user.login || '?')[0].toUpperCase() }}
+              <div class="task-modal-participant-field">
+                <button
+                  class="task-modal-participant-btn"
+                  :class="{ 'selected': newTask.creatorId }"
+                  @click="showCreatorSelect = !showCreatorSelect"
+                >
+                  <img src="/images/icons/tasks/creator.svg" alt="постановщик" />
+                  <span>{{ getCreatorName() || 'постановщик' }}</span>
+                </button>
+                <!-- Выпадающий список постановщика -->
+                <div v-if="showCreatorSelect" class="task-modal-participants-dropdown">
+                  <div class="task-modal-participants-search">
+                    <input
+                      v-model="creatorSearchQuery"
+                      type="text"
+                      placeholder="поиск..."
+                      class="task-modal-participants-search-input"
+                      @click.stop
+                    />
+                  </div>
+                  <div class="task-modal-participants-list">
+                    <div
+                      v-for="user in filteredCreatorUsers"
+                      :key="user.id"
+                      class="task-modal-participant-option"
+                      @click="selectCreator(user.id)"
+                    >
+                      <img v-if="user.avatar" :src="user.avatar" :alt="user.displayName || user.firstName || ''" />
+                      <div v-else class="task-modal-participant-avatar-placeholder">
+                        {{ (user.displayName || user.firstName || user.login || '?')[0].toUpperCase() }}
+                      </div>
+                      <span>{{ user.displayName || user.firstName || user.login }}</span>
+                    </div>
+                  </div>
                 </div>
-                <span>{{ user.displayName || user.firstName || user.login }}</span>
               </div>
-            </div>
-            <div v-if="showAssigneeSelect" class="task-modal-participants-dropdown">
-              <div
-                v-for="user in projectParticipants"
-                :key="user.id"
-                class="task-modal-participant-option"
-                @click="selectAssignee(user.id)"
-              >
-                <img v-if="user.avatar" :src="user.avatar" :alt="user.displayName || user.firstName || ''" />
-                <div v-else class="task-modal-participant-avatar-placeholder">
-                  {{ (user.displayName || user.firstName || user.login || '?')[0].toUpperCase() }}
+              <div class="task-modal-participant-field">
+                <button
+                  class="task-modal-participant-btn"
+                  :class="{ 'selected': newTask.assigneeId }"
+                  @click="showAssigneeSelect = !showAssigneeSelect"
+                >
+                  <img src="/images/icons/tasks/executor.svg" alt="исполнитель" />
+                  <span>{{ getAssigneeName() || 'исполнитель' }}</span>
+                </button>
+                <!-- Выпадающий список исполнителя -->
+                <div v-if="showAssigneeSelect" class="task-modal-participants-dropdown">
+                  <div class="task-modal-participants-search">
+                    <input
+                      v-model="assigneeSearchQuery"
+                      type="text"
+                      placeholder="поиск..."
+                      class="task-modal-participants-search-input"
+                      @click.stop
+                    />
+                  </div>
+                  <div class="task-modal-participants-list">
+                    <div
+                      v-for="user in filteredAssigneeUsers"
+                      :key="user.id"
+                      class="task-modal-participant-option"
+                      @click="selectAssignee(user.id)"
+                    >
+                      <img v-if="user.avatar" :src="user.avatar" :alt="user.displayName || user.firstName || ''" />
+                      <div v-else class="task-modal-participant-avatar-placeholder">
+                        {{ (user.displayName || user.firstName || user.login || '?')[0].toUpperCase() }}
+                      </div>
+                      <span>{{ user.displayName || user.firstName || user.login }}</span>
+                    </div>
+                  </div>
                 </div>
-                <span>{{ user.displayName || user.firstName || user.login }}</span>
               </div>
-            </div>
-            <div v-if="showWatchersSelect" class="task-modal-participants-dropdown">
-              <div
-                v-for="user in projectParticipants"
-                :key="user.id"
-                class="task-modal-participant-option"
-                @click="toggleWatcher(user.id)"
-              >
-                <input type="checkbox" :checked="newTask.watcherIds.includes(user.id)" @change.stop />
-                <img v-if="user.avatar" :src="user.avatar" :alt="user.displayName || user.firstName || ''" />
-                <div v-else class="task-modal-participant-avatar-placeholder">
-                  {{ (user.displayName || user.firstName || user.login || '?')[0].toUpperCase() }}
+              <div class="task-modal-participant-field">
+                <button
+                  class="task-modal-participant-btn"
+                  :class="{ 'selected': newTask.watcherIds.length > 0 }"
+                  @click="showWatchersSelect = !showWatchersSelect"
+                >
+                  <img src="/images/icons/tasks/watcher.svg" alt="наблюдатели" />
+                  <span>{{ newTask.watcherIds.length > 0 ? `${newTask.watcherIds.length} наблюдателей` : 'наблюдатели' }}</span>
+                </button>
+                <!-- Выпадающий список наблюдателей -->
+                <div v-if="showWatchersSelect" class="task-modal-participants-dropdown">
+                  <div class="task-modal-participants-search">
+                    <input
+                      v-model="watchersSearchQuery"
+                      type="text"
+                      placeholder="поиск..."
+                      class="task-modal-participants-search-input"
+                      @click.stop
+                    />
+                  </div>
+                  <div class="task-modal-participants-list">
+                    <div
+                      v-for="user in filteredWatcherUsers"
+                      :key="user.id"
+                      class="task-modal-participant-option"
+                      @click="toggleWatcher(user.id)"
+                    >
+                      <input type="checkbox" :checked="newTask.watcherIds.includes(user.id)" @change.stop />
+                      <img v-if="user.avatar" :src="user.avatar" :alt="user.displayName || user.firstName || ''" />
+                      <div v-else class="task-modal-participant-avatar-placeholder">
+                        {{ (user.displayName || user.firstName || user.login || '?')[0].toUpperCase() }}
+                      </div>
+                      <span>{{ user.displayName || user.firstName || user.login }}</span>
+                    </div>
+                  </div>
                 </div>
-                <span>{{ user.displayName || user.firstName || user.login }}</span>
               </div>
             </div>
           </div>
@@ -703,7 +743,7 @@ import {
   type Task,
   type UserInfo,
 } from '../api/tasks';
-import { getProject, getProjects, type Project } from '../api/projects';
+import { getProject, getProjects, updateProject, type Project } from '../api/projects';
 import { getCompanyUsers, getUserInfo, type CompanyUser } from '../api/user';
 
 const route = useRoute();
@@ -716,6 +756,7 @@ const projects = ref<Project[]>([]);
 const columns = ref<Column[]>([]);
 const tasks = ref<Task[]>([]);
 const projectParticipants = ref<CompanyUser[]>([]);
+const companyUsers = ref<CompanyUser[]>([]);
 const currentUser = ref<CompanyUser | null>(null);
 
 const searchQuery = ref('');
@@ -743,6 +784,10 @@ const showWatchersSelect = ref(false);
 const showDeadlinePicker = ref(false);
 const showSubtasksModal = ref(false);
 const showChecklistModal = ref(false);
+
+const creatorSearchQuery = ref('');
+const assigneeSearchQuery = ref('');
+const watchersSearchQuery = ref('');
 
 const editTask = ref({
   name: '',
@@ -780,6 +825,39 @@ const displayedProjects = computed(() => {
 const hasMoreProjects = computed(() => {
   // Проверяем, есть ли еще проекты после первых 5
   return availableProjects.value.length > 5;
+});
+
+const filteredCreatorUsers = computed(() => {
+  if (!creatorSearchQuery.value.trim()) {
+    return companyUsers.value;
+  }
+  const query = creatorSearchQuery.value.toLowerCase().trim();
+  return companyUsers.value.filter((user) => {
+    const name = (user.displayName || user.firstName || user.lastName || user.login || '').toLowerCase();
+    return name.includes(query);
+  });
+});
+
+const filteredAssigneeUsers = computed(() => {
+  if (!assigneeSearchQuery.value.trim()) {
+    return companyUsers.value;
+  }
+  const query = assigneeSearchQuery.value.toLowerCase().trim();
+  return companyUsers.value.filter((user) => {
+    const name = (user.displayName || user.firstName || user.lastName || user.login || '').toLowerCase();
+    return name.includes(query);
+  });
+});
+
+const filteredWatcherUsers = computed(() => {
+  if (!watchersSearchQuery.value.trim()) {
+    return companyUsers.value;
+  }
+  const query = watchersSearchQuery.value.toLowerCase().trim();
+  return companyUsers.value.filter((user) => {
+    const name = (user.displayName || user.firstName || user.lastName || user.login || '').toLowerCase();
+    return name.includes(query);
+  });
 });
 
 const filteredTasks = computed(() => {
@@ -962,31 +1040,65 @@ function openCreateTaskModal(columnId: string) {
   showAssigneeSelect.value = false;
   showWatchersSelect.value = false;
   showDeadlinePicker.value = false;
+  creatorSearchQuery.value = '';
+  assigneeSearchQuery.value = '';
+  watchersSearchQuery.value = '';
 }
 
 function getCreatorName(): string {
   if (!newTask.value.creatorId) return '';
-  const user = projectParticipants.value.find(u => u.id === newTask.value.creatorId);
+  const user = companyUsers.value.find(u => u.id === newTask.value.creatorId);
   return user ? (user.displayName || user.firstName || user.login || '') : '';
 }
 
 function getAssigneeName(): string {
   if (!newTask.value.assigneeId) return '';
-  const user = projectParticipants.value.find(u => u.id === newTask.value.assigneeId);
+  const user = companyUsers.value.find(u => u.id === newTask.value.assigneeId);
   return user ? (user.displayName || user.firstName || user.login || '') : '';
 }
 
-function selectCreator(userId: string) {
+async function addUserToProjectIfNeeded(userId: string) {
+  if (!project.value) return;
+  
+  // Проверяем, является ли пользователь участником проекта
+  const isParticipant = projectParticipants.value.some(p => p.id === userId);
+  
+  if (!isParticipant) {
+    try {
+      // Добавляем пользователя в участники проекта
+      const currentParticipantIds = project.value.participants.map(p => p.id);
+      const updatedProject = await updateProject(project.value.id, {
+        participants: [...currentParticipantIds, userId],
+      });
+      
+      // Обновляем список участников проекта
+      project.value = updatedProject;
+      projectParticipants.value = [
+        updatedProject.creator,
+        ...updatedProject.participants,
+      ];
+    } catch (error: any) {
+      console.error('Ошибка добавления участника в проект:', error);
+    }
+  }
+}
+
+async function selectCreator(userId: string) {
+  await addUserToProjectIfNeeded(userId);
   newTask.value.creatorId = userId;
   showCreatorSelect.value = false;
+  creatorSearchQuery.value = '';
 }
 
-function selectAssignee(userId: string) {
+async function selectAssignee(userId: string) {
+  await addUserToProjectIfNeeded(userId);
   newTask.value.assigneeId = userId;
   showAssigneeSelect.value = false;
+  assigneeSearchQuery.value = '';
 }
 
-function toggleWatcher(userId: string) {
+async function toggleWatcher(userId: string) {
+  await addUserToProjectIfNeeded(userId);
   const index = newTask.value.watcherIds.indexOf(userId);
   if (index > -1) {
     newTask.value.watcherIds.splice(index, 1);
@@ -1027,6 +1139,9 @@ function closeCreateTaskModal() {
   showAssigneeSelect.value = false;
   showWatchersSelect.value = false;
   showDeadlinePicker.value = false;
+  creatorSearchQuery.value = '';
+  assigneeSearchQuery.value = '';
+  watchersSearchQuery.value = '';
 }
 
 function openCreateSubtaskModal(task: Task) {
@@ -1090,12 +1205,13 @@ function removeSubtask(index: number) {
 
 async function loadData() {
   try {
-    const [projectData, columnsData, tasksData, projectsData, userInfo] = await Promise.all([
+    const [projectData, columnsData, tasksData, projectsData, userInfo, companyUsersData] = await Promise.all([
       getProject(projectId.value),
       getColumns(projectId.value),
       getTasks(projectId.value),
       getProjects(),
       getUserInfo(),
+      getCompanyUsers(),
     ]);
 
     project.value = projectData;
@@ -1106,6 +1222,7 @@ async function loadData() {
       projectData.creator,
       ...projectData.participants,
     ];
+    companyUsers.value = companyUsersData;
     currentUser.value = userInfo;
   } catch (error: any) {
     console.error('Ошибка загрузки данных:', error);
@@ -2459,9 +2576,13 @@ watch(
 }
 
 .task-modal-participants-row {
-  display: flex;
-  gap: 24px;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: clamp(0.75rem, 1.5vw, 1rem);
+  position: relative;
+}
+
+.task-modal-participant-field {
   position: relative;
 }
 
@@ -2478,7 +2599,7 @@ watch(
   color: #e1eaf8;
   font-size: 15px;
   font-weight: 400;
-  min-width: 212px;
+  width: 100%;
 }
 
 .task-modal-participant-btn.selected {
@@ -2493,14 +2614,51 @@ watch(
 
 .task-modal-participants-dropdown {
   position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
   background: #292d32;
   border-radius: 16px;
   padding: 8px;
   margin-top: 4px;
   z-index: 10001;
-  max-height: 200px;
+  max-height: 300px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.task-modal-participants-search {
+  padding: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: 4px;
+}
+
+.task-modal-participants-search-input {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 6px 12px;
+  color: #e1eaf8;
+  font-size: 14px;
+  font-family: 'Involve', Arial, sans-serif;
+  outline: none;
+}
+
+.task-modal-participants-search-input::placeholder {
+  color: rgba(225, 234, 248, 0.5);
+}
+
+.task-modal-participants-search-input:focus {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(145, 33, 56, 0.5);
+}
+
+.task-modal-participants-list {
+  max-height: 240px;
   overflow-y: auto;
-  min-width: 212px;
+  padding: 4px 0;
 }
 
 .task-modal-participant-option {
@@ -2751,6 +2909,18 @@ watch(
     padding: 12px 16px;
     gap: 20px;
     box-shadow: none;
+  }
+
+  .task-modal-participants-row {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .task-modal-participants-dropdown {
+    position: fixed;
+    left: 16px;
+    right: 16px;
+    max-width: calc(100vw - 32px);
   }
 }
 </style>
