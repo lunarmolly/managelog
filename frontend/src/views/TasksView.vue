@@ -3294,8 +3294,8 @@ watch(showCreateTaskModal, (isOpen) => {
 }
 
 .task-important-btn img {
-  width: 12px;
-  height: 12px;
+  width: 24px;
+  height: 24px;
 }
 
 .modal-close {
