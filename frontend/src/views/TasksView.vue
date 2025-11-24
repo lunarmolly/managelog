@@ -195,220 +195,375 @@
       </div>
     </div>
 
-    <!-- Модальные окна остаются без изменений -->
+    <!-- Модальное окно создания задачи -->
     <Teleport to="body">
       <div v-if="showCreateTaskModal" class="modal-overlay" @click="closeCreateTaskModal">
-        <div class="task-modal" @click.stop>
-          <div class="modal-header">
-            <h3 class="modal-title">создать задачу</h3>
-            <button class="modal-close" @click="closeCreateTaskModal">×</button>
+        <div class="create-task-modal" @click.stop>
+          <!-- Кнопка назад -->
+          <div class="modal-back-btn" @click="closeCreateTaskModal">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span>к задачам</span>
           </div>
-          <div class="modal-content">
-            <div class="form-group">
-              <label class="form-label">название:</label>
+
+          <div class="modal-content-wrapper">
+            <!-- Название -->
+            <div class="task-modal-title-row">
+              <label class="task-modal-label">название:</label>
               <input
                 v-model="newTask.name"
                 type="text"
-                class="form-input"
-                placeholder="Введите название задачи"
+                class="task-modal-title-input"
+                placeholder="Lorem ipsum dolor sit amet, consectetur."
               />
+              <button class="task-modal-ai-btn" @click="generateDescription" title="сгенерировать описание">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
             </div>
-            <div class="form-group">
-              <label class="form-label">описание:</label>
+
+            <!-- Описание -->
+            <div class="task-modal-description-wrapper">
               <textarea
                 v-model="newTask.description"
-                class="form-textarea"
-                placeholder="Введите описание задачи"
+                class="task-modal-description"
+                placeholder="описание задачи:&#10;постановщик, исполнитель, наблюдатели&#10;описание&#10;чеклисты, подзадачи, отработанное время, дедлайн, удалить задачу, ии-помощь в генерации описания, комментарии, статус"
               ></textarea>
-            </div>
-            <div class="form-group">
-              <label class="form-label">исполнитель:</label>
-              <select v-model="newTask.assigneeId" class="form-select">
-                <option value="">Не назначен</option>
-                <option
-                  v-for="user in projectParticipants"
-                  :key="user.id"
-                  :value="user.id"
-                >
-                  {{ user.displayName || user.firstName || user.login }}
-                </option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label class="form-label">наблюдатели:</label>
-              <div class="watchers-select">
-                <div
-                  v-for="user in projectParticipants"
-                  :key="user.id"
-                  class="watcher-option"
-                >
-                  <input
-                    type="checkbox"
-                    :value="user.id"
-                    v-model="newTask.watcherIds"
-                  />
-                  <span>{{ user.displayName || user.firstName || user.login }}</span>
-                </div>
+              <div class="task-modal-scrollbar">
+                <div class="task-modal-scrollbar-thumb"></div>
               </div>
             </div>
-            <div class="form-group">
-              <label class="form-label">дедлайн:</label>
+
+            <!-- Кнопка генерации описания -->
+            <button class="task-modal-generate-btn" @click="generateDescription">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <span>сгенерировать описание</span>
+            </button>
+
+            <!-- Постановщик, исполнитель, наблюдатели -->
+            <div class="task-modal-participants-row">
+              <button
+                class="task-modal-participant-btn"
+                :class="{ 'selected': newTask.creatorId }"
+                @click="showCreatorSelect = !showCreatorSelect"
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="2"/>
+                </svg>
+                <span>{{ getCreatorName() || 'постановщик' }}</span>
+              </button>
+              <button
+                class="task-modal-participant-btn"
+                :class="{ 'selected': newTask.assigneeId }"
+                @click="showAssigneeSelect = !showAssigneeSelect"
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="2"/>
+                  <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span>{{ getAssigneeName() || 'исполнитель' }}</span>
+              </button>
+              <button
+                class="task-modal-participant-btn"
+                :class="{ 'selected': newTask.watcherIds.length > 0 }"
+                @click="showWatchersSelect = !showWatchersSelect"
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="2"/>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span>{{ newTask.watcherIds.length > 0 ? `${newTask.watcherIds.length} наблюдателей` : 'наблюдатели' }}</span>
+              </button>
+            </div>
+
+            <!-- Выпадающие списки участников -->
+            <div v-if="showCreatorSelect" class="task-modal-participants-dropdown">
+              <div
+                v-for="user in projectParticipants"
+                :key="user.id"
+                class="task-modal-participant-option"
+                @click="selectCreator(user.id)"
+              >
+                <img v-if="user.avatar" :src="user.avatar" :alt="user.displayName || user.firstName || ''" />
+                <div v-else class="task-modal-participant-avatar-placeholder">
+                  {{ (user.displayName || user.firstName || user.login || '?')[0].toUpperCase() }}
+                </div>
+                <span>{{ user.displayName || user.firstName || user.login }}</span>
+              </div>
+            </div>
+            <div v-if="showAssigneeSelect" class="task-modal-participants-dropdown">
+              <div
+                v-for="user in projectParticipants"
+                :key="user.id"
+                class="task-modal-participant-option"
+                @click="selectAssignee(user.id)"
+              >
+                <img v-if="user.avatar" :src="user.avatar" :alt="user.displayName || user.firstName || ''" />
+                <div v-else class="task-modal-participant-avatar-placeholder">
+                  {{ (user.displayName || user.firstName || user.login || '?')[0].toUpperCase() }}
+                </div>
+                <span>{{ user.displayName || user.firstName || user.login }}</span>
+              </div>
+            </div>
+            <div v-if="showWatchersSelect" class="task-modal-participants-dropdown">
+              <div
+                v-for="user in projectParticipants"
+                :key="user.id"
+                class="task-modal-participant-option"
+                @click="toggleWatcher(user.id)"
+              >
+                <input type="checkbox" :checked="newTask.watcherIds.includes(user.id)" @change.stop />
+                <img v-if="user.avatar" :src="user.avatar" :alt="user.displayName || user.firstName || ''" />
+                <div v-else class="task-modal-participant-avatar-placeholder">
+                  {{ (user.displayName || user.firstName || user.login || '?')[0].toUpperCase() }}
+                </div>
+                <span>{{ user.displayName || user.firstName || user.login }}</span>
+              </div>
+            </div>
+
+            <!-- Подзадачи и чеклист -->
+            <button class="task-modal-action-btn" @click="showSubtasksModal = true">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path d="M9 11L12 14L22 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M21 12V19A2 2 0 0 1 19 21H5A2 2 0 0 1 3 19V5A2 2 0 0 1 5 3H12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <span>подзадача</span>
+            </button>
+            <button class="task-modal-action-btn" @click="showChecklistModal = true">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path d="M9 5H5A2 2 0 0 0 3 7V19A2 2 0 0 0 5 21H19A2 2 0 0 0 21 19V7A2 2 0 0 0 19 5H15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M9 3V9M15 3V9M9 12H15M9 15H15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+              <span>чеклист</span>
+            </button>
+
+            <!-- Дедлайн -->
+            <button class="task-modal-deadline-btn" @click="showDeadlinePicker = !showDeadlinePicker">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2"/>
+                <path d="M16 2V6M8 2V6M3 10H21" stroke="currentColor" stroke-width="2"/>
+              </svg>
+              <span>{{ newTask.deadline ? formatDate(newTask.deadline) : 'дедлайн' }}</span>
+            </button>
+            <div v-if="showDeadlinePicker" class="task-modal-deadline-picker">
               <input
                 v-model="newTask.deadline"
                 type="datetime-local"
-                class="form-input"
+                class="task-modal-deadline-input"
               />
             </div>
-            <div class="form-actions">
-              <button class="btn-create" @click="createTask">создать задачу</button>
-              <button class="btn-cancel" @click="closeCreateTaskModal">отмена</button>
+
+            <!-- Кнопки действий -->
+            <div class="task-modal-actions">
+              <button class="task-modal-btn-create" @click="createTask">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span>создать задачу</span>
+              </button>
+              <button class="task-modal-btn-cancel" @click="closeCreateTaskModal">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span>отмена</span>
+              </button>
             </div>
           </div>
         </div>
       </div>
     </Teleport>
 
+    <!-- Модальное окно редактирования задачи -->
     <Teleport to="body">
       <div v-if="showEditTaskModal && selectedTask" class="modal-overlay" @click="closeEditTaskModal">
-        <div class="task-modal" @click.stop>
-          <div class="modal-header">
-            <h3 class="modal-title">редактировать задачу</h3>
-            <button class="modal-close" @click="closeEditTaskModal">×</button>
+        <div class="edit-task-modal" @click.stop>
+          <!-- Кнопка назад -->
+          <div class="modal-back-btn" @click="closeEditTaskModal">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span>к задачам</span>
           </div>
-          <div class="modal-content">
-            <div class="form-group">
-              <label class="form-label">название:</label>
+
+          <div class="modal-content-wrapper">
+            <!-- Название -->
+            <div class="task-modal-title-row">
+              <label class="task-modal-label">Название:</label>
               <input
                 v-model="editTask.name"
                 type="text"
-                class="form-input"
-                :disabled="!canEditTask(selectedTask)"
+                class="task-modal-title-input"
+                :disabled="!canEditTask(selectedTask) && !canCompleteTask(selectedTask)"
               />
             </div>
-            <div class="form-group">
-              <label class="form-label">описание:</label>
+
+            <!-- Описание -->
+            <div class="task-modal-description-wrapper">
               <textarea
                 v-model="editTask.description"
-                class="form-textarea"
-                :disabled="!canEditTask(selectedTask)"
+                class="task-modal-description"
+                :disabled="!canEditTask(selectedTask) && !canCompleteTask(selectedTask)"
               ></textarea>
+              <div class="task-modal-scrollbar">
+                <div class="task-modal-scrollbar-thumb"></div>
+              </div>
             </div>
-            <div class="form-group">
-              <label class="form-label">постановщик:</label>
-              <div class="user-select">
+
+            <!-- Постановщик, исполнитель, наблюдатели -->
+            <div class="task-modal-participants-row">
+              <div class="task-modal-participant-display">
                 <img
                   v-if="selectedTask.creator.avatar"
                   :src="selectedTask.creator.avatar"
                   :alt="selectedTask.creator.displayName || ''"
-                  class="user-avatar"
+                  class="task-modal-participant-avatar"
                 />
-                <span>{{ selectedTask.creator.displayName || selectedTask.creator.firstName || '' }}</span>
-              </div>
-            </div>
-            <div class="form-group">
-              <label class="form-label">исполнитель:</label>
-              <select
-                v-model="editTask.assigneeId"
-                class="form-select"
-                :disabled="!canEditTask(selectedTask)"
-              >
-                <option value="">Не назначен</option>
-                <option
-                  v-for="user in projectParticipants"
-                  :key="user.id"
-                  :value="user.id"
-                >
-                  {{ user.displayName || user.firstName || user.login }}
-                </option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label class="form-label">наблюдатели:</label>
-              <div class="watchers-select">
-                <div
-                  v-for="user in projectParticipants"
-                  :key="user.id"
-                  class="watcher-option"
-                >
-                  <input
-                    type="checkbox"
-                    :value="user.id"
-                    v-model="editTask.watcherIds"
-                    :disabled="!canEditTask(selectedTask)"
-                  />
-                  <span>{{ user.displayName || user.firstName || user.login }}</span>
+                <div v-else class="task-modal-participant-avatar-placeholder">
+                  {{ (selectedTask.creator.displayName || selectedTask.creator.firstName || selectedTask.creator.login || '?')[0].toUpperCase() }}
                 </div>
+                <span>{{ getCreatorDisplayName(selectedTask.creator) }}</span>
               </div>
-            </div>
-            <div class="form-group">
-              <label class="form-label">подзадачи:</label>
-              <div class="subtasks-list">
-                <div
-                  v-for="(subtask, index) in editTask.subtasks"
-                  :key="index"
-                  class="subtask-item"
-                >
-                  <input
-                    type="checkbox"
-                    v-model="subtask.isCompleted"
-                    :disabled="!canEditTask(selectedTask)"
-                  />
-                  <input
-                    type="text"
-                    v-model="subtask.name"
-                    class="subtask-input"
-                    :disabled="!canEditTask(selectedTask)"
-                  />
-                  <button
-                    v-if="canEditTask(selectedTask)"
-                    @click="removeSubtask(index)"
-                    class="remove-subtask-btn"
-                  >
-                    ×
-                  </button>
+              <div class="task-modal-participant-display">
+                <img
+                  v-if="selectedTask.assignee?.avatar"
+                  :src="selectedTask.assignee.avatar"
+                  :alt="selectedTask.assignee.displayName || ''"
+                  class="task-modal-participant-avatar"
+                />
+                <div v-else-if="selectedTask.assignee" class="task-modal-participant-avatar-placeholder">
+                  {{ (selectedTask.assignee.displayName || selectedTask.assignee.firstName || selectedTask.assignee.login || '?')[0].toUpperCase() }}
                 </div>
-                <button
-                  v-if="canEditTask(selectedTask)"
-                  @click="addSubtask"
-                  class="add-subtask-btn"
-                >
-                  + добавить подзадачу
-                </button>
+                <span>{{ selectedTask.assignee ? getCreatorDisplayName(selectedTask.assignee) : 'исполнитель' }}</span>
+              </div>
+              <div class="task-modal-participant-display">
+                <img
+                  v-if="selectedTask.watchers && selectedTask.watchers.length > 0 && selectedTask.watchers[0].avatar"
+                  :src="selectedTask.watchers[0].avatar"
+                  :alt="selectedTask.watchers[0].displayName || ''"
+                  class="task-modal-participant-avatar"
+                />
+                <div v-else-if="selectedTask.watchers && selectedTask.watchers.length > 0" class="task-modal-participant-avatar-placeholder">
+                  {{ (selectedTask.watchers[0].displayName || selectedTask.watchers[0].firstName || selectedTask.watchers[0].login || '?')[0].toUpperCase() }}
+                </div>
+                <span>{{ selectedTask.watchers && selectedTask.watchers.length > 0 ? getCreatorDisplayName(selectedTask.watchers[0]) : 'наблюдатели' }}</span>
               </div>
             </div>
-            <div class="form-group">
-              <label class="form-label">дедлайн:</label>
-              <input
-                v-model="editTask.deadline"
-                type="datetime-local"
-                class="form-input"
-                :disabled="!canEditTask(selectedTask)"
-              />
+
+            <!-- Подзадачи -->
+            <button
+              class="task-modal-action-btn"
+              :disabled="!canEditTask(selectedTask) && !canCompleteTask(selectedTask)"
+              @click="showEditSubtasksModal = true"
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path d="M9 11L12 14L22 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M21 12V19A2 2 0 0 1 19 21H5A2 2 0 0 1 3 19V5A2 2 0 0 1 5 3H12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <span>подзадачи</span>
+            </button>
+
+            <!-- Чеклист -->
+            <button
+              class="task-modal-action-btn"
+              :disabled="!canEditTask(selectedTask) && !canCompleteTask(selectedTask)"
+              @click="showEditChecklistModal = true"
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path d="M9 5H5A2 2 0 0 0 3 7V19A2 2 0 0 0 5 21H19A2 2 0 0 0 21 19V7A2 2 0 0 0 19 5H15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M9 3V9M15 3V9M9 12H15M9 15H15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+              <span>чеклист</span>
+            </button>
+
+            <!-- Время, редактор, дедлайн -->
+            <div class="task-modal-meta-row">
+              <div class="task-modal-meta-item">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                  <path d="M12 6V12L16 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                <span>{{ editTask.timeSpent ? formatTime(editTask.timeSpent) : '00:00' }}</span>
+              </div>
+              <div class="task-modal-meta-item">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span>редактор</span>
+              </div>
+              <div class="task-modal-meta-item">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2"/>
+                  <path d="M16 2V6M8 2V6M3 10H21" stroke="currentColor" stroke-width="2"/>
+                </svg>
+                <span>{{ editTask.deadline ? formatDate(editTask.deadline) : 'дд/мм/гггг' }}</span>
+              </div>
+              <div v-if="selectedTask.deadline" class="task-modal-meta-item">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2"/>
+                  <path d="M16 2V6M8 2V6M3 10H21" stroke="currentColor" stroke-width="2"/>
+                </svg>
+                <span>{{ formatDate(selectedTask.deadline) }}</span>
+              </div>
             </div>
-            <div class="form-actions">
+
+            <!-- Кнопки действий -->
+            <div class="task-modal-actions">
               <button
                 v-if="canEditTask(selectedTask)"
-                class="btn-save"
+                class="task-modal-btn-accept"
                 @click="updateTask"
               >
-                сохранить
-              </button>
-              <button
-                v-if="canCompleteTask(selectedTask)"
-                class="btn-complete"
-                @click="completeTask"
-              >
-                готово
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span>принять</span>
               </button>
               <button
                 v-if="canEditTask(selectedTask)"
-                class="btn-delete"
+                class="task-modal-btn-rework"
+                @click="sendToRework"
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <path d="M3 12L9 6M3 12L9 18M3 12H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span>доработать</span>
+              </button>
+              <button
+                v-if="canEditTask(selectedTask)"
+                class="task-modal-btn-delete"
                 @click="deleteTask"
               >
-                удалить
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span>удалить</span>
               </button>
-              <button class="btn-cancel" @click="closeEditTaskModal">отмена</button>
+              <button
+                v-if="canCompleteTask(selectedTask) && !canEditTask(selectedTask)"
+                class="task-modal-btn-complete"
+                @click="completeTask"
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span>готово</span>
+              </button>
             </div>
+
+            <!-- Комментарии (пустое поле внизу) -->
+            <div class="task-modal-comments"></div>
           </div>
         </div>
       </div>
@@ -455,6 +610,7 @@ import {
   deleteTask as deleteTaskApi,
   type Column,
   type Task,
+  type UserInfo,
 } from '../api/tasks';
 import { getProject, getProjects, type Project } from '../api/projects';
 import { getCompanyUsers, getUserInfo, type CompanyUser } from '../api/user';
@@ -483,10 +639,19 @@ const newTask = ref({
   name: '',
   description: '',
   columnId: '',
+  creatorId: '',
   assigneeId: '',
   watcherIds: [] as string[],
   deadline: '',
+  subtasks: [] as Array<{ name: string; isCompleted: boolean }>,
 });
+
+const showCreatorSelect = ref(false);
+const showAssigneeSelect = ref(false);
+const showWatchersSelect = ref(false);
+const showDeadlinePicker = ref(false);
+const showSubtasksModal = ref(false);
+const showChecklistModal = ref(false);
 
 const editTask = ref({
   name: '',
@@ -495,7 +660,11 @@ const editTask = ref({
   watcherIds: [] as string[],
   subtasks: [] as Array<{ name: string; isCompleted: boolean }>,
   deadline: '',
+  timeSpent: 0,
 });
+
+const showEditSubtasksModal = ref(false);
+const showEditChecklistModal = ref(false);
 
 const newColumn = ref({
   name: '',
@@ -601,12 +770,14 @@ function getCompletedSubtasksCount(task: Task): number {
   return task.subtasks.filter((st) => st.isCompleted).length;
 }
 
-function formatDate(dateString: string | null): string {
+function formatDate(dateString: string | null | undefined): string {
   if (!dateString) return '';
   const date = new Date(dateString);
+  if (isNaN(date.getTime())) return '';
   return date.toLocaleDateString('ru-RU', {
     day: '2-digit',
     month: '2-digit',
+    year: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
   });
@@ -633,13 +804,32 @@ function getTaskParticipants(task: Task): CompanyUser[] {
 }
 
 function canEditTask(task: Task): boolean {
-  if (!currentUser.value) return false;
+  if (!currentUser.value || !project.value) return false;
+  // Руководитель проекта имеет доступ ко всем задачам
+  if (project.value.creator.id === currentUser.value.id) return true;
+  // Владелец и менеджер компании имеют доступ ко всем задачам
+  if (currentUser.value.companyRole === 'owner' || currentUser.value.companyRole === 'manager') return true;
+  // Постановщик может редактировать свою задачу
   return task.creator.id === currentUser.value.id;
 }
 
 function canCompleteTask(task: Task): boolean {
   if (!currentUser.value) return false;
+  // Исполнитель может только нажать "готово"
   return task.assignee?.id === currentUser.value.id;
+}
+
+function canViewTask(task: Task): boolean {
+  if (!currentUser.value || !project.value) return false;
+  // Руководитель проекта имеет доступ ко всем задачам
+  if (project.value.creator.id === currentUser.value.id) return true;
+  // Владелец и менеджер компании имеют доступ ко всем задачам
+  if (currentUser.value.companyRole === 'owner' || currentUser.value.companyRole === 'manager') return true;
+  // Постановщик, исполнитель и наблюдатели имеют доступ
+  if (task.creator.id === currentUser.value.id) return true;
+  if (task.assignee?.id === currentUser.value.id) return true;
+  if (task.watchers?.some(w => w.id === currentUser.value?.id)) return true;
+  return false;
 }
 
 const canCreateColumn = computed(() => {
@@ -666,16 +856,62 @@ function openCreateTaskModal(columnId: string) {
     name: '',
     description: '',
     columnId,
+    creatorId: currentUser.value?.id || '',
     assigneeId: '',
     watcherIds: [],
     deadline: '',
+    subtasks: [],
   };
   showCreateTaskModal.value = true;
+  showCreatorSelect.value = false;
+  showAssigneeSelect.value = false;
+  showWatchersSelect.value = false;
+  showDeadlinePicker.value = false;
+}
+
+function getCreatorName(): string {
+  if (!newTask.value.creatorId) return '';
+  const user = projectParticipants.value.find(u => u.id === newTask.value.creatorId);
+  return user ? (user.displayName || user.firstName || user.login || '') : '';
+}
+
+function getAssigneeName(): string {
+  if (!newTask.value.assigneeId) return '';
+  const user = projectParticipants.value.find(u => u.id === newTask.value.assigneeId);
+  return user ? (user.displayName || user.firstName || user.login || '') : '';
+}
+
+function selectCreator(userId: string) {
+  newTask.value.creatorId = userId;
+  showCreatorSelect.value = false;
+}
+
+function selectAssignee(userId: string) {
+  newTask.value.assigneeId = userId;
+  showAssigneeSelect.value = false;
+}
+
+function toggleWatcher(userId: string) {
+  const index = newTask.value.watcherIds.indexOf(userId);
+  if (index > -1) {
+    newTask.value.watcherIds.splice(index, 1);
+  } else {
+    newTask.value.watcherIds.push(userId);
+  }
+}
+
+function generateDescription() {
+  // TODO: Реализовать генерацию описания через AI
+  console.log('Generate description');
 }
 
 function closeCreateTaskModal() {
   showCreateTaskModal.value = false;
   selectedColumnId.value = '';
+  showCreatorSelect.value = false;
+  showAssigneeSelect.value = false;
+  showWatchersSelect.value = false;
+  showDeadlinePicker.value = false;
 }
 
 function openCreateSubtaskModal(task: Task) {
@@ -692,13 +928,28 @@ function openEditTaskModal(task: Task) {
     watcherIds: task.watchers.map((w) => w.id),
     subtasks: task.subtasks.map((st) => ({ ...st })),
     deadline: task.deadline ? new Date(task.deadline).toISOString().slice(0, 16) : '',
+    timeSpent: task.timeSpent || 0,
   };
   showEditTaskModal.value = true;
+}
+
+function getCreatorDisplayName(user: UserInfo): string {
+  if (user.displayName) return user.displayName;
+  if (user.firstName && user.lastName) return `${user.firstName} ${user.lastName[0]}.`;
+  if (user.firstName) return user.firstName;
+  return user.login || '';
+}
+
+function sendToRework() {
+  // TODO: Реализовать отправку на доработку
+  console.log('Send to rework');
 }
 
 function closeEditTaskModal() {
   showEditTaskModal.value = false;
   selectedTask.value = null;
+  showEditSubtasksModal.value = false;
+  showEditChecklistModal.value = false;
 }
 
 function openTaskModal(task: Task) {
@@ -754,7 +1005,13 @@ async function createTask() {
     }
 
     const taskData = {
-      ...newTask.value,
+      name: newTask.value.name,
+      description: newTask.value.description || undefined,
+      columnId: newTask.value.columnId,
+      creatorId: newTask.value.creatorId || currentUser.value?.id || '',
+      assigneeId: newTask.value.assigneeId || undefined,
+      watcherIds: newTask.value.watcherIds,
+      subtasks: newTask.value.subtasks,
       deadline: newTask.value.deadline ? new Date(newTask.value.deadline).toISOString() : undefined,
     };
 
@@ -1034,7 +1291,7 @@ watch(
 
 .tasks-main {
   flex: 1;
-  padding: 128px 36px 0;
+  padding: 30px 36px 0;
   overflow-x: auto;
 }
 
@@ -1446,5 +1703,481 @@ watch(
   width: 24px;
   height: 24px;
   border-radius: 50%;
+}
+
+/* Стили для модальных окон создания и редактирования задач */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  display: flex;
+  align-items: stretch;
+  justify-content: flex-end;
+  z-index: 10000;
+  overflow: hidden;
+}
+
+.create-task-modal,
+.edit-task-modal {
+  background: rgba(4, 9, 16, 0.95);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0;
+  width: 100%;
+  max-width: 720px;
+  max-height: 100vh;
+  height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: clamp(1.5rem, 3vw, 2rem) clamp(1.5rem, 3vw, 2.5rem);
+  display: flex;
+  flex-direction: column;
+  gap: clamp(1.5rem, 3vw, 2rem);
+  box-shadow: -10px 0 40px rgba(0, 0, 0, 0.5);
+  box-sizing: border-box;
+  animation: slideInRight 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.modal-back-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #e1eaf8;
+  font-size: 20px;
+  font-weight: 400;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+  width: fit-content;
+}
+
+.modal-back-btn svg {
+  width: 24px;
+  height: 24px;
+}
+
+.modal-content-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.task-modal-title-row {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.task-modal-label {
+  font-size: 20px;
+  font-weight: 400;
+  color: #e1eaf8;
+  min-width: 168px;
+}
+
+.task-modal-title-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: #e1eaf8;
+  font-size: 15px;
+  font-weight: 500;
+  padding: 0;
+  outline: none;
+}
+
+.task-modal-ai-btn {
+  background: #912138;
+  border: none;
+  border-radius: 16px;
+  padding: 6px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.task-modal-ai-btn svg {
+  width: 24px;
+  height: 24px;
+  color: #f3d3c2;
+}
+
+.task-modal-description-wrapper {
+  background: #292d32;
+  border-radius: 16px;
+  padding: 12px;
+  display: flex;
+  gap: 6px;
+  min-height: 327px;
+}
+
+.task-modal-description {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  font-size: 20px;
+  font-weight: 400;
+  resize: none;
+  outline: none;
+  min-height: 327px;
+  font-family: 'Involve', Arial, sans-serif;
+}
+
+.task-modal-description:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.task-modal-scrollbar {
+  width: 8px;
+  background: rgba(225, 234, 248, 0.25);
+  border-radius: 100px;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.task-modal-scrollbar-thumb {
+  width: 8px;
+  height: 48px;
+  background: #e1eaf8;
+  border-radius: 100px;
+}
+
+.task-modal-generate-btn {
+  background: #912138;
+  border: none;
+  border-radius: 16px;
+  padding: 6px 12px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  color: #e1eaf8;
+  font-size: 15px;
+  font-weight: 400;
+}
+
+.task-modal-generate-btn svg {
+  width: 24px;
+  height: 24px;
+}
+
+.task-modal-participants-row {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  position: relative;
+}
+
+.task-modal-participant-btn {
+  background: #292d32;
+  border: none;
+  border-radius: 16px;
+  padding: 6px 12px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  color: #e1eaf8;
+  font-size: 15px;
+  font-weight: 400;
+  min-width: 212px;
+}
+
+.task-modal-participant-btn.selected {
+  background: rgba(145, 33, 56, 0.3);
+}
+
+.task-modal-participant-btn svg {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.task-modal-participants-dropdown {
+  position: absolute;
+  background: #292d32;
+  border-radius: 16px;
+  padding: 8px;
+  margin-top: 4px;
+  z-index: 10001;
+  max-height: 200px;
+  overflow-y: auto;
+  min-width: 212px;
+}
+
+.task-modal-participant-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  cursor: pointer;
+  border-radius: 8px;
+  color: #e1eaf8;
+  font-size: 15px;
+}
+
+.task-modal-participant-option:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.task-modal-participant-option img,
+.task-modal-participant-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.task-modal-participant-avatar-placeholder {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(225, 234, 248, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #e1eaf8;
+  font-size: 12px;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.task-modal-participant-display {
+  background: #292d32;
+  border-radius: 16px;
+  padding: 6px 12px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 400;
+  min-width: 212px;
+}
+
+.task-modal-action-btn {
+  background: #292d32;
+  border: none;
+  border-radius: 16px;
+  padding: 6px 12px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  color: #e1eaf8;
+  font-size: 15px;
+  font-weight: 400;
+  width: 100%;
+}
+
+.task-modal-action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.task-modal-action-btn svg {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.task-modal-deadline-btn {
+  background: #292d32;
+  border: none;
+  border-radius: 16px;
+  padding: 6px 12px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  color: #e1eaf8;
+  font-size: 15px;
+  font-weight: 400;
+  width: 212px;
+}
+
+.task-modal-deadline-btn svg {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.task-modal-deadline-picker {
+  margin-top: -20px;
+}
+
+.task-modal-deadline-input {
+  background: #292d32;
+  border: none;
+  border-radius: 16px;
+  padding: 6px 12px;
+  height: 36px;
+  color: #e1eaf8;
+  font-size: 15px;
+  outline: none;
+}
+
+.task-modal-actions {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.task-modal-btn-create,
+.task-modal-btn-accept,
+.task-modal-btn-complete {
+  background: #dbf3c2;
+  border: none;
+  border-radius: 16px;
+  padding: 6px 12px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  color: #292d32;
+  font-size: 15px;
+  font-weight: 400;
+  min-width: 212px;
+}
+
+.task-modal-btn-create svg,
+.task-modal-btn-accept svg,
+.task-modal-btn-complete svg {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.task-modal-btn-rework {
+  background: #f3dbc2;
+  border: none;
+  border-radius: 16px;
+  padding: 6px 12px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  color: #292d32;
+  font-size: 15px;
+  font-weight: 400;
+  min-width: 212px;
+}
+
+.task-modal-btn-rework svg {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.task-modal-btn-delete,
+.task-modal-btn-cancel {
+  background: #f3c2c3;
+  border: none;
+  border-radius: 16px;
+  padding: 6px 12px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  color: #292d32;
+  font-size: 15px;
+  font-weight: 400;
+  min-width: 212px;
+}
+
+.task-modal-btn-delete svg,
+.task-modal-btn-cancel svg {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.task-modal-meta-row {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.task-modal-meta-item {
+  background: #292d32;
+  border-radius: 16px;
+  padding: 6px 12px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #e1eaf8;
+  font-size: 15px;
+  font-weight: 400;
+  min-width: 153px;
+}
+
+.task-modal-meta-item svg {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.task-modal-comments {
+  min-height: 36px;
+  background: #292d32;
+  border-radius: 16px;
+  flex: 1;
+}
+
+@media (max-width: 768px) {
+  .modal-overlay {
+    align-items: flex-start;
+    justify-content: center;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .create-task-modal,
+  .edit-task-modal {
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    min-height: 100vh;
+    max-height: none;
+    border-left: none;
+    border-radius: 0;
+    padding: 12px 16px;
+    gap: 20px;
+    box-shadow: none;
+  }
 }
 </style>

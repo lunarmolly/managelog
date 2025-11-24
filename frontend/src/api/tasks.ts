@@ -59,6 +59,7 @@ export interface TaskCreateRequest {
   name: string;
   description?: string;
   columnId: string;
+  creatorId?: string;
   assigneeId?: string;
   watcherIds?: string[];
   subtasks?: TaskSubtask[];
