@@ -196,6 +196,7 @@ export async function getCompanyUsers(req: AuthRequest, res: Response): Promise<
       login: member.login || '',
       firstName: member.firstName || null,
       lastName: member.lastName || null,
+      middleName: member.middleName || null,
       displayName: member.displayName || member.firstName || null,
       role: member.role || null,
       phone: member.phone || null,

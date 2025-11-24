@@ -5,6 +5,40 @@
       <h1 class="teams-title">сотрудники</h1>
     </div>
 
+    <!-- Поиск -->
+    <div v-if="!isLoading && companyUsers.length > 0" class="teams-search">
+      <div class="search-container">
+        <div class="search-input-wrapper">
+          <svg class="search-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M21 21L16.65 16.65" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <input
+            v-model="searchQuery"
+            type="text"
+            class="search-input"
+            placeholder="поиск по имени, фамилии или отчеству..."
+            autocomplete="off"
+            @input="handleSearchInput"
+          />
+          <button
+            v-if="searchQuery"
+            class="search-clear"
+            @click="clearSearch"
+            type="button"
+            aria-label="Очистить поиск"
+          >
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+        </div>
+        <div v-if="searchQuery && filteredCompanyUsers.length === 0" class="search-no-results">
+          <p>ничего не найдено</p>
+        </div>
+      </div>
+    </div>
+
     <!-- Список сотрудников -->
     <div v-if="isLoading" class="teams-loading">
       <div class="loading-spinner"></div>
@@ -17,7 +51,7 @@
 
     <div v-else class="teams-grid">
       <div
-        v-for="user in sortedCompanyUsers"
+        v-for="user in filteredCompanyUsers"
         :key="user.id"
         class="team-member-card"
         :class="{ 'team-member-card--current-user': user.id === currentUserId }"
@@ -72,6 +106,7 @@ const router = useRouter();
 const companyUsers = ref<CompanyUser[]>([]);
 const currentUserId = ref<string | null>(null);
 const isLoading = ref(true);
+const searchQuery = ref('');
 
 // Отсортированный список сотрудников (текущий пользователь первым)
 const sortedCompanyUsers = computed(() => {
@@ -81,6 +116,40 @@ const sortedCompanyUsers = computed(() => {
   const otherUsers = companyUsers.value.filter(u => u.id !== currentUserId.value);
   
   return currentUser ? [currentUser, ...otherUsers] : companyUsers.value;
+});
+
+// Отфильтрованный список сотрудников по поисковому запросу
+const filteredCompanyUsers = computed(() => {
+  const users = sortedCompanyUsers.value;
+  
+  if (!searchQuery.value.trim()) {
+    return users;
+  }
+  
+  const query = searchQuery.value.toLowerCase().trim();
+  
+  return users.filter(user => {
+    // Поиск по имени
+    const firstName = (user.firstName || '').toLowerCase();
+    // Поиск по фамилии
+    const lastName = (user.lastName || '').toLowerCase();
+    // Поиск по отчеству (middleName)
+    const middleName = (user.middleName || '').toLowerCase();
+    // Поиск по полному имени
+    const fullName = getMemberFullName(user).toLowerCase();
+    // Поиск по логину (на случай, если нет ФИО)
+    const login = (user.login || '').toLowerCase();
+    // Поиск по отображаемому имени
+    const displayName = (user.displayName || '').toLowerCase();
+    
+    // Проверяем, содержит ли любое из полей поисковый запрос
+    return firstName.includes(query) ||
+           lastName.includes(query) ||
+           middleName.includes(query) ||
+           fullName.includes(query) ||
+           login.includes(query) ||
+           displayName.includes(query);
+  });
 });
 
 // Формирование полного URL аватара
@@ -150,6 +219,16 @@ function formatPhoneNumber(phone: string): string {
   }
   
   return phone;
+}
+
+// Обработка ввода в поле поиска
+function handleSearchInput(): void {
+  // Можно добавить debounce здесь, если нужно
+}
+
+// Очистка поиска
+function clearSearch(): void {
+  searchQuery.value = '';
 }
 
 // Переход на страницу профиля пользователя
@@ -241,6 +320,107 @@ onMounted(() => {
   margin: 0;
   text-transform: lowercase;
   letter-spacing: -0.02em;
+}
+
+.teams-search {
+  max-width: 1400px;
+  margin: 0 auto 32px;
+}
+
+.search-container {
+  position: relative;
+}
+
+.search-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: rgba(245, 245, 245, 0.5);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 40px;
+  padding: 16px 24px;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+}
+
+.search-input-wrapper:focus-within {
+  border-color: rgba(145, 33, 56, 0.5);
+  box-shadow: 0 4px 24px rgba(145, 33, 56, 0.15);
+  background: rgba(245, 245, 245, 0.7);
+}
+
+.search-icon {
+  width: 20px;
+  height: 20px;
+  color: rgba(41, 45, 50, 0.5);
+  flex-shrink: 0;
+  margin-right: 12px;
+  transition: color 0.3s ease;
+}
+
+.search-input-wrapper:focus-within .search-icon {
+  color: rgba(145, 33, 56, 0.8);
+}
+
+.search-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-family: 'Involve', Arial, sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  color: #292d32;
+  padding: 0;
+  min-width: 0;
+}
+
+.search-input::placeholder {
+  color: rgba(41, 45, 50, 0.4);
+  font-weight: 400;
+}
+
+.search-clear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  border-radius: 50%;
+  color: rgba(41, 45, 50, 0.5);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  margin-left: 8px;
+  padding: 0;
+}
+
+.search-clear:hover {
+  background: rgba(41, 45, 50, 0.1);
+  color: rgba(41, 45, 50, 0.8);
+}
+
+.search-clear:active {
+  transform: scale(0.95);
+}
+
+.search-clear svg {
+  width: 18px;
+  height: 18px;
+}
+
+.search-no-results {
+  margin-top: 16px;
+  padding: 24px;
+  text-align: center;
+  color: rgba(41, 45, 50, 0.6);
+  font-family: 'Involve', Arial, sans-serif;
+  font-size: 16px;
+  text-transform: lowercase;
 }
 
 .teams-loading,
@@ -395,6 +575,38 @@ onMounted(() => {
 
   .teams-title {
     font-size: 36px;
+  }
+
+  .teams-search {
+    margin-bottom: 24px;
+  }
+
+  .search-input-wrapper {
+    padding: 12px 16px;
+  }
+
+  .search-icon {
+    width: 18px;
+    height: 18px;
+    margin-right: 10px;
+  }
+
+  .search-input {
+    font-size: 14px;
+  }
+
+  .search-input::placeholder {
+    font-size: 14px;
+  }
+
+  .search-clear {
+    width: 28px;
+    height: 28px;
+  }
+
+  .search-clear svg {
+    width: 16px;
+    height: 16px;
   }
 
   .teams-grid {
