@@ -211,14 +211,14 @@
                 />
               </svg>
             </button>
-            <h2 class="modal-title">Создать задачу</h2>
-            <div class="modal-subtitle">Заполните информацию о задаче</div>
+            <h2 class="modal-title">создать задачу</h2>
+            <div class="modal-subtitle">заполните информацию о задаче</div>
           </div>
 
           <!-- Название -->
           <div class="modal-field">
             <label class="modal-field-label" for="task-name">
-              Название задачи
+              название задачи
               <span class="modal-field-required">*</span>
             </label>
             <div class="modal-input-wrapper">
@@ -227,7 +227,7 @@
                 v-model="newTask.name"
                 type="text"
                 class="modal-field-input"
-                placeholder="Введите название задачи"
+                placeholder="введите название задачи"
                 required
               />
             </div>
@@ -236,14 +236,14 @@
           <!-- Описание -->
           <div class="modal-field">
             <label class="modal-field-label" for="task-description">
-              Описание задачи
+              описание задачи
             </label>
             <div class="modal-textarea-wrapper">
               <textarea
                 id="task-description"
                 v-model="newTask.description"
                 class="modal-description-textarea"
-                placeholder="Опишите задачу..."
+                placeholder="опишите задачу..."
                 rows="6"
               ></textarea>
               <div class="modal-textarea-footer">
@@ -328,7 +328,7 @@
 
           <!-- Постановщик, исполнитель, наблюдатели -->
           <div class="modal-field">
-            <label class="modal-field-label">Участники</label>
+            <label class="modal-field-label">участники</label>
             <div class="task-modal-participants-row">
               <div class="task-modal-participant-field">
                 <button
@@ -480,7 +480,7 @@
           <!-- Важная задача и дедлайн -->
           <div class="modal-field-group">
             <div class="modal-field">
-              <label class="modal-field-label">Важная задача</label>
+              <label class="modal-field-label">важная задача</label>
               <button 
                 class="task-important-btn"
                 :class="{ 'active': isImportantTask }"
@@ -493,7 +493,7 @@
               </button>
             </div>
             <div class="modal-field">
-              <label class="modal-field-label" for="task-deadline">Дедлайн</label>
+              <label class="modal-field-label" for="task-deadline">дедлайн</label>
               <div class="modal-input-wrapper">
                 <input
                   id="task-deadline"
@@ -844,12 +844,19 @@ const newColumn = ref({
 });
 
 function getUserDisplayNameWithRole(user: CompanyUser): string {
-  const name = user.firstName || user.displayName || user.login || '';
+  const firstName = user.firstName || user.displayName || user.login || '';
+  const lastName = user.lastName || '';
   const role = user.role || '';
+  
   if (role) {
-    return `${name} ${role}`;
+    return `${firstName} ${role}`;
   }
-  return name;
+  
+  if (lastName) {
+    return `${firstName} ${lastName}`;
+  }
+  
+  return firstName;
 }
 
 const sortedColumns = computed(() => {
@@ -877,8 +884,10 @@ const filteredCreatorUsers = computed(() => {
   }
   const query = creatorSearchQuery.value.toLowerCase().trim();
   return companyUsers.value.filter((user) => {
-    const displayText = getUserDisplayNameWithRole(user).toLowerCase();
-    return displayText.includes(query);
+    const firstName = (user.firstName || user.displayName || user.login || '').toLowerCase();
+    const lastName = (user.lastName || '').toLowerCase();
+    const role = (user.role || '').toLowerCase();
+    return firstName.includes(query) || lastName.includes(query) || role.includes(query);
   });
 });
 
@@ -888,8 +897,10 @@ const filteredAssigneeUsers = computed(() => {
   }
   const query = assigneeSearchQuery.value.toLowerCase().trim();
   return companyUsers.value.filter((user) => {
-    const displayText = getUserDisplayNameWithRole(user).toLowerCase();
-    return displayText.includes(query);
+    const firstName = (user.firstName || user.displayName || user.login || '').toLowerCase();
+    const lastName = (user.lastName || '').toLowerCase();
+    const role = (user.role || '').toLowerCase();
+    return firstName.includes(query) || lastName.includes(query) || role.includes(query);
   });
 });
 
@@ -899,8 +910,10 @@ const filteredWatcherUsers = computed(() => {
   }
   const query = watchersSearchQuery.value.toLowerCase().trim();
   return companyUsers.value.filter((user) => {
-    const displayText = getUserDisplayNameWithRole(user).toLowerCase();
-    return displayText.includes(query);
+    const firstName = (user.firstName || user.displayName || user.login || '').toLowerCase();
+    const lastName = (user.lastName || '').toLowerCase();
+    const role = (user.role || '').toLowerCase();
+    return firstName.includes(query) || lastName.includes(query) || role.includes(query);
   });
 });
 
@@ -2784,7 +2797,8 @@ watch(showCreateTaskModal, (isOpen) => {
   border: none;
   border-radius: 16px;
   padding: 6px 12px;
-  height: 36px;
+  min-height: 36px;
+  height: auto;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -2816,6 +2830,10 @@ watch(showCreateTaskModal, (isOpen) => {
 .task-modal-participant-btn span {
   flex: 1;
   text-align: left;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+  line-height: 1.4;
 }
 
 .task-modal-participant-clear {
@@ -2853,10 +2871,10 @@ watch(showCreateTaskModal, (isOpen) => {
   padding: 8px;
   margin-top: 4px;
   z-index: 10001;
-  max-height: 300px;
   display: flex;
   flex-direction: column;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  min-height: fit-content;
 }
 
 .task-modal-participants-search {
@@ -2887,9 +2905,10 @@ watch(showCreateTaskModal, (isOpen) => {
 }
 
 .task-modal-participants-list {
-  max-height: 240px;
+  max-height: 300px;
   overflow-y: auto;
   padding: 4px 0;
+  min-height: fit-content;
 }
 
 .task-modal-participant-option {
