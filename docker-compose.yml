@@ -1,0 +1,50 @@
+services:
+  # redis:
+  #   container_name: redis
+  #   hostname: redis
+  #   extends:
+  #     file: templates.yml
+  #     service: base_redis
+  #   ports:
+  #     - "127.0.0.1:6379:6379"
+  #   networks:
+  #     - backend
+
+  postgres:
+    container_name: postgres
+    hostname: postgres
+    extends:
+      file: templates.yml
+      service: base_postgres
+    ports:
+      - "127.0.0.1:5431:5432"
+    environment:
+      - POSTGRES_PASSWORD=${CI_POSTGRES_PASSWORD}
+    networks:
+      - backend
+    volumes:
+      - "/srv/docker-data/postgres:/var/lib/postgresql/data"
+    
+  backend:
+    container_name: backend
+    hostname: backend
+    environment:
+      - DATABASE_DSN=postgresql+asyncpg://postgres:${CI_POSTGRES_PASSWORD}@postgres:5432/database
+      - SECRET_JWT=${CI_SECRET_JWT}
+      - REDIS_DSN=redis://redis:6379/0
+    image: backend:latest
+    restart: always
+    build:
+      context: backend
+    ports:
+      - "127.0.0.1:8000:8000"
+    networks:
+      - backend
+      
+networks:
+  backend:
+    driver: bridge
+    driver_opts:
+      com.docker.network.driver.mtu: 1450
+  test:
+    driver: bridge
