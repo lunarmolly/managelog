@@ -94,12 +94,9 @@ class AuthorizationService:
     
     @classmethod
     def refresh_tokens(cls, refresh_token: str):
-        print("refresh_tokens ENTRY")
         payload = jwt.decode(refresh_token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
-        print("jwt.decode PASSED")
         new_access_token = cls.create_access_token(data={"sub": payload["sub"], "scopes": payload["scopes"]})
         new_refresh_token = cls.create_refresh_token(data={"sub": payload["sub"], "scopes": payload["scopes"]})
-        print(f"NEW TOKEN\n{new_access_token}\n{new_refresh_token}")
         token_Data = TokenData(
             access_token=new_access_token, 
             refresh_token=new_refresh_token

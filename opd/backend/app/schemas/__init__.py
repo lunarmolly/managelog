@@ -7,7 +7,9 @@ from .user import (
     UserLoginResponse,
     UserRegisterRequest,
     UserRegisterResponse,
-    UserSchemaCreate
+    UserSchemaCreate,
+    UserMeResponse,
+    UserUpdate
 )
 from .admin import (
     AdminSchema, 
@@ -20,4 +22,32 @@ from .auth import (
     VerifyRequest, 
     VerifyResponse,
     TokenData,
+)
+
+from .task import (
+    TaskSchema,
+    TaskSchemaCreateRequest,
+    TaskSchemaCreate,
+    TaskUpdate,
+    TaskUpdateRequest,
+    TaskDeleteRequest
+)
+
+from .project import (
+    ProjectSchema,
+    ProjectSchemaCreateRequest,
+    ProjectSchemaCreate,
+    ProjectGetResponse,
+    ProjectSchemaDeleteRequest,
+    ProjectSchemaUpdateRequest,
+    ProjectSchemaUpdate,
+)
+
+from .backlog import (
+    BacklogSchemaCreateRequest,
+    BacklogSchemaUpdateRequest,
+    BacklogSchemaCreate,
+    BacklogSchema,
+    BacklogDeleteRequest,
+    BacklogUpdate
 )

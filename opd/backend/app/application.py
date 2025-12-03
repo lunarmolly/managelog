@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.utils.logger import logger
 from app.api import (
-    auth_router
+    auth_router, user_router, projects_router, backlogs_router, tasks_router
 )
 from app.utils.redis import redis_connection
 from app.admin.setup import setup_admin
@@ -39,5 +39,9 @@ setup_admin(app)
 api = FastAPI(root_path="/api/v1")
 
 api.include_router(auth_router)
+api.include_router(user_router)
+api.include_router(projects_router)
+api.include_router(backlogs_router)
+api.include_router(tasks_router)
 
 app.mount("/api/v1", api)

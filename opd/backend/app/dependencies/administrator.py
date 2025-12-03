@@ -5,8 +5,13 @@ from ..utils.handlers.error import error_handler
 from ..utils.logger import logger
 from .managers import (
     UserManager, 
-    AdminManager
+    AdminManager,
+    ProjectsManager,
+    BacklogsManager,
+    TasksManager
 )
+
+import logging
 
 class Administrator:
     """Class for orchestrating managers"""
@@ -22,9 +27,10 @@ class Administrator:
             yield self
             await self._db_session.commit()
         except Exception as e:
+            logging.error(e)
             await self._db_session.rollback()
             await logger.write("DB operations rolled back")
-            await error_handler.handle(e)
+            # await error_handler.handle(e)
         finally:
             await self._db_session.close()
         
@@ -36,3 +42,14 @@ class Administrator:
     def admin(self) -> AdminManager:
         return AdminManager(self._db_session)
     
+    @property
+    def projects(self) -> ProjectsManager:
+        return ProjectsManager(self._db_session)
+    
+    @property
+    def backlogs(self) -> BacklogsManager:
+        return BacklogsManager(self._db_session)
+    
+    @property
+    def tasks(self) -> TasksManager:
+        return TasksManager(self._db_session)

@@ -1,5 +1,6 @@
 from typing import Any, TypeVar
 
+from sqlalchemy.orm import selectinload
 from sqlalchemy import delete, func, insert, select, update
 from sqlalchemy.exc import NoResultFound
 
@@ -11,6 +12,7 @@ from .value import create_values
 from ..models.base import Model
 from ...schemas import CaseInfo
 from ...utils.logger import logger
+import logging
 
 T = TypeVar("T")
 
@@ -23,7 +25,7 @@ class DataAccessObject[T](AbstractDataAccessObject):
     ) -> T:
         stmt = select(self.model).filter(*create_filter(self.model, **filters))
         if result := (await self._db_session.execute(stmt)).scalar_one():
-            return result.to_pydantic()
+            return await result.to_pydantic()
 
     
     async def fetch_models(
@@ -33,10 +35,16 @@ class DataAccessObject[T](AbstractDataAccessObject):
         desc: bool | None = None,
         offset: int = 0,
         limit: int = 25,
+        selectinload_opts: Any = None,
         **filters
     ) -> list[T] | None:
+        base_stmt = select(self.model)
+        logging.error("2")
+        if selectinload_opts:
+            for i in selectinload_opts:
+                base_stmt = base_stmt.options(i)
         base_stmt = (
-            select(self.model)
+            base_stmt
             .filter(*create_filter(self.model, **filters))
             .offset(offset)
         )
@@ -49,8 +57,9 @@ class DataAccessObject[T](AbstractDataAccessObject):
             .order_by(order_by, desc)  
         )
         objs: list[Model] = (await self._db_session.execute(stmt.get_query())).unique().scalars().all()
+        logging.error("1")
         if objs:
-            return [obj.to_pydantic() for obj in objs]
+            return [await obj.to_pydantic() for obj in objs]
         
 
     async def create_model(
@@ -149,7 +158,7 @@ class DataAccessObject[T](AbstractDataAccessObject):
             stmt = stmt.order_by(order_by, desc)
         objs: list[Model] = (await self._db_session.execute(stmt.get_query())).unique().scalars().all()
         if objs:
-            return [obj.to_pydantic() for obj in objs]
+            return [await obj.to_pydantic() for obj in objs]
 
     async def update_models(
         self,

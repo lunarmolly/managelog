@@ -14,7 +14,12 @@ async def get_profile(
     async with connector.start() as administrator:
         match role:
             case "user":
-                return await administrator.users.fetch_model(filter_=int(filter_))
+                if response := await administrator.users.fetch_model(login__eq=filter_):
+                    return response
+                elif response := await administrator.users.fetch_model(email__eq=filter_):
+                    return response
+                else: 
+                    return None
             case "admin":
                 return await administrator.admin.fetch_model(login__eq=filter_)
             case _:

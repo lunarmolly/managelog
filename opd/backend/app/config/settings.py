@@ -9,8 +9,8 @@ class Settings(BaseSettings):
     FORWARDED_ALLOW_IPS: str = os.getenv("FORWARDED_ALLOW_IPS", "*")
     KEEPALIVE: int = int(os.getenv("KEEPALIVE", 120))
     REDIS_DSN: str = os.getenv('REDIS_DSN', "redis://localhost:6380")
-    DATABASE_DSN: str = os.getenv("DATABASE_DSN", "postgresql+asyncpg://postgres:db_password@postgres:5432/database")
-    # DATABASE_DSN: str = os.getenv("DATABASE_DSN", "postgresql+asyncpg://postgres:db_password@localhost:5431/database")
+    # DATABASE_DSN: str = os.getenv("DATABASE_DSN", "postgresql+asyncpg://postgres:db_password@postgres:5432/database")
+    DATABASE_DSN: str = os.getenv("DATABASE_DSN", "postgresql+asyncpg://postgres:db_password@localhost:5431/database")
     DATABASE_POOL_SIZE: int = int(os.getenv("DATABASE_POOL_SIZE", 2)) 
     # JWT
     SECRET_KEY: str = os.getenv("SECRET_KEY", "1c93ca1692d5bf624d440a73ccb9dba43a1cb31dbf0c99ba718fe626ee7aecbaaceda1adbea0d5942397c32d28b3302899cad130705a48a99117d7454b86d853")

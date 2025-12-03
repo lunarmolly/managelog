@@ -9,7 +9,8 @@ from ...repositories import UserRepository
 from ...schemas import (
     UserSchema,
     UserRegisterRequest,
-    UserSchemaCreate
+    UserSchemaCreate,
+    UserUpdate
 )
 
 class UserManager(ManagerAbstractBase):
@@ -31,9 +32,8 @@ class UserManager(ManagerAbstractBase):
         
     async def create_model_from_schema(self, schema: UserRegisterRequest) -> str:
         user_schema = UserSchemaCreate(
-            login=schema.login,
-            email=schema.email,
-            password_hash=Hasher.get_password_hash(schema.password)
+            password_hash=Hasher.get_password_hash(schema.password),
+            **schema.model_dump()
         )
         return await super().create_model_from_schema(user_schema)
 
@@ -52,16 +52,16 @@ class UserManager(ManagerAbstractBase):
         ):
             return [obj.model_dump() for obj in response]
         
-    # async def update_model_from_schema(
-    #     self, 
-    #     user_id: int,
-    #     schema: UserUpdate,
-    #     returning: str | None = None
-    # ) -> None:
-    #     data = self._formatting_data(schema=schema)
-    #     result = await self.dao.update_model(
-    #         data=data,
-    #         returning=returning,
-    #         user_id__eq=user_id,
-    #     )
-    #     return result
+    async def update_model_from_schema(
+        self, 
+        user_id: str,
+        schema: UserUpdate,
+        returning: str | None = None
+    ) -> None:
+        data = self._formatting_data(schema=schema)
+        result = await self.dao.update_model(
+            data=data,
+            returning=returning,
+            id__eq=user_id,
+        )
+        return result

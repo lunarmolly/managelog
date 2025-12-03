@@ -14,7 +14,7 @@ class AdminOrm(Model):
     hash_password: Mapped[str] = mapped_column(nullable=False)
     created_at: Mapped[datetime.date] = mapped_column(default=datetime.date.today)
 
-    def to_pydantic(self) -> AdminSchema:
+    async def to_pydantic(self) -> AdminSchema:
         return AdminSchema(
             admin_id=str(self.id),
             login=self.login,

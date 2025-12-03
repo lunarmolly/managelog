@@ -14,6 +14,8 @@ from ...schemas import (
     UserLoginRequest, UserLoginResponse, TokenData
 )
 
+import logging
+
 from .auth import auth_router
 
 @auth_router.post(
@@ -39,13 +41,13 @@ async def login(
         role='user', 
         session=db_session
     ):
-        return ORJSONResponse(
-            status_code=200,
+        response = ORJSONResponse(
             content={'status': "ok"},
-            headers={
-                'Set-Cookie': f"access_token={tokens.access_token};refresh_token={tokens.refresh_token}",
-            }
+            status_code=200
         )
+        response.set_cookie("access_token", value=tokens.access_token)
+        response.set_cookie('refresh_token', tokens.refresh_token)
+        return response
     raise HTTPException(
         status_code=status.HTTP_400_BAD_REQUEST,
         detail="Can`t procces the request"

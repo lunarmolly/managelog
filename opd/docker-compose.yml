@@ -1,14 +1,14 @@
 services:
-  redis:
-    container_name: redis
-    hostname: redis
-    extends:
-      file: templates.yml
-      service: base_redis
-    ports:
-      - "127.0.0.1:6379:6379"
-    networks:
-      - backend
+  # redis:
+  #   container_name: redis
+  #   hostname: redis
+  #   extends:
+  #     file: templates.yml
+  #     service: base_redis
+  #   ports:
+  #     - "127.0.0.1:6379:6379"
+  #   networks:
+  #     - backend
 
   postgres:
     container_name: postgres
@@ -40,23 +40,7 @@ services:
       - "127.0.0.1:8000:8000"
     networks:
       - backend
-
-  # gateway:
-  #   container_name: gateway
-  #   hostname: gateway
-  #   restart: always
-  #   ports:
-  #     - 80:80
-  #     - 443:443
-  #   image: gateway:latest
-  #   volumes:
-  #     - "/etc/letsencrypt:/etc/letsencrypt:ro"
-  #     - "/srv/nginx-docker/www-html:/var/www/certbot:ro"
-  #   networks:
-  #     - backend
-  #   profiles:
-  #     - production
-
+      
 networks:
   backend:
     driver: bridge

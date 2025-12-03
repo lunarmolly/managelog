@@ -17,7 +17,7 @@ async def logout(
     await logger.write(
         f"{request.method} Request from {request.client.host}: {request.client.port} Handler /auth/logout/"
     )
-    request.cookies.clear()
+    request.session.clear()
     return ORJSONResponse(
         status_code=status.HTTP_200_OK,
         content={'status': 'ok'}

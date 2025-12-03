@@ -1,2 +1,5 @@
-# from .users import users_router
 from .auth import auth_router
+from .user import user_router
+from .projects import projects_router
+from .backlogs import backlogs_router
+from .tasks import tasks_router
