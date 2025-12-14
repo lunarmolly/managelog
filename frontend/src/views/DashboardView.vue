@@ -87,7 +87,7 @@
             <router-link
               v-for="project in projects.slice(0, 8)"
               :key="project.id"
-              to="/projects"
+              :to="{ name: 'tasks', params: { id: project.id } }"
               class="project-item"
               :style="{ borderLeftColor: project.color }"
               :title="project.description"
