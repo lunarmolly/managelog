@@ -413,10 +413,15 @@ function calculateStats(userId: string, projectsList: Project[], tasksList: Task
 // Вспомогательные функции
 function getGreeting(): string {
   const hour = new Date().getHours();
-  if (hour < 12) return 'Доброе утро';
-  if (hour < 17) return 'Добрый день';
-  if (21 > hour && hour >= 8) return 'Доброй ночи';
-  return 'Добрый вечер';
+  // Диапазоны:
+  // 05:00–11:59 → Доброе утро
+  // 12:00–16:59 → Добрый день
+  // 17:00–22:59 → Добрый вечер
+  // 23:00–04:59 → Доброй ночи
+  if (hour >= 5 && hour < 12) return 'Доброе утро';
+  if (hour >= 12 && hour < 17) return 'Добрый день';
+  if (hour >= 17 && hour <= 22) return 'Добрый вечер';
+  return 'Доброй ночи';
 }
 
 function getSubtitle(): string {
