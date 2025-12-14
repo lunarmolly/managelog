@@ -1111,9 +1111,13 @@ const filteredTasks = computed(() => {
 function getTasksForColumn(columnId: string): Task[] {
   const columnTasks = filteredTasks.value.filter((task) => task.column.id === columnId);
   
-  // Сортировка: сначала важные, затем по дедлайну (от раннего к позднему)
+  // Сортировка: выполненные всегда в конце, невыполненные сортируются по важности и дедлайну
   return columnTasks.sort((a, b) => {
-    // Сначала сортируем по важности (важные первыми)
+    // Сначала сортируем по статусу выполнения (невыполненные первыми)
+    if (a.isCompleted && !b.isCompleted) return 1;
+    if (!a.isCompleted && b.isCompleted) return -1;
+    
+    // Затем по важности (важные первыми)
     if (a.isImportant && !b.isImportant) return -1;
     if (!a.isImportant && b.isImportant) return 1;
     
