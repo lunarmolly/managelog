@@ -2612,14 +2612,13 @@ function getEndOfNextWeek(): string {
 .task-card {
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0.6) 100%);
   border-radius: 16px;
-  padding: 14px;
+  padding: 12px 14px;
   cursor: pointer;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
   user-select: none;
   position: relative;
   overflow: hidden;
@@ -2650,7 +2649,6 @@ function getEndOfNextWeek(): string {
 
 .task-card:hover {
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.85) 100%);
-  box-shadow: 0 12px 32px rgba(145, 33, 56, 0.2);
   border-color: rgba(145, 33, 56, 0.4);
 }
 
@@ -2674,9 +2672,7 @@ function getEndOfNextWeek(): string {
 }
 
 .kanban-column.drag-over {
-  background: linear-gradient(135deg, rgba(145, 33, 56, 0.15) 0%, rgba(145, 33, 56, 0.05) 100%);
   border-color: rgba(145, 33, 56, 0.6);
-  box-shadow: 0 0 0 2px rgba(145, 33, 56, 0.3), 0 12px 40px rgba(145, 33, 56, 0.2);
 }
 
 .kanban-column.drag-over .column-title {
@@ -2966,8 +2962,7 @@ function getEndOfNextWeek(): string {
 
 .task-deadline-section {
   width: 100%;
-  display: flex;
-  justify-content: center;
+  display: contents;
 }
 
 .task-deadline-btn {
