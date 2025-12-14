@@ -696,9 +696,28 @@
           </div>
 
           <!-- Файлы (добавление к существующей задаче) -->
-          <div class="modal-field" v-if="canUploadFiles(selectedTask)">
+          <div class="modal-field">
             <label class="modal-field-label">прикрепленные файлы</label>
-            <div class="modal-file-upload">
+            
+            <!-- Существующие файлы задачи -->
+            <div v-if="selectedTask.files && selectedTask.files.length > 0" class="modal-file-list" style="margin-bottom: 12px;">
+              <div
+                v-for="file in selectedTask.files"
+                :key="file.url"
+                class="modal-file-item"
+                style="cursor: pointer;"
+                @click="downloadFile(file.url, file.name)"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                  <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M14 2V8H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span class="modal-file-name">{{ file.name }}</span>
+              </div>
+            </div>
+            
+            <!-- Добавление новых файлов (только для участников) -->
+            <div v-if="canUploadFiles(selectedTask)" class="modal-file-upload">
               <input
                 ref="editTaskFilesInput"
                 type="file"
@@ -713,7 +732,7 @@
                 </svg>
                 <span>выбрать файлы (до 10 МБ)</span>
               </label>
-              <div v-if="selectedEditFiles.length > 0" class="modal-file-list">
+              <div v-if="selectedEditFiles.length > 0" class="modal-file-list" style="margin-top: 8px;">
                 <div
                   v-for="(file, index) in selectedEditFiles"
                   :key="index"
@@ -734,16 +753,6 @@
                     </svg>
                   </button>
                 </div>
-              </div>
-            </div>
-            <div v-if="selectedEditFiles.length > 0" style="margin-top: 12px;">
-              <div class="modal-btn modal-btn-create" @click="uploadEditFiles">
-                <div class="modal-btn-icon">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                  </svg>
-                </div>
-                <span>загрузить файлы</span>
               </div>
             </div>
           </div>
