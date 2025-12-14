@@ -138,9 +138,10 @@
                 <!-- 3. Важная или нет -->
                 <button 
                   class="task-important-btn"
-                  :class="{ 'active': task.isImportant }"
-                  @click.stop="toggleTaskImportant(task)"
-                  :title="task.isImportant ? 'убрать важность' : 'отметить важной'"
+                  :class="{ 'active': task.isImportant, 'disabled': !canEditTask(task) }"
+                  @click.stop="canEditTask(task) && toggleTaskImportant(task)"
+                  :title="!canEditTask(task) ? 'Только постановщик может изменить важность' : (task.isImportant ? 'убрать важность' : 'отметить важной')"
+                  :disabled="!canEditTask(task)"
                 >
                   <img 
                     :src="task.isImportant ? '/images/icons/tasks/fire-active.svg' : '/images/icons/tasks/fire-unactive.svg'" 
@@ -278,15 +279,29 @@
               название задачи
               <span class="modal-field-required">*</span>
             </label>
-            <div class="modal-input-wrapper">
-              <input
-                id="task-name"
-                v-model="newTask.name"
-                type="text"
-                class="modal-field-input"
-                placeholder="введите название задачи"
-                required
-              />
+            <div class="modal-input-with-icon">
+              <div class="modal-input-wrapper">
+                <input
+                  id="task-name"
+                  v-model="newTask.name"
+                  type="text"
+                  class="modal-field-input"
+                  placeholder="введите название задачи"
+                  required
+                />
+              </div>
+              <button 
+                type="button"
+                class="modal-important-btn"
+                :class="{ 'active': isImportantTask }"
+                :title="isImportantTask ? 'Убрать важность' : 'Отметить важной'"
+                @click="isImportantTask = !isImportantTask"
+              >
+                <img 
+                  :src="isImportantTask ? '/images/icons/tasks/fire-active.svg' : '/images/icons/tasks/fire-unactive.svg'" 
+                  alt="важная задача" 
+                />
+              </button>
             </div>
           </div>
 
@@ -534,31 +549,16 @@
             </div>
           </div>
 
-          <!-- Важная задача и дедлайн -->
-          <div class="modal-field-group">
-            <div class="modal-field">
-              <label class="modal-field-label">важная задача</label>
-              <button 
-                class="task-important-btn"
-                :class="{ 'active': isImportantTask }"
-                @click="isImportantTask = !isImportantTask"
-              >
-                <img 
-                  :src="isImportantTask ? '/images/icons/tasks/fire-active.svg' : '/images/icons/tasks/fire-unactive.svg'" 
-                  alt="важная задача" 
-                />
-              </button>
-            </div>
-            <div class="modal-field">
-              <label class="modal-field-label" for="task-deadline">дедлайн</label>
-              <div class="modal-input-wrapper">
-                <input
-                  id="task-deadline"
-                  v-model="newTask.deadline"
-                  type="datetime-local"
-                  class="modal-field-input"
-                />
-              </div>
+          <!-- Дедлайн -->
+          <div class="modal-field">
+            <label class="modal-field-label" for="task-deadline">дедлайн</label>
+            <div class="modal-input-wrapper">
+              <input
+                id="task-deadline"
+                v-model="newTask.deadline"
+                type="datetime-local"
+                class="modal-field-input"
+              />
             </div>
           </div>
 
@@ -1752,16 +1752,25 @@ async function toggleTaskComplete(task: Task) {
 async function toggleTaskImportant(task: Task) {
   if (!canEditTask(task)) return;
 
+  // Оптимистичное обновление UI
+  const oldIsImportant = task.isImportant;
+  task.isImportant = !task.isImportant;
+
   try {
     const updatedTask = await updateTaskApi(projectId.value, task.id, {
-      isImportant: !task.isImportant,
+      isImportant: task.isImportant,
     });
+    
+    // Обновляем задачу полностью из ответа сервера
     const index = tasks.value.findIndex((t) => t.id === updatedTask.id);
     if (index !== -1) {
-      tasks.value[index] = updatedTask;
+      // Сохраняем реактивность, обновляя свойства
+      Object.assign(tasks.value[index], updatedTask);
     }
   } catch (error: any) {
     console.error('Ошибка изменения важности задачи:', error);
+    // Откатываем изменение при ошибке
+    task.isImportant = oldIsImportant;
   }
 }
 
@@ -2099,7 +2108,6 @@ watch(showCreateTaskModal, (isOpen) => {
 .back-btn:hover {
   background: rgba(145, 33, 56, 0.25);
   border-color: rgba(145, 33, 56, 0.5);
-  transform: translateX(-2px);
 }
 
 .back-btn svg {
@@ -2151,11 +2159,6 @@ watch(showCreateTaskModal, (isOpen) => {
   background: linear-gradient(135deg, #a02a43 0%, #8a1f34 100%);
   border-color: rgba(145, 33, 56, 0.7);
   box-shadow: 0 6px 16px rgba(145, 33, 56, 0.3);
-  transform: translateY(-1px);
-}
-
-.info-btn:active {
-  transform: translateY(0);
 }
 
 .projects-list {
@@ -2205,7 +2208,6 @@ watch(showCreateTaskModal, (isOpen) => {
 .project-item:hover {
   background: rgba(145, 33, 56, 0.2);
   border-color: rgba(145, 33, 56, 0.3);
-  transform: translateX(4px);
 }
 
 .project-item:not(:last-child)::after {
@@ -2439,17 +2441,12 @@ watch(showCreateTaskModal, (isOpen) => {
 
 .task-card:hover {
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.85) 100%);
-  transform: translateY(-4px);
   box-shadow: 0 12px 32px rgba(145, 33, 56, 0.2);
   border-color: rgba(145, 33, 56, 0.4);
 }
 
 .task-card:hover::before {
   opacity: 1;
-}
-
-.task-card:active {
-  transform: translateY(-2px);
 }
 
 .task-card[draggable="true"] {
@@ -2646,11 +2643,10 @@ watch(showCreateTaskModal, (isOpen) => {
   width: 28px;
   height: 28px;
   background: rgba(145, 33, 56, 0.1);
-  border: 1px solid rgba(145, 33, 56, 0.2);
+  border: none;
   border-radius: 6px;
   padding: 0;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   flex-shrink: 0;
   
   img {
@@ -2658,26 +2654,22 @@ watch(showCreateTaskModal, (isOpen) => {
     height: 16px;
   }
   
-  &:hover {
+  &:hover:not(:disabled) {
     background: rgba(145, 33, 56, 0.2);
-    border-color: rgba(145, 33, 56, 0.4);
-    transform: scale(1.1);
   }
   
-  &:active {
-    transform: scale(0.95);
+  &:active:not(:disabled) {
+    opacity: 0.8;
   }
   
   &.active {
-    background: linear-gradient(135deg, #912138 0%, #7a1a2d 100%);
-    border-color: #912138;
-    box-shadow: 0 4px 12px rgba(145, 33, 56, 0.3);
-    
-    img {
-      width: 16px;
-      height: 16px;
-      filter: brightness(1.2);
-    }
+    background: #912138;
+  }
+  
+  &.disabled,
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
   }
 }
 
@@ -2928,7 +2920,6 @@ watch(showCreateTaskModal, (isOpen) => {
   &:hover {
     background: rgba(145, 33, 56, 0.15);
     border-color: rgba(145, 33, 56, 0.3);
-    transform: translateX(2px);
   }
   
   svg {
@@ -3052,11 +3043,6 @@ watch(showCreateTaskModal, (isOpen) => {
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.04) 100%);
   border-color: rgba(145, 33, 56, 0.5);
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
-  transform: translateY(-2px);
-}
-
-.add-column-btn:active {
-  transform: translateY(0);
 }
 
 .modal-overlay {
@@ -3176,6 +3162,59 @@ watch(showCreateTaskModal, (isOpen) => {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: clamp(1rem, 2vw, 1.5rem);
+}
+
+.modal-input-with-icon {
+  display: flex;
+  align-items: center;
+  gap: clamp(0.75rem, 1.5vw, 1rem);
+}
+
+.modal-input-with-icon .modal-input-wrapper {
+  flex: 1;
+}
+
+.modal-important-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: transparent;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 0;
+  opacity: 0.4;
+  flex-shrink: 0;
+}
+
+.modal-important-btn img {
+  width: 28px;
+  height: 28px;
+  transition: all 0.3s ease;
+}
+
+.modal-important-btn:hover {
+  background: rgba(145, 33, 56, 0.1);
+  opacity: 0.6;
+}
+
+.modal-important-btn.active {
+  background: linear-gradient(135deg, rgba(145, 33, 56, 0.2) 0%, rgba(145, 33, 56, 0.1) 100%);
+  box-shadow: 0 4px 12px rgba(145, 33, 56, 0.15);
+  opacity: 1;
+}
+
+.modal-important-btn.active:hover {
+  background: linear-gradient(135deg, rgba(145, 33, 56, 0.3) 0%, rgba(145, 33, 56, 0.2) 100%);
+  box-shadow: 0 6px 16px rgba(145, 33, 56, 0.25);
+  opacity: 1;
+}
+
+.modal-important-btn.active img {
+  filter: brightness(1.2) drop-shadow(0 2px 4px rgba(145, 33, 56, 0.3));
 }
 
 .modal-field-label {
@@ -3413,7 +3452,6 @@ watch(showCreateTaskModal, (isOpen) => {
 .modal-generate-btn:hover {
   background: rgba(145, 33, 56, 1);
   border-color: rgba(145, 33, 56, 0.7);
-  transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(145, 33, 56, 0.3);
 }
 
@@ -3510,7 +3548,6 @@ watch(showCreateTaskModal, (isOpen) => {
 .modal-action-accept:hover {
   background: rgba(145, 33, 56, 1);
   border-color: rgba(145, 33, 56, 0.7);
-  transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(145, 33, 56, 0.3);
 }
 
@@ -3523,7 +3560,6 @@ watch(showCreateTaskModal, (isOpen) => {
 .modal-action-refine:hover {
   background: rgba(255, 255, 255, 0.15);
   border-color: rgba(255, 255, 255, 0.3);
-  transform: translateY(-1px);
 }
 
 .modal-action-delete {
@@ -3535,7 +3571,6 @@ watch(showCreateTaskModal, (isOpen) => {
 .modal-action-delete:hover {
   background: rgba(255, 107, 107, 0.2);
   border-color: rgba(255, 107, 107, 0.4);
-  transform: translateY(-1px);
 }
 
 .modal-action-btn-icon {
@@ -3589,7 +3624,6 @@ watch(showCreateTaskModal, (isOpen) => {
   background: #a02a43;
   border-color: rgba(145, 33, 56, 0.7);
   color: #ffffff;
-  transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(145, 33, 56, 0.3);
 }
 
@@ -3602,7 +3636,6 @@ watch(showCreateTaskModal, (isOpen) => {
 .modal-btn-cancel:hover {
   background: rgba(255, 255, 255, 0.1);
   border-color: rgba(255, 255, 255, 0.2);
-  transform: translateY(-1px);
 }
 
 .modal-btn-icon {
