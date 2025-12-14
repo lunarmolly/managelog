@@ -44,7 +44,7 @@
         </button>
       </div>
 
-      <div class="projects-list">
+      <div v-if="availableProjects.length > 0" class="projects-list">
         <h3 class="projects-list-title">актуальные проекты</h3>
         <div class="projects-list-items">
           <div
