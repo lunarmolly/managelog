@@ -664,15 +664,30 @@
               Название задачи
               <span class="modal-field-required">*</span>
             </label>
-            <div class="modal-input-wrapper">
-              <input
-                id="edit-task-name"
-                v-model="editTask.name"
-                type="text"
-                class="modal-field-input"
-                :disabled="!canEditTask(selectedTask) && !canCompleteTask(selectedTask)"
-                required
-              />
+            <div class="modal-input-with-icon">
+              <div class="modal-input-wrapper">
+                <input
+                  id="edit-task-name"
+                  v-model="editTask.name"
+                  type="text"
+                  class="modal-field-input"
+                  :disabled="!canEditTask(selectedTask)"
+                  required
+                />
+              </div>
+              <button 
+                type="button"
+                class="modal-important-btn"
+                :class="{ 'active': editTask.isImportant, 'disabled': !canEditTask(selectedTask) }"
+                :title="!canEditTask(selectedTask) ? 'Нет доступа' : (editTask.isImportant ? 'Убрать важность' : 'Отметить важной')"
+                @click="canEditTask(selectedTask) && (editTask.isImportant = !editTask.isImportant)"
+                :disabled="!canEditTask(selectedTask)"
+              >
+                <img 
+                  :src="editTask.isImportant ? '/images/icons/tasks/fire-active.svg' : '/images/icons/tasks/fire-unactive.svg'" 
+                  alt="важная задача" 
+                />
+              </button>
             </div>
           </div>
 
@@ -686,7 +701,7 @@
                 id="edit-task-description"
                 v-model="editTask.description"
                 class="modal-description-textarea"
-                :disabled="!canEditTask(selectedTask) && !canCompleteTask(selectedTask)"
+                :disabled="!canEditTask(selectedTask)"
                 placeholder="Опишите задачу..."
                 rows="6"
               ></textarea>
@@ -698,8 +713,9 @@
 
           <!-- Постановщик, исполнитель, наблюдатели -->
           <div class="modal-field">
-            <label class="modal-field-label">Участники</label>
+            <label class="modal-field-label">участники</label>
             <div class="task-modal-participants-row">
+              <!-- Постановщик (только отображение) -->
               <div class="task-modal-participant-display">
                 <img
                   v-if="selectedTask.creator.avatar"
@@ -712,7 +728,62 @@
                 </div>
                 <span>{{ getCreatorDisplayName(selectedTask.creator) }}</span>
               </div>
-              <div class="task-modal-participant-display">
+              
+              <!-- Исполнитель -->
+              <div v-if="canEditTask(selectedTask)" class="task-modal-participant-field">
+                <button
+                  class="task-modal-participant-btn"
+                  :class="{ 'selected': editTask.assigneeId }"
+                  @click="showEditAssigneeSelect = !showEditAssigneeSelect"
+                >
+                  <img v-if="getEditAssigneeAvatar()" :src="getAvatarUrl(getEditAssigneeAvatar())" alt="исполнитель" class="task-modal-participant-avatar-btn" />
+                  <img v-else src="/images/icons/tasks/executor.svg" alt="исполнитель" />
+                  <span>{{ getAssigneeNameFromEdit() || 'исполнитель' }}</span>
+                  <button
+                    v-if="editTask.assigneeId"
+                    class="task-modal-participant-clear"
+                    @click.stop="editTask.assigneeId = null"
+                    title="Очистить"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path
+                        d="M18 6L6 18M6 6L18 18"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                    </svg>
+                  </button>
+                </button>
+                <!-- Выпадающий список исполнителя -->
+                <div v-if="showEditAssigneeSelect" class="task-modal-participants-dropdown" @click.stop>
+                  <div class="task-modal-participants-search">
+                    <input
+                      v-model="assigneeEditSearchQuery"
+                      type="text"
+                      placeholder="поиск..."
+                      class="task-modal-participants-search-input"
+                      @click.stop
+                    />
+                  </div>
+                  <div class="task-modal-participants-list">
+                    <div
+                      v-for="user in filteredEditAssigneeUsers"
+                      :key="user.id"
+                      class="task-modal-participant-option"
+                      @click="editTask.assigneeId = user.id; showEditAssigneeSelect = false"
+                    >
+                      <img v-if="user.avatar" :src="getAvatarUrl(user.avatar)" :alt="getUserDisplayNameWithRole(user)" />
+                      <div v-else class="task-modal-participant-avatar-placeholder">
+                        {{ (user.firstName || user.displayName || user.login || '?')[0].toUpperCase() }}
+                      </div>
+                      <span>{{ getUserDisplayNameWithRole(user) }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div v-else class="task-modal-participant-display">
                 <img
                   v-if="selectedTask.assignee?.avatar"
                   :src="getAvatarUrl(selectedTask.assignee.avatar)"
@@ -724,7 +795,63 @@
                 </div>
                 <span>{{ selectedTask.assignee ? getCreatorDisplayName(selectedTask.assignee) : 'исполнитель' }}</span>
               </div>
-              <div class="task-modal-participant-display">
+              
+              <!-- Наблюдатели -->
+              <div v-if="canEditTask(selectedTask)" class="task-modal-participant-field">
+                <button
+                  class="task-modal-participant-btn"
+                  :class="{ 'selected': editTask.watcherIds && editTask.watcherIds.length > 0 }"
+                  @click="showEditWatchersSelect = !showEditWatchersSelect"
+                >
+                  <img v-if="getEditWatchersAvatar()" :src="getAvatarUrl(getEditWatchersAvatar())" alt="наблюдатели" class="task-modal-participant-avatar-btn" />
+                  <img v-else src="/images/icons/tasks/watcher.svg" alt="наблюдатели" />
+                  <span>{{ getEditWatchersDisplayText() }}</span>
+                  <button
+                    v-if="editTask.watcherIds && editTask.watcherIds.length > 0"
+                    class="task-modal-participant-clear"
+                    @click.stop="editTask.watcherIds = []"
+                    title="Очистить"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path
+                        d="M18 6L6 18M6 6L18 18"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                    </svg>
+                  </button>
+                </button>
+                <!-- Выпадающий список наблюдателей -->
+                <div v-if="showEditWatchersSelect" class="task-modal-participants-dropdown" @click.stop>
+                  <div class="task-modal-participants-search">
+                    <input
+                      v-model="watchersEditSearchQuery"
+                      type="text"
+                      placeholder="поиск..."
+                      class="task-modal-participants-search-input"
+                      @click.stop
+                    />
+                  </div>
+                  <div class="task-modal-participants-list">
+                    <div
+                      v-for="user in filteredEditWatcherUsers"
+                      :key="user.id"
+                      class="task-modal-participant-option"
+                      :class="{ 'selected': editTask.watcherIds.includes(user.id) }"
+                      @click="toggleEditWatcher(user.id)"
+                    >
+                      <img v-if="user.avatar" :src="getAvatarUrl(user.avatar)" :alt="getUserDisplayNameWithRole(user)" />
+                      <div v-else class="task-modal-participant-avatar-placeholder">
+                        {{ (user.firstName || user.displayName || user.login || '?')[0].toUpperCase() }}
+                      </div>
+                      <span>{{ getUserDisplayNameWithRole(user) }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div v-else class="task-modal-participant-display">
                 <img
                   v-if="selectedTask.watchers && selectedTask.watchers.length > 0 && selectedTask.watchers[0].avatar"
                   :src="getAvatarUrl(selectedTask.watchers[0].avatar)"
@@ -739,31 +866,17 @@
             </div>
           </div>
 
-          <!-- Время, редактор, дедлайн -->
-          <div class="modal-field-group">
-            <div class="modal-field">
-              <label class="modal-field-label">Время</label>
-              <div class="modal-input-wrapper">
-                <input
-                  v-model="editTask.timeSpent"
-                  type="text"
-                  class="modal-field-input"
-                  :disabled="!canEditTask(selectedTask) && !canCompleteTask(selectedTask)"
-                  placeholder="00:00"
-                />
-              </div>
-            </div>
-            <div class="modal-field">
-              <label class="modal-field-label" for="edit-task-deadline">Дедлайн</label>
-              <div class="modal-input-wrapper">
-                <input
-                  id="edit-task-deadline"
-                  v-model="editTask.deadline"
-                  type="datetime-local"
-                  class="modal-field-input"
-                  :disabled="!canEditTask(selectedTask) && !canCompleteTask(selectedTask)"
-                />
-              </div>
+          <!-- Дедлайн -->
+          <div class="modal-field">
+            <label class="modal-field-label" for="edit-task-deadline">Дедлайн</label>
+            <div class="modal-input-wrapper">
+              <input
+                id="edit-task-deadline"
+                v-model="editTask.deadline"
+                type="datetime-local"
+                class="modal-field-input"
+                :disabled="!canEditTask(selectedTask)"
+              />
             </div>
           </div>
 
@@ -919,13 +1032,17 @@ const newTask = ref({
 const showCreatorSelect = ref(false);
 const showAssigneeSelect = ref(false);
 const showWatchersSelect = ref(false);
+const showEditAssigneeSelect = ref(false);
+const showEditWatchersSelect = ref(false);
 const showDeadlinePicker = ref(false);
 const showSubtasksModal = ref(false);
 const showChecklistModal = ref(false);
 
 const creatorSearchQuery = ref('');
 const assigneeSearchQuery = ref('');
+const assigneeEditSearchQuery = ref('');
 const watchersSearchQuery = ref('');
+const watchersEditSearchQuery = ref('');
 
 const editTask = ref({
   name: '',
@@ -935,6 +1052,7 @@ const editTask = ref({
   subtasks: [] as Array<{ name: string; isCompleted: boolean }>,
   deadline: '',
   timeSpent: 0,
+  isImportant: false,
 });
 
 const showEditSubtasksModal = ref(false);
@@ -1022,11 +1140,37 @@ const filteredAssigneeUsers = computed(() => {
   });
 });
 
+const filteredEditAssigneeUsers = computed(() => {
+  if (!assigneeEditSearchQuery.value.trim()) {
+    return companyUsers.value;
+  }
+  const query = assigneeEditSearchQuery.value.toLowerCase().trim();
+  return companyUsers.value.filter((user) => {
+    const firstName = (user.firstName || user.displayName || user.login || '').toLowerCase();
+    const lastName = (user.lastName || '').toLowerCase();
+    const role = (user.role || '').toLowerCase();
+    return firstName.includes(query) || lastName.includes(query) || role.includes(query);
+  });
+});
+
 const filteredWatcherUsers = computed(() => {
   if (!watchersSearchQuery.value.trim()) {
     return companyUsers.value;
   }
   const query = watchersSearchQuery.value.toLowerCase().trim();
+  return companyUsers.value.filter((user) => {
+    const firstName = (user.firstName || user.displayName || user.login || '').toLowerCase();
+    const lastName = (user.lastName || '').toLowerCase();
+    const role = (user.role || '').toLowerCase();
+    return firstName.includes(query) || lastName.includes(query) || role.includes(query);
+  });
+});
+
+const filteredEditWatcherUsers = computed(() => {
+  if (!watchersEditSearchQuery.value.trim()) {
+    return companyUsers.value;
+  }
+  const query = watchersEditSearchQuery.value.toLowerCase().trim();
   return companyUsers.value.filter((user) => {
     const firstName = (user.firstName || user.displayName || user.login || '').toLowerCase();
     const lastName = (user.lastName || '').toLowerCase();
@@ -1278,6 +1422,19 @@ function canCompleteTask(task: Task): boolean {
   return task.assignee?.id === currentUser.value.id || task.creator.id === currentUser.value.id;
 }
 
+function isTaskWatcher(task: Task): boolean {
+  if (!currentUser.value) return false;
+  return task.watchers.some((w) => w.id === currentUser.value?.id);
+}
+
+function canOnlyViewTask(task: Task): boolean {
+  if (!currentUser.value) return false;
+  // Если пользователь не постановщик, не исполнитель и не имеет прав в проекте, то только наблюдатель
+  if (canEditTask(task) || canCompleteTask(task)) return false;
+  // Проверяем, является ли пользователь наблюдателем
+  return isTaskWatcher(task);
+}
+
 function canViewTask(task: Task): boolean {
   if (!currentUser.value || !project.value) return false;
   // Руководитель проекта имеет доступ ко всем задачам
@@ -1373,6 +1530,51 @@ function getAssigneeAvatar(): string | null {
   if (!newTask.value.assigneeId) return null;
   const user = companyUsers.value.find(u => u.id === newTask.value.assigneeId);
   return user?.avatar || null;
+}
+
+function getAssigneeFromEdit(): any {
+  if (!editTask.value.assigneeId) return null;
+  const user = companyUsers.value.find(u => u.id === editTask.value.assigneeId);
+  return user || null;
+}
+
+function getAssigneeNameFromEdit(): string {
+  if (!editTask.value.assigneeId) return '';
+  const user = companyUsers.value.find(u => u.id === editTask.value.assigneeId);
+  return user ? getUserDisplayNameWithRole(user) : '';
+}
+
+function getEditWatchersDisplayText(): string {
+  if (!editTask.value.watcherIds || editTask.value.watcherIds.length === 0) {
+    return 'наблюдатели';
+  }
+  if (editTask.value.watcherIds.length === 1) {
+    const user = companyUsers.value.find(u => u.id === editTask.value.watcherIds[0]);
+    return user ? getUserDisplayNameWithRole(user) : 'наблюдатель';
+  }
+  return `${editTask.value.watcherIds.length} наблюдателей`;
+}
+
+function getEditWatchersAvatar(): string | null {
+  if (!editTask.value.watcherIds || editTask.value.watcherIds.length === 0) return null;
+  if (editTask.value.watcherIds.length === 1) {
+    const user = companyUsers.value.find(u => u.id === editTask.value.watcherIds[0]);
+    return user?.avatar || null;
+  }
+  const firstWatcher = companyUsers.value.find(u => u.id === editTask.value.watcherIds[0]);
+  return firstWatcher?.avatar || null;
+}
+
+function toggleEditWatcher(userId: string) {
+  if (!editTask.value.watcherIds) {
+    editTask.value.watcherIds = [];
+  }
+  const index = editTask.value.watcherIds.indexOf(userId);
+  if (index > -1) {
+    editTask.value.watcherIds.splice(index, 1);
+  } else {
+    editTask.value.watcherIds.push(userId);
+  }
 }
 
 function getWatchersDisplayText(): string {
@@ -1523,6 +1725,7 @@ function openEditTaskModal(task: Task) {
     subtasks: task.subtasks.map((st) => ({ ...st })),
     deadline: task.deadline ? new Date(task.deadline).toISOString().slice(0, 16) : '',
     timeSpent: task.timeSpent || 0,
+    isImportant: task.isImportant || false,
   };
   showEditTaskModal.value = true;
 }
@@ -1544,6 +1747,10 @@ function closeEditTaskModal() {
   selectedTask.value = null;
   showEditSubtasksModal.value = false;
   showEditChecklistModal.value = false;
+  showEditAssigneeSelect.value = false;
+  showEditWatchersSelect.value = false;
+  assigneeEditSearchQuery.value = '';
+  watchersEditSearchQuery.value = '';
 }
 
 function openTaskModal(task: Task) {
