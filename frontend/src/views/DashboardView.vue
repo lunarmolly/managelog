@@ -138,7 +138,7 @@
             <router-link to="/projects" class="section-link">К проектам →</router-link>
           </div>
           <div v-if="!isLoading && tasksInProgress.length > 0" class="tasks-list">
-            <div 
+            <router-link
               v-for="task in tasksInProgress.slice(0, 8)"
               :key="task.id"
               class="task-item"
@@ -146,6 +146,7 @@
                 'task-overdue': isOverdue(task.deadline),
                 'task-important': task.isImportant
               }"
+              :to="{ name: 'tasks', params: { id: task.project } }"
             >
               <div class="task-status-indicator"></div>
               <div class="task-content">
@@ -165,7 +166,7 @@
                   {{ formatDate(task.deadline) }}
                 </span>
               </div>
-            </div>
+            </router-link>
           </div>
           <div v-if="!isLoading && tasksInProgress.length === 0" class="empty-state">
             <p>
