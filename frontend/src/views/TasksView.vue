@@ -1538,6 +1538,12 @@ function getAssigneeFromEdit(): any {
   return user || null;
 }
 
+function getEditAssigneeAvatar(): string | null {
+  if (!editTask.value.assigneeId) return null;
+  const user = companyUsers.value.find(u => u.id === editTask.value.assigneeId);
+  return user?.avatar || null;
+}
+
 function getAssigneeNameFromEdit(): string {
   if (!editTask.value.assigneeId) return '';
   const user = companyUsers.value.find(u => u.id === editTask.value.assigneeId);
