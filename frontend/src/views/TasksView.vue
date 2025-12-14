@@ -2318,17 +2318,15 @@ watch(showCreateTaskModal, (isOpen) => {
   display: flex;
   flex-direction: column;
   position: relative;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
   flex-shrink: 0;
   backdrop-filter: blur(10px);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: border-color 0.3s ease;
   max-height: calc(100vh - 120px);
 }
 
 .kanban-column:hover {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.04) 100%);
-  border-color: rgba(145, 33, 56, 0.5);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.15);
+  border-color: rgba(145, 33, 56, 0.4);
 }
 
 .column-header {
@@ -2337,7 +2335,6 @@ watch(showCreateTaskModal, (isOpen) => {
   justify-content: space-between;
   padding: 12px 0 16px;
   gap: 8px;
-  border-bottom: 2px solid rgba(145, 33, 56, 0.4);
   margin-bottom: 12px;
 }
 
@@ -2473,7 +2470,7 @@ watch(showCreateTaskModal, (isOpen) => {
 .kanban-column.drag-over {
   background: linear-gradient(135deg, rgba(145, 33, 56, 0.15) 0%, rgba(145, 33, 56, 0.05) 100%);
   border-color: rgba(145, 33, 56, 0.6);
-  box-shadow: 0 0 0 2px rgba(145, 33, 56, 0.3), inset 0 0 40px rgba(145, 33, 56, 0.1);
+  box-shadow: 0 0 0 2px rgba(145, 33, 56, 0.3), 0 12px 40px rgba(145, 33, 56, 0.2);
 }
 
 .kanban-column.drag-over .column-title {
