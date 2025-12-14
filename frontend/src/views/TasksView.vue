@@ -150,29 +150,7 @@
                 </button>
               </div>
 
-              <!-- 4. Отслеживание времени -->
-              <div class="task-timer-section">
-                <button 
-                  class="task-timer-btn"
-                  :class="{ 
-                    'running': activeTimerTaskId === task.id,
-                    'has-time': task.timeSpent && task.timeSpent > 0
-                  }"
-                  @click.stop="toggleTimer(task)"
-                  :disabled="task.isCompleted"
-                >
-                  <svg v-if="activeTimerTaskId === task.id" width="12" height="12" viewBox="0 0 24 24" fill="none">
-                    <rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor"/>
-                  </svg>
-                  <svg v-else width="12" height="12" viewBox="0 0 24 24" fill="none">
-                    <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
-                    <path d="M12 6V12L16 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                  </svg>
-                  <span>{{ getDisplayTime(task) }}</span>
-                </button>
-              </div>
-
-              <!-- 5. Дедлайн -->
+              <!-- 4. Дедлайн -->
               <div class="task-deadline-section">
                 <button 
                   class="task-deadline-btn"
@@ -192,7 +170,7 @@
                 </button>
               </div>
 
-              <!-- 6. Участники (кроме наблюдателей) -->
+              <!-- 5. Участники (кроме наблюдателей) -->
               <div v-if="getTaskActiveParticipants(task).length > 0" class="task-participants">
                 <div
                   v-for="(participant, index) in getTaskActiveParticipants(task)"
@@ -215,7 +193,7 @@
                 </div>
               </div>
 
-              <!-- 7. Прикрепленные файлы -->
+              <!-- 6. Прикрепленные файлы -->
               <div v-if="task.files.length > 0" class="task-files-section">
                 <div
                   v-for="file in task.files"
@@ -1065,7 +1043,6 @@ const editTask = ref({
   watcherIds: [] as string[],
   subtasks: [] as Array<{ name: string; isCompleted: boolean }>,
   deadline: '',
-  timeSpent: 0,
   isImportant: false,
 });
 
@@ -1303,14 +1280,7 @@ function formatDate(dateString: string | null | undefined): string {
   return `${weekDay} ${day}.${month}`;
 }
 
-function formatTime(minutes: number): string {
-  const hours = Math.floor(minutes / 60);
-  const mins = minutes % 60;
-  if (hours > 0) {
-    return `${hours}:${mins.toString().padStart(2, '0')}`;
-  }
-  return `0:${mins.toString().padStart(2, '0')}`;
-}
+
 
 function isDeadlineOverdue(deadline: string | null | undefined, isCompleted: boolean): boolean {
   if (!deadline || isCompleted) return false;
@@ -1342,73 +1312,7 @@ function getTaskActiveParticipants(task: Task): CompanyUser[] {
   return participants;
 }
 
-function getDisplayTime(task: Task): string {
-  if (activeTimerTaskId.value === task.id) {
-    // Показываем время с таймера
-    const totalMinutes = (task.timeSpent || 0) + timerElapsedMinutes.value;
-    return formatTime(totalMinutes);
-  }
-  return task.timeSpent ? formatTime(task.timeSpent) : '0:00';
-}
 
-function toggleTimer(task: Task) {
-  if (task.isCompleted) return;
-  
-  if (activeTimerTaskId.value === task.id) {
-    // Останавливаем таймер
-    stopTimer(task);
-  } else {
-    // Останавливаем предыдущий таймер, если есть
-    if (activeTimerTaskId.value) {
-      const previousTask = tasks.value.find(t => t.id === activeTimerTaskId.value);
-      if (previousTask) {
-        stopTimer(previousTask);
-      }
-    }
-    // Запускаем новый таймер
-    startTimer(task);
-  }
-}
-
-function startTimer(task: Task) {
-  activeTimerTaskId.value = task.id;
-  timerStartTime.value = Date.now();
-  timerElapsedMinutes.value = 0;
-  
-  timerInterval.value = window.setInterval(() => {
-    if (timerStartTime.value) {
-      const elapsed = Math.floor((Date.now() - timerStartTime.value) / 1000 / 60);
-      timerElapsedMinutes.value = elapsed;
-    }
-  }, 1000);
-}
-
-async function stopTimer(task: Task) {
-  if (!activeTimerTaskId.value || activeTimerTaskId.value !== task.id) return;
-  
-  if (timerInterval.value) {
-    clearInterval(timerInterval.value);
-    timerInterval.value = null;
-  }
-  
-  // Сохраняем время
-  const totalMinutes = (task.timeSpent || 0) + timerElapsedMinutes.value;
-  try {
-    const updatedTask = await updateTaskApi(projectId.value, task.id, {
-      timeSpent: totalMinutes,
-    });
-    const index = tasks.value.findIndex((t) => t.id === updatedTask.id);
-    if (index !== -1) {
-      tasks.value[index] = updatedTask;
-    }
-  } catch (error: any) {
-    console.error('Ошибка сохранения времени:', error);
-  }
-  
-  activeTimerTaskId.value = null;
-  timerStartTime.value = null;
-  timerElapsedMinutes.value = 0;
-}
 
 function downloadFile(url: string, name: string) {
   const link = document.createElement('a');
@@ -1744,7 +1648,6 @@ function openEditTaskModal(task: Task) {
     watcherIds: task.watchers.map((w) => w.id),
     subtasks: task.subtasks.map((st) => ({ ...st })),
     deadline: task.deadline ? new Date(task.deadline).toISOString().split('T')[0] : '',
-    timeSpent: task.timeSpent || 0,
     isImportant: task.isImportant || false,
   };
   showEditTaskModal.value = true;
@@ -2283,14 +2186,6 @@ onMounted(() => {
 
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside);
-  // Останавливаем таймер при размонтировании
-  if (timerInterval.value) {
-    clearInterval(timerInterval.value);
-    timerInterval.value = null;
-  }
-  activeTimerTaskId.value = null;
-  timerStartTime.value = null;
-  timerElapsedMinutes.value = 0;
 });
 
 watch(
@@ -3069,81 +2964,10 @@ function getEndOfNextWeek(): string {
   }
 }
 
-.task-timer-section,
 .task-deadline-section {
   width: 100%;
   display: flex;
   justify-content: center;
-}
-
-.task-timer-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 10px;
-  height: 28px;
-  background: rgba(133, 175, 228, 0.15);
-  border: 1px solid rgba(133, 175, 228, 0.3);
-  border-radius: 8px;
-  font-size: 12px;
-  color: #5b8bc1;
-  cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  font-family: 'Involve', Arial, sans-serif;
-  width: 100%;
-  font-weight: 500;
-  
-  svg {
-    width: 14px;
-    height: 14px;
-    flex-shrink: 0;
-    color: #5b8bc1;
-  }
-  
-  &:hover:not(:disabled) {
-    background: rgba(133, 175, 228, 0.25);
-    border-color: rgba(133, 175, 228, 0.5);
-  }
-  
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-  
-  &.running {
-    background: linear-gradient(135deg, #85afe4 0%, #6b9dd4 100%);
-    color: #ffffff;
-    animation: pulse 1.5s ease-in-out infinite;
-    border-color: #6b9dd4;
-    box-shadow: 0 4px 12px rgba(133, 175, 228, 0.3);
-    
-    svg {
-      color: #ffffff;
-    }
-  }
-  
-  &.has-time:not(.running) {
-    background: linear-gradient(135deg, rgba(133, 175, 228, 0.3) 0%, rgba(133, 175, 228, 0.15) 100%);
-    color: #5b8bc1;
-    border-color: rgba(133, 175, 228, 0.4);
-    
-    svg {
-      color: #5b8bc1;
-    }
-    
-    &:hover {
-      background: linear-gradient(135deg, rgba(133, 175, 228, 0.4) 0%, rgba(133, 175, 228, 0.2) 100%);
-    }
-  }
-}
-
-@keyframes pulse {
-  0%, 100% {
-    box-shadow: 0 4px 12px rgba(133, 175, 228, 0.3);
-  }
-  50% {
-    box-shadow: 0 4px 20px rgba(133, 175, 228, 0.5);
-  }
 }
 
 .task-deadline-btn {
