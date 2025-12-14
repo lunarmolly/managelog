@@ -17,8 +17,8 @@ const options: swaggerJsdoc.Options = {
         description: 'Локальный сервер разработки',
       },
       {
-        url: 'https://api.managelog.ru',
-        description: 'Production сервер',
+        url: 'https://api.managelog.ru/api/v1',
+        description: 'Production API сервер',
       },
     ],
     components: {

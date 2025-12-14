@@ -2,6 +2,8 @@ import express, { Request, Response } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import swaggerUi from 'swagger-ui-express';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { connectDatabase, disconnectDatabase } from './config/database.js';
 import { swaggerSpec } from './config/swagger.js';
 import authRoutes from './routes/authRoutes.js';
@@ -11,30 +13,70 @@ import userRoutes from './routes/userRoutes.js';
 import projectRoutes from './routes/projectRoutes.js';
 import taskRoutes from './routes/taskRoutes.js';
 import columnRoutes from './routes/columnRoutes.js';
-import express from 'express';
-import path from 'path';
-import { fileURLToPath } from 'url';
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Упрощенная настройка CORS - разрешаем все в режиме разработки
+// Настройка окружения
 const isDevelopment = !process.env.NODE_ENV || process.env.NODE_ENV === 'development';
 
+// Получаем список разрешённых источников из переменных окружения
+const getAllowedOrigins = (): (string | RegExp)[] => {
+  if (isDevelopment) {
+    // В режиме разработки разрешаем локальные источники
+    return [
+      'http://localhost:5173',
+      'http://127.0.0.1:5173',
+      'http://localhost:3000',
+      'http://127.0.0.1:3000',
+      'http://localhost:8080',
+      'http://127.0.0.1:8080',
+    ];
+  }
+
+  // В режиме production используем переменные окружения
+  // Пример: https://app.managelog.ru (фронтенд на этом домене)
+  const allowedOrigins = process.env.ALLOWED_ORIGINS || 'https://app.managelog.ru';
+  return allowedOrigins
+    .split(',')
+    .map((origin: string) => origin.trim())
+    .filter((origin: string) => origin.length > 0);
+};
+
 const corsOptions = {
-  origin: isDevelopment ? true : [
-    'http://localhost:5173',
-    'http://127.0.0.1:5173',
-    'http://localhost:3000',
-    'http://127.0.0.1:3000',
-  ],
+  origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+    const allowedOrigins = getAllowedOrigins();
+    
+    // Разрешаем запросы без origin (например, мобильные приложения, Postman)
+    if (!origin) {
+      return callback(null, true);
+    }
+
+    const isAllowed = allowedOrigins.some((allowed) => {
+      if (allowed instanceof RegExp) {
+        return allowed.test(origin);
+      }
+      return allowed === origin;
+    });
+
+    if (isAllowed) {
+      callback(null, true);
+    } else if (isDevelopment) {
+      // В разработке логируем нераз решённые источники
+      console.warn(`[CORS] Нераз решённый источник: ${origin}`);
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
   exposedHeaders: ['Authorization'],
   optionsSuccessStatus: 204,
+  maxAge: 86400, // 24 часа кэширования preflight
 };
 
 // Применяем CORS ПЕРВЫМ middleware

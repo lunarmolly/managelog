@@ -1,8 +1,16 @@
 # managelog
 
 Проект состоит из двух отдельных сервисов:
-- **API** - Backend сервер на Express.js + TypeScript + MongoDB
-- **Frontend** - Vue.js приложение с Tailwind CSS
+- **API** - Backend сервер на Express.js + TypeScript + MongoDB (api.managelog.ru)
+- **Frontend** - Vue.js приложение с Tailwind CSS (app.managelog.ru)
+
+## 📚 Документация
+
+- 🚀 **[SETUP_CHECKLIST.md](SETUP_CHECKLIST.md)** - Быстрый старт и checklist
+- 🔧 **[API_CONFIGURATION.md](API_CONFIGURATION.md)** - Подробная конфигурация API
+- 📦 **[PRODUCTION_CONFIG.md](PRODUCTION_CONFIG.md)** - Production deployment guide
+- 📝 **[FIXES_SUMMARY.md](FIXES_SUMMARY.md)** - Резюме исправлений
+- 📖 **[DETAILED_CHANGES.md](DETAILED_CHANGES.md)** - Детальное описание всех изменений
 
 ## Структура проекта
 
@@ -44,7 +52,7 @@ managelog/
 ### Предварительные требования
 
 - Node.js (версия 18 или выше)
-- MongoDB 8.2.2 (запущенная локально на `mongodb://localhost:27017/`)
+- MongoDB 8+ (локально на `mongodb://localhost:27017/` или MongoDB Atlas)
 
 ### 1. Установка зависимостей
 
@@ -81,29 +89,40 @@ cd api
 cp .env.example .env
 ```
 
-Отредактируйте `api/.env`:
+Переменные окружения уже настроены в `api/.env.example`. Для разработки они работают как есть.
+
+**Development:**
 ```env
+NODE_ENV=development
 PORT=3000
 MONGODB_URI=mongodb://localhost:27017/managelog
-NODE_ENV=development
-JWT_SECRET=your-super-secret-jwt-key-change-in-production
-JWT_REFRESH_SECRET=your-super-secret-refresh-jwt-key-change-in-production
-JWT_ACCESS_EXPIRES_IN=15m
-JWT_REFRESH_EXPIRES_IN=7d
+JWT_SECRET=dev-secret-key-not-for-production-12345
+JWT_REFRESH_SECRET=dev-refresh-secret-key-not-for-production-12345
+```
+
+**Production (api.managelog.ru):**
+```env
+NODE_ENV=production
+PORT=3000
+MONGODB_URI=mongodb+srv://user:password@cluster.mongodb.net/managelog
+JWT_SECRET=<ваш-32-символьный-ключ>
+JWT_REFRESH_SECRET=<ваш-32-символьный-refresh-ключ>
+ALLOWED_ORIGINS=https://app.managelog.ru
 ```
 
 #### Frontend
-Создайте файл `frontend/.env`:
-```bash
-# Windows PowerShell
-cd frontend
-@"
-VITE_API_BASE_URL=http://localhost:3000/api/v1
-"@ | Out-File -FilePath .env -Encoding utf8
+Создайте файл `frontend/.env` на основе `frontend/.env.example`:
 
-# Linux/Mac
-cd frontend
-echo "VITE_API_BASE_URL=http://localhost:3000/api/v1" > .env
+**Development:**
+```env
+VITE_API_BASE_URL=http://localhost:3000/api/v1
+VITE_APP_ENV=development
+```
+
+**Production (app.managelog.ru):**
+```env
+VITE_API_BASE_URL=https://api.managelog.ru/api/v1
+VITE_APP_ENV=production
 ```
 
 ### 3. Запуск сервисов
@@ -141,22 +160,31 @@ cd frontend
 npm run dev
 ```
 
-## Порты по умолчанию
+## Порты и URL
 
-- **API**: `3000`
-- **Frontend**: `5173`
-- **MongoDB**: `27017`
+### Development
+- **API**: `http://localhost:3000`
+- **Frontend**: `http://localhost:5173`
+- **MongoDB**: `localhost:27017`
+- **API Docs**: `http://localhost:3000/api-docs`
+- **Health Check**: `http://localhost:3000/health`
+
+### Production
+- **Frontend**: `https://app.managelog.ru`
+- **API**: `https://api.managelog.ru/api/v1`
+- **API Docs**: `https://api.managelog.ru/api-docs`
 
 ## API Документация
 
-После запуска API сервера, документация доступна по адресу:
-- **Swagger UI**: `http://localhost:3000/api-docs`
+После запуска API сервера, Swagger документация доступна:
+- **Development**: `http://localhost:3000/api-docs`
+- **Production**: `https://api.managelog.ru/api-docs`
 
-Документация включает:
-- Описание всех эндпоинтов
-- Схемы запросов и ответов
-- Примеры использования
-- Возможность тестирования API прямо в браузере
+Возможности:
+- ✅ Описание всех эндпоинтов
+- ✅ Интерактивное тестирование API
+- ✅ Примеры запросов и ответов
+- ✅ Авторизация через Bearer токены
 
 ## Сборка для production
 
