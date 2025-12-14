@@ -108,6 +108,7 @@ export async function getTasks(req: AuthRequest, res: Response): Promise<void> {
           avatar: watcher.avatar ? `/api/v1/avatars/${watcher.avatar}` : null,
         })),
         isCompleted: task.isCompleted,
+        isImportant: task.isImportant,
         subtasks: task.subtasks,
         files: task.files.map((file) => ({
           name: file.name,
@@ -204,6 +205,7 @@ export async function getTask(req: AuthRequest, res: Response): Promise<void> {
         avatar: watcher.avatar ? `/api/v1/avatars/${watcher.avatar}` : null,
       })),
       isCompleted: task.isCompleted,
+      isImportant: task.isImportant,
       subtasks: task.subtasks,
       files: task.files.map((file) => ({
         name: file.name,
@@ -369,6 +371,7 @@ export async function createTask(req: AuthRequest, res: Response): Promise<void>
         avatar: watcher.avatar ? `/api/v1/avatars/${watcher.avatar}` : null,
       })),
       isCompleted: populatedTask!.isCompleted,
+      isImportant: populatedTask!.isImportant,
       subtasks: populatedTask!.subtasks,
       files: [],
       timeSpent: populatedTask!.timeSpent || null,
@@ -408,6 +411,7 @@ export async function updateTask(req: AuthRequest, res: Response): Promise<void>
       deadline,
       order,
       creatorId, // Смена постановщика
+      isImportant,
     } = req.body;
 
     const { hasAccess } = await checkProjectAccess(userId, projectId);
@@ -515,6 +519,10 @@ export async function updateTask(req: AuthRequest, res: Response): Promise<void>
       task.order = order;
     }
 
+    if (isImportant !== undefined) {
+      task.isImportant = isImportant === true;
+    }
+
     await task.save();
 
     const populatedTask = await Task.findById(task._id)
@@ -563,6 +571,7 @@ export async function updateTask(req: AuthRequest, res: Response): Promise<void>
         avatar: watcher.avatar ? `/api/v1/avatars/${watcher.avatar}` : null,
       })),
       isCompleted: populatedTask!.isCompleted,
+      isImportant: populatedTask!.isImportant,
       subtasks: populatedTask!.subtasks,
       files: populatedTask!.files.map((file) => ({
         name: file.name,
@@ -673,6 +682,7 @@ export async function completeTask(req: AuthRequest, res: Response): Promise<voi
         avatar: watcher.avatar ? `/api/v1/avatars/${watcher.avatar}` : null,
       })),
       isCompleted: populatedTask!.isCompleted,
+      isImportant: populatedTask!.isImportant,
       subtasks: populatedTask!.subtasks,
       files: populatedTask!.files.map((file) => ({
         name: file.name,
@@ -859,6 +869,7 @@ export async function moveTask(req: AuthRequest, res: Response): Promise<void> {
         avatar: watcher.avatar ? `/api/v1/avatars/${watcher.avatar}` : null,
       })),
       isCompleted: populatedTask!.isCompleted,
+      isImportant: populatedTask!.isImportant,
       subtasks: populatedTask!.subtasks,
       files: populatedTask!.files.map((file) => ({
         name: file.name,

@@ -20,6 +20,7 @@ export interface ITask extends Document {
   assignee?: mongoose.Types.ObjectId; // Исполнитель (один пользователь)
   watchers: mongoose.Types.ObjectId[]; // Наблюдатели
   isCompleted: boolean;
+  isImportant: boolean;
   subtasks: ITaskSubtask[];
   files: ITaskFile[];
   timeSpent?: number; // время в минутах
@@ -69,6 +70,10 @@ const TaskSchema = new Schema<ITask>(
       default: [],
     },
     isCompleted: {
+      type: Boolean,
+      default: false,
+    },
+    isImportant: {
       type: Boolean,
       default: false,
     },

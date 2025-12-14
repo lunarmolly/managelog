@@ -1109,7 +1109,21 @@ const filteredTasks = computed(() => {
 });
 
 function getTasksForColumn(columnId: string): Task[] {
-  return filteredTasks.value.filter((task) => task.column.id === columnId);
+  const columnTasks = filteredTasks.value.filter((task) => task.column.id === columnId);
+  
+  // Сортировка: сначала важные, затем по дедлайну (от раннего к позднему)
+  return columnTasks.sort((a, b) => {
+    // Сначала сортируем по важности (важные первыми)
+    if (a.isImportant && !b.isImportant) return -1;
+    if (!a.isImportant && b.isImportant) return 1;
+    
+    // Затем по дедлайну (задачи без дедлайна в конец)
+    if (!a.deadline && !b.deadline) return 0;
+    if (!a.deadline) return 1;
+    if (!b.deadline) return -1;
+    
+    return new Date(a.deadline).getTime() - new Date(b.deadline).getTime();
+  });
 }
 
 function getCompletedSubtasksCount(task: Task): number {
@@ -2648,6 +2662,7 @@ watch(showCreateTaskModal, (isOpen) => {
   padding: 0;
   cursor: pointer;
   flex-shrink: 0;
+  outline: none;
   
   img {
     width: 16px;
