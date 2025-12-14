@@ -412,6 +412,7 @@ export async function updateTask(req: AuthRequest, res: Response): Promise<void>
       order,
       creatorId, // Смена постановщика
       isImportant,
+      isCompleted,
     } = req.body;
 
     const { hasAccess } = await checkProjectAccess(userId, projectId);
@@ -432,17 +433,44 @@ export async function updateTask(req: AuthRequest, res: Response): Promise<void>
       return;
     }
 
-    // Только постановщик может изменять задачу
-    if (task.creator.toString() !== userId) {
+    // Определяем, меняется ли только isCompleted
+    const isOnlyCompletionChange = 
+      isCompleted !== undefined && 
+      name === undefined &&
+      description === undefined &&
+      columnId === undefined &&
+      assigneeId === undefined &&
+      watcherIds === undefined &&
+      subtasks === undefined &&
+      timeSpent === undefined &&
+      deadline === undefined &&
+      order === undefined &&
+      creatorId === undefined &&
+      isImportant === undefined;
+
+    // Исполнитель может менять только статус выполнения
+    const isAssignee = task.assignee && task.assignee.toString() === userId;
+    const isCreator = task.creator.toString() === userId;
+
+    // Проверка прав доступа
+    if (!isCreator && !isAssignee) {
       res.status(403).json({
-        detail: 'Только постановщик может изменять задачу',
+        detail: 'Только постановщик или исполнитель могут изменять задачу',
+      });
+      return;
+    }
+
+    // Исполнитель может изменять только isCompleted
+    if (isAssignee && !isCreator && !isOnlyCompletionChange) {
+      res.status(403).json({
+        detail: 'Исполнитель может изменять только статус выполнения задачи',
       });
       return;
     }
 
     // Смена постановщика - только текущий постановщик может сменить себя
     if (creatorId !== undefined && creatorId !== null) {
-      if (task.creator.toString() !== userId) {
+      if (!isCreator) {
         res.status(403).json({
           detail: 'Только текущий постановщик может сменить постановщика',
         });
@@ -521,6 +549,10 @@ export async function updateTask(req: AuthRequest, res: Response): Promise<void>
 
     if (isImportant !== undefined) {
       task.isImportant = isImportant === true;
+    }
+
+    if (isCompleted !== undefined) {
+      task.isCompleted = isCompleted === true;
     }
 
     await task.save();

@@ -113,7 +113,7 @@
               v-for="task in getTasksForColumn(column.id)"
               :key="task.id"
               class="task-card"
-              :class="{ 'dragging': draggedTask?.id === task.id }"
+              :class="{ 'dragging': draggedTask?.id === task.id, 'completed': task.isCompleted }"
               draggable="true"
               @dragstart="handleDragStart(task, $event)"
               @dragend="handleDragEnd"
@@ -1270,8 +1270,8 @@ function canEditTask(task: Task): boolean {
 
 function canCompleteTask(task: Task): boolean {
   if (!currentUser.value) return false;
-  // Исполнитель может только нажать "готово"
-  return task.assignee?.id === currentUser.value.id;
+  // Исполнитель и постановщик могут отметить задачу выполненной
+  return task.assignee?.id === currentUser.value.id || task.creator.id === currentUser.value.id;
 }
 
 function canViewTask(task: Task): boolean {
@@ -1752,14 +1752,25 @@ async function completeTask() {
 async function toggleTaskComplete(task: Task) {
   if (!canCompleteTask(task)) return;
 
+  // Оптимистичное обновление UI
+  const oldIsCompleted = task.isCompleted;
+  task.isCompleted = !task.isCompleted;
+
   try {
-    const updatedTask = await completeTaskApi(projectId.value, task.id, !task.isCompleted);
+    const updatedTask = await updateTaskApi(projectId.value, task.id, {
+      isCompleted: task.isCompleted,
+    });
+    
+    // Обновляем задачу полностью из ответа сервера
     const index = tasks.value.findIndex((t) => t.id === updatedTask.id);
     if (index !== -1) {
-      tasks.value[index] = updatedTask;
+      // Сохраняем реактивность, обновляя свойства
+      Object.assign(tasks.value[index], updatedTask);
     }
   } catch (error: any) {
     console.error('Ошибка изменения статуса задачи:', error);
+    // Откатываем изменение при ошибке
+    task.isCompleted = oldIsCompleted;
   }
 }
 
@@ -2438,6 +2449,16 @@ watch(showCreateTaskModal, (isOpen) => {
   user-select: none;
   position: relative;
   overflow: hidden;
+  
+  &.completed {
+    opacity: 0.5;
+    background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
+    
+    .task-name {
+      text-decoration: line-through;
+      color: #999;
+    }
+  }
 }
 
 .task-card::before {
