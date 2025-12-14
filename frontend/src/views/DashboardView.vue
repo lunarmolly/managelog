@@ -45,7 +45,11 @@
               <h3 class="nav-card-title">Задачи</h3>
               <p class="nav-card-count">{{ stats.totalTasks }} незавершенных</p>
             </div>
-            <div class="nav-card-arrow">✓</div>
+            <div class="nav-card-arrow" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
           </div>
 
           <div class="nav-card nav-card-tertiary">
@@ -59,7 +63,14 @@
               <h3 class="nav-card-title">Команда</h3>
               <p class="nav-card-count">{{ stats.myTeamMembers }} участников</p>
             </div>
-            <div class="nav-card-arrow">👥</div>
+            <div class="nav-card-arrow" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none">
+                <circle cx="8" cy="9" r="3" stroke="currentColor" stroke-width="1.5"/>
+                <circle cx="16" cy="9" r="3" stroke="currentColor" stroke-width="1.5"/>
+                <path d="M3.5 19c0-3 2.5-5 4.5-5s4.5 2 4.5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                <path d="M10.5 19c0-3 2.5-5 4.5-5s4.5 2 4.5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+              </svg>
+            </div>
           </div>
         </div>
 
@@ -142,7 +153,11 @@
                 </div>
               </div>
               <div class="task-meta">
-                <span v-if="task.isImportant" class="task-badge important">⭐</span>
+                <span v-if="task.isImportant" class="task-badge important" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" style="width: 1rem; height: 1rem;">
+                    <path d="M12 3L14.6 9.5L21.5 10.5L16.5 15.2L17.8 22L12 18.5L6.2 22L7.5 15.2L2.5 10.5L9.4 9.5L12 3Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                  </svg>
+                </span>
                 <span v-if="task.deadline" :class="['task-deadline', { 'is-overdue': isOverdue(task.deadline) }]">
                   {{ formatDate(task.deadline) }}
                 </span>
@@ -150,7 +165,14 @@
             </div>
           </div>
           <div v-if="!isLoading && tasksInProgress.length === 0" class="empty-state">
-            <p>Все задачи завершены 🎉</p>
+            <p>
+              Все задачи завершены
+              <span aria-hidden="true" style="display:inline-block; vertical-align:middle; margin-left: 0.25rem;">
+                <svg viewBox="0 0 24 24" fill="none" style="width: 1rem; height: 1rem;">
+                  <path d="M12 3L15 8L21 9L17 13L18 19L12 16L6 19L7 13L3 9L9 8L12 3Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                </svg>
+              </span>
+            </p>
             <router-link to="/projects" class="empty-link">Перейти к проектам</router-link>
           </div>
           <div v-if="isLoading" class="loading-state">
@@ -164,7 +186,11 @@
         <!-- Карточки статистики -->
         <div class="stats-cards">
           <div class="stat-card">
-            <div class="stat-icon">✓</div>
+            <div class="stat-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
             <div class="stat-content">
               <p class="stat-label">Завершено</p>
               <p class="stat-value">{{ stats.completedTasks }}</p>
@@ -172,7 +198,13 @@
           </div>
 
           <div class="stat-card" :class="{ 'stat-alert': stats.overdueTasks > 0 }">
-            <div class="stat-icon">⏰</div>
+            <div class="stat-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="13" r="7" stroke="currentColor" stroke-width="2"/>
+                <path d="M12 13V9M12 13L15 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <path d="M7 4L9 6M17 4L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </div>
             <div class="stat-content">
               <p class="stat-label">Просрочено</p>
               <p class="stat-value">{{ stats.overdueTasks }}</p>
@@ -180,7 +212,12 @@
           </div>
 
           <div class="stat-card">
-            <div class="stat-icon">📝</div>
+            <div class="stat-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M5 4H14L19 9V20C19 21.105 18.105 22 17 22H5C3.895 22 3 21.105 3 20V6C3 4.895 3.895 4 5 4Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                <path d="M9 12H15M9 16H15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </div>
             <div class="stat-content">
               <p class="stat-label">Всего задач</p>
               <p class="stat-value">{{ stats.totalTasks }}</p>
@@ -188,7 +225,11 @@
           </div>
 
           <div class="stat-card">
-            <div class="stat-icon">⭐</div>
+            <div class="stat-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none">
+                <path d="M12 3L14.6 9.5L21.5 10.5L16.5 15.2L17.8 22L12 18.5L6.2 22L7.5 15.2L2.5 10.5L9.4 9.5L12 3Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+              </svg>
+            </div>
             <div class="stat-content">
               <p class="stat-label">Важные</p>
               <p class="stat-value">{{ stats.importantTasks }}</p>
