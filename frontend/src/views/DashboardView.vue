@@ -624,7 +624,7 @@ onMounted(() => {
 }
 
 .user-name {
-  background: linear-gradient(135deg, #b1ff8a 0%, #e1eaf8 100%);
+  background: linear-gradient(135deg, #ff6b6b 0%, #e1eaf8 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
