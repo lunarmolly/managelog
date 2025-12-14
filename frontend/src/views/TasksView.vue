@@ -695,6 +695,59 @@
             </div>
           </div>
 
+          <!-- Файлы (добавление к существующей задаче) -->
+          <div class="modal-field" v-if="canUploadFiles(selectedTask)">
+            <label class="modal-field-label">прикрепленные файлы</label>
+            <div class="modal-file-upload">
+              <input
+                ref="editTaskFilesInput"
+                type="file"
+                multiple
+                accept="*/*"
+                @change="handleEditFileSelect"
+                class="modal-file-input"
+              />
+              <label @click="editTaskFilesInput && editTaskFilesInput.click()" class="modal-file-label">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span>выбрать файлы (до 10 МБ)</span>
+              </label>
+              <div v-if="selectedEditFiles.length > 0" class="modal-file-list">
+                <div
+                  v-for="(file, index) in selectedEditFiles"
+                  :key="index"
+                  class="modal-file-item"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                    <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M14 2V8H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                  <span class="modal-file-name">{{ file.name }}</span>
+                  <button
+                    type="button"
+                    class="modal-file-remove"
+                    @click="removeEditFile(index)"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                      <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div v-if="selectedEditFiles.length > 0" style="margin-top: 12px;">
+              <div class="modal-btn modal-btn-create" @click="uploadEditFiles">
+                <div class="modal-btn-icon">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </div>
+                <span>загрузить файлы</span>
+              </div>
+            </div>
+          </div>
+
           <!-- Постановщик, исполнитель, наблюдатели -->
           <div class="modal-field">
             <label class="modal-field-label">участники</label>
@@ -1049,6 +1102,10 @@ const showEditSubtasksModal = ref(false);
 const showEditChecklistModal = ref(false);
 const generatedDescription = ref('');
 const isImportantTask = ref(false);
+
+// Файлы (редактирование)
+const selectedEditFiles = ref<File[]>([]);
+const editTaskFilesInput = ref<HTMLInputElement | null>(null);
 
 // Таймер для отслеживания времени
 const activeTimerTaskId = ref<string | null>(null);
@@ -1650,6 +1707,8 @@ function openEditTaskModal(task: Task) {
     isImportant: task.isImportant || false,
   };
   showEditTaskModal.value = true;
+  selectedEditFiles.value = [];
+  if (editTaskFilesInput.value) editTaskFilesInput.value.value = '';
 }
 
 function getCreatorDisplayName(user: UserInfo): string {
@@ -1673,6 +1732,8 @@ function closeEditTaskModal() {
   showEditWatchersSelect.value = false;
   assigneeEditSearchQuery.value = '';
   watchersEditSearchQuery.value = '';
+  selectedEditFiles.value = [];
+  if (editTaskFilesInput.value) editTaskFilesInput.value.value = '';
 }
 
 function openTaskModal(task: Task) {
@@ -2250,6 +2311,61 @@ function getEndOfNextWeek(): string {
   const daysUntilNextFriday = 12 - dayOfWeek;
   date.setDate(date.getDate() + daysUntilNextFriday);
   return date.toISOString().split('T')[0];
+}
+
+// Функции для работы с файлами в модальном окне редактирования
+function canUploadFiles(task: Task): boolean {
+  if (!currentUser.value) return false;
+  return (
+    task.creator.id === currentUser.value.id ||
+    task.assignee?.id === currentUser.value.id ||
+    task.watchers?.some(w => w.id === currentUser.value?.id)
+  );
+}
+
+function handleEditFileSelect(event: Event) {
+  const input = event.target as HTMLInputElement;
+  if (!input.files) return;
+  
+  const files = Array.from(input.files);
+  const maxSize = 10 * 1024 * 1024; // 10 МБ
+  
+  for (const file of files) {
+    if (file.size > maxSize) {
+      alert(`Файл "${file.name}" превышает максимальный размер 10 МБ`);
+      continue;
+    }
+    selectedEditFiles.value.push(file);
+  }
+  
+  // Очищаем input для возможности повторного выбора того же файла
+  if (editTaskFilesInput.value) {
+    editTaskFilesInput.value.value = '';
+  }
+}
+
+function removeEditFile(index: number) {
+  selectedEditFiles.value.splice(index, 1);
+}
+
+async function uploadEditFiles() {
+  if (!selectedTask.value || selectedEditFiles.value.length === 0) return;
+  try {
+    for (const file of selectedEditFiles.value) {
+      await uploadTaskFile(projectId.value, selectedTask.value.id, file);
+    }
+    const updatedTask = await getTaskApi(projectId.value, selectedTask.value.id);
+    const index = tasks.value.findIndex(t => t.id === updatedTask.id);
+    if (index !== -1) {
+      tasks.value[index] = updatedTask;
+      selectedTask.value = updatedTask;
+    }
+    selectedEditFiles.value = [];
+    if (editTaskFilesInput.value) editTaskFilesInput.value.value = '';
+  } catch (error: any) {
+    console.error('Ошибка загрузки файлов к задаче:', error);
+    alert(error.message || 'Ошибка загрузки файлов');
+  }
 }
 </script>
 
