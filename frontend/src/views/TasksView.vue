@@ -2519,9 +2519,9 @@ function getEndOfNextWeek(): string {
   display: flex;
   flex-direction: column;
   position: relative;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
   flex-shrink: 0;
-  backdrop-filter: blur(10px);
+  /* Removing blur to prevent light edge artifacts on dark background */
+  backdrop-filter: none;
   transition: border-color 0.3s ease;
   max-height: calc(100vh - 120px);
 }
@@ -2537,6 +2537,7 @@ function getEndOfNextWeek(): string {
   padding: 12px 0 16px;
   gap: 8px;
   margin-bottom: 12px;
+  border-bottom: none;
 }
 
 .column-title {
@@ -2612,11 +2613,11 @@ function getEndOfNextWeek(): string {
 .task-card {
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0.6) 100%);
   border-radius: 16px;
-  padding: 12px 14px;
+  padding: 14px;
   cursor: pointer;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   border: 1px solid rgba(255, 255, 255, 0.2);
   user-select: none;
@@ -2962,7 +2963,8 @@ function getEndOfNextWeek(): string {
 
 .task-deadline-section {
   width: 100%;
-  display: contents;
+  display: flex;
+  justify-content: center;
 }
 
 .task-deadline-btn {
