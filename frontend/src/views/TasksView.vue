@@ -10,7 +10,7 @@
       </button>
       <h2 class="mobile-project-name">{{ project?.name || 'Загрузка...' }}</h2>
       <div class="mobile-actions">
-        <button class="info-btn" @click="showProjectInfo = !showProjectInfo">
+        <button class="info-btn" @click="openProjectInfoModal">
           информация
         </button>
         <div class="search-box-mobile">
@@ -39,7 +39,7 @@
       
       <div class="project-info">
         <h2 class="project-name">{{ project?.name || 'Загрузка...' }}</h2>
-        <button class="info-btn" @click="showProjectInfo = !showProjectInfo">
+        <button class="info-btn" @click="openProjectInfoModal">
           информация
         </button>
       </div>
@@ -1027,6 +1027,247 @@
         </div>
       </div>
     </Teleport>
+
+    <!-- Модальное окно информации о проекте -->
+    <Teleport to="body">
+      <div v-if="showProjectModal" class="modal-overlay" @click="closeProjectModal">
+        <div class="create-project-modal" @click.stop>
+          <div class="modal-header">
+            <button class="modal-close-btn" @click="closeProjectModal" aria-label="Закрыть">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            <h2 class="modal-title">{{ canEditProject ? 'Редактировать проект' : 'Информация о проекте' }}</h2>
+            <div class="modal-subtitle">{{ canEditProject ? 'Измените информацию о проекте' : 'Просмотр информации о проекте' }}</div>
+          </div>
+
+          <div class="modal-field">
+            <label class="modal-field-label" for="project-name">
+              Название проекта
+              <span v-if="canEditProject" class="modal-field-required">*</span>
+            </label>
+            <div class="modal-input-wrapper">
+              <input
+                id="project-name"
+                v-model="projectModalName"
+                type="text"
+                class="modal-field-input"
+                placeholder="Введите название проекта"
+                :disabled="!canEditProject"
+                required
+              />
+            </div>
+          </div>
+
+          <div class="modal-field-group">
+            <div class="modal-field">
+              <label class="modal-field-label">Иконка</label>
+              <div class="modal-icons-list-container">
+                <div class="modal-icons-list">
+                  <button
+                    v-for="icon in projectModalIconsWithSvg"
+                    :key="`${icon.id}-${projectModalSelectedColor}`"
+                    type="button"
+                    class="modal-icon-option"
+                    :class="{ selected: projectModalSelectedIcon === icon.id }"
+                    @click="canEditProject && selectProjectIcon(icon.id)"
+                    :disabled="!canEditProject"
+                    :aria-label="`Выбрать иконку ${icon.name}`"
+                    v-html="icon.svgHtml"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div class="modal-field">
+              <label class="modal-field-label">Цвет</label>
+              <div class="modal-colors-list-container">
+                <div class="modal-colors-list">
+                  <button
+                    v-for="color in projectColors"
+                    :key="color.id"
+                    type="button"
+                    class="modal-color-option"
+                    :class="{ selected: projectModalSelectedColor === color.hex }"
+                    :style="{ backgroundColor: color.hex }"
+                    @click="canEditProject && selectProjectColor(color.hex)"
+                    :disabled="!canEditProject"
+                    :aria-label="`Выбрать цвет ${color.name}`"
+                  >
+                    <svg v-if="projectModalSelectedColor === color.hex" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M16.667 5L7.5 14.167 3.333 10" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-field">
+            <label class="modal-field-label" for="project-description">
+              Описание проекта
+            </label>
+            <div class="modal-textarea-wrapper">
+              <textarea
+                id="project-description"
+                v-model="projectModalDescription"
+                class="modal-description-textarea"
+                placeholder="Опишите цели, задачи и особенности проекта..."
+                rows="6"
+                :disabled="!canEditProject"
+              />
+              <div class="modal-textarea-footer">
+                <span class="modal-char-count">{{ projectModalDescription.length }} символов</span>
+              </div>
+            </div>
+          </div>
+
+          <div v-if="canEditProject" class="modal-generate-section">
+            <div class="modal-generate-btn" @click="generateProjectDescription">
+              <div class="modal-generate-btn-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M9.01238 5.448C9.61038 3.698 12.0284 3.645 12.7374 5.289L12.7974 5.449L13.6044 7.809C13.7893 8.35023 14.0882 8.84551 14.4808 9.26142C14.8734 9.67734 15.3507 10.0042 15.8804 10.22L16.0974 10.301L18.4574 11.107C20.2074 11.705 20.2604 14.123 18.6174 14.832L18.4574 14.892L16.0974 15.699C15.556 15.8838 15.0605 16.1826 14.6444 16.5753C14.2283 16.9679 13.9013 17.4452 13.6854 17.975L13.6044 18.191L12.7984 20.552C12.2004 22.302 9.78238 22.355 9.07438 20.712L9.01238 20.552L8.20638 18.192C8.02156 17.6506 7.72275 17.1551 7.33012 16.739C6.93749 16.3229 6.46017 15.9959 5.93038 15.78L5.71438 15.699L3.35438 14.893C1.60338 14.295 1.55038 11.877 3.19438 11.169L3.35438 11.107L5.71438 10.301C6.25561 10.1161 6.75089 9.81719 7.1668 9.42457C7.58271 9.03195 7.90959 8.55469 8.12538 8.025L8.20638 7.809L9.01238 5.448ZM10.9054 6.094L10.0994 8.454C9.81777 9.2793 9.35965 10.0333 8.75691 10.6635C8.15418 11.2937 7.42132 11.7849 6.60938 12.103L6.35938 12.194L3.99938 13L6.35938 13.806C7.18468 14.0876 7.93868 14.5457 8.56887 15.1485C9.19907 15.7512 9.6903 16.4841 10.0084 17.296L10.0994 17.546L10.9054 19.906L11.7114 17.546C11.993 16.7207 12.4511 15.9667 13.0538 15.3365C13.6566 14.7063 14.3894 14.2151 15.2014 13.897L15.4514 13.807L17.8114 13L15.4514 12.194C14.6261 11.9124 13.8721 11.4543 13.2419 10.8515C12.6117 10.2488 12.1205 9.51595 11.8024 8.704L11.7124 8.454L10.9054 6.094ZM18.9054 2C19.0925 2 19.2758 2.05248 19.4345 2.15147C19.5933 2.25046 19.7211 2.392 19.8034 2.56L19.8514 2.677L20.2014 3.703L21.2284 4.053C21.4159 4.1167 21.5802 4.23462 21.7006 4.39182C21.821 4.54902 21.892 4.73842 21.9047 4.93602C21.9173 5.13362 21.871 5.33053 21.7716 5.50179C21.6722 5.67304 21.5242 5.81094 21.3464 5.898L21.2284 5.946L20.2024 6.296L19.8524 7.323C19.7886 7.51043 19.6706 7.6747 19.5133 7.79499C19.356 7.91529 19.1666 7.98619 18.969 7.99872C18.7714 8.01125 18.5746 7.96484 18.4034 7.86538C18.2322 7.76591 18.0944 7.61787 18.0074 7.44L17.9594 7.323L17.6094 6.297L16.5824 5.947C16.3949 5.8833 16.2305 5.76538 16.1101 5.60819C15.9898 5.45099 15.9187 5.26158 15.9061 5.06398C15.8935 4.86638 15.9398 4.66947 16.0392 4.49821C16.1385 4.32696 16.2865 4.18906 16.4644 4.102L16.5824 4.054L17.6084 3.704L17.9584 2.677C18.0258 2.47943 18.1534 2.30791 18.3232 2.1865C18.493 2.06509 18.6966 1.99987 18.9054 2Z" fill="currentColor"/>
+                </svg>
+              </div>
+              <div class="modal-generate-btn-text">сгенерировать описание</div>
+            </div>
+            <div v-if="projectModalGeneratedDescription" class="modal-generated-description">
+              <div class="modal-generated-content">
+                <div class="modal-generated-text">{{ projectModalGeneratedDescription }}</div>
+                <div class="modal-generated-actions">
+                  <div class="modal-action-btn modal-action-accept" @click="acceptProjectGeneratedDescription">
+                    <div class="modal-action-btn-icon">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </div>
+                    <span>принять</span>
+                  </div>
+                  <div class="modal-action-btn modal-action-refine" @click="refineProjectGeneratedDescription">
+                    <div class="modal-action-btn-icon">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </div>
+                    <span>доработать</span>
+                  </div>
+                  <div class="modal-action-btn modal-action-delete" @click="deleteProjectGeneratedDescription">
+                    <div class="modal-action-btn-icon">
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h14zM10 11v6M14 11v6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </div>
+                    <span>удалить</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div v-if="canEditProject" class="modal-field">
+            <label class="modal-field-label">участники проекта</label>
+            <div class="participants-selector">
+              <div v-if="projectModalSelectedParticipants.length > 0" class="selected-participants">
+                <div class="selected-participants-header">
+                  <span class="selected-participants-label">выбрано: {{ projectModalSelectedParticipants.length }}</span>
+                  <button type="button" class="selected-participants-clear" @click="clearProjectParticipants">
+                    очистить
+                  </button>
+                </div>
+                <div class="selected-participants-list">
+                  <div
+                    v-for="participantId in projectModalSelectedParticipants"
+                    :key="participantId"
+                    class="selected-participant-tag"
+                  >
+                    <div class="participant-avatar-small">
+                      <img
+                        v-if="companyUsers.find(u => u.id === participantId)?.avatar"
+                        :src="getAvatarUrl(companyUsers.find(u => u.id === participantId)?.avatar || '')"
+                        :alt="getProjectParticipantName(participantId)"
+                      />
+                      <div v-else class="participant-avatar-placeholder-small">
+                        {{ getProjectParticipantInitial(companyUsers.find(u => u.id === participantId)) }}
+                      </div>
+                    </div>
+                    <span>{{ getProjectParticipantName(participantId) }}</span>
+                    <button
+                      type="button"
+                      class="selected-participant-remove"
+                      @click="removeProjectParticipant(participantId)"
+                      :aria-label="`Удалить ${getProjectParticipantName(participantId)}`"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M10.5 3.5L3.5 10.5M3.5 3.5L10.5 10.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="participants-search">
+                <svg class="participants-search-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <input
+                  v-model="projectModalParticipantSearch"
+                  type="text"
+                  class="participants-search-input"
+                  placeholder="поиск участников..."
+                />
+              </div>
+
+              <div class="participants-list">
+                <div
+                  v-for="user in filteredProjectModalParticipants"
+                  :key="user.id"
+                  class="participant-item"
+                  @click="toggleProjectParticipant(user.id)"
+                >
+                  <div class="participant-avatar-small">
+                    <img
+                      v-if="user.avatar"
+                      :src="getAvatarUrl(user.avatar)"
+                      :alt="user.firstName || user.displayName || user.login || ''"
+                    />
+                    <div v-else class="participant-avatar-placeholder-small">
+                      {{ getProjectParticipantInitial(user) }}
+                    </div>
+                  </div>
+                  <span class="participant-name">{{ user.firstName || user.displayName || user.login }}</span>
+                  <div class="participant-checkbox">
+                    <svg v-if="projectModalSelectedParticipants.includes(user.id)" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M11.6667 3.5L5.25 9.91667L2.33334 7" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-actions">
+            <div v-if="canEditProject" class="modal-btn modal-btn-create" @click="submitProjectUpdate">
+              <div class="modal-btn-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+              <span>сохранить</span>
+            </div>
+            <div class="modal-btn modal-btn-cancel" @click="closeProjectModal">
+              <div class="modal-btn-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M20 5C20.2652 5 20.5196 5.10536 20.7071 5.29289C20.8946 5.48043 21 5.73478 21 6C21 6.26522 20.8946 6.51957 20.7071 6.70711C20.5196 6.89464 20.2652 7 20 7H19L18.997 7.071L18.064 20.142C18.0281 20.6466 17.8023 21.1188 17.4321 21.4636C17.0619 21.8083 16.5749 22 16.069 22H7.93C7.42414 22 6.93707 21.8083 6.56688 21.4636C6.1967 21.1188 5.97092 20.6466 5.935 20.142L5.002 7.072L5 7H4C3.73478 7 3.48043 6.89464 3.29289 6.70711C3.10536 6.51957 3 6.26522 3 6C3 5.73478 3.10536 5.48043 3.29289 5.29289C3.48043 5.10536 3.73478 5 4 5H20ZM16.997 7H7.003L7.931 20H16.069L16.997 7ZM14 2C14.2652 2 14.5196 2.10536 14.7071 2.29289C14.8946 2.48043 15 2.73478 15 3C15 3.26522 14.8946 3.51957 14.7071 3.70711C14.5196 3.89464 14.2652 4 14 4H10C9.73478 4 9.48043 3.89464 9.29289 3.70711C9.10536 3.51957 9 3.26522 9 3C9 2.73478 9.10536 2.48043 9.29289 2.29289C9.48043 2.10536 9.73478 2 10 2H14Z" fill="#912138"/>
+                </svg>
+              </div>
+              <span>{{ canEditProject ? 'отмена' : 'закрыть' }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -1134,6 +1375,59 @@ const newColumn = ref({
 const draggedTask = ref<Task | null>(null);
 const draggedOverColumn = ref<string | null>(null);
 const isDragging = ref(false);
+
+// Модальное окно информации о проекте
+const showProjectModal = ref(false);
+const projectModalName = ref('');
+const projectModalDescription = ref('');
+const projectModalSelectedIcon = ref('building');
+const projectModalSelectedColor = ref('#c2c7f3');
+const projectModalSelectedParticipants = ref<string[]>([]);
+const projectModalParticipantSearch = ref('');
+const projectModalGeneratedDescription = ref('');
+
+// Иконки и цвета проектов
+const projectIcons = [
+  {
+    id: 'building',
+    name: 'Здание',
+    svg: '<path d="M3 11L12 5L21 11V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V11Z"/><path d="M9 22V13H15V22"/>',
+  },
+  {
+    id: 'folder',
+    name: 'Папка',
+    svg: '<path d="M4 8.5C4 7.94772 4.21071 7.4179 4.58579 7.04289C4.96086 6.66781 5.46957 6.5 6 6.5H10.5L13 9H18C18.5304 9 19.0391 9.21071 19.4142 9.58579C19.7893 9.96086 20 10.4696 20 11V19.5C20 20.0523 19.7893 20.5821 19.4142 20.9571C19.0391 21.3322 18.5304 21.5 18 21.5H6C5.46957 21.5 4.96086 21.3322 4.58579 20.9571C4.21071 20.5821 4 20.0523 4 19.5V8.5Z"/>',
+  },
+  {
+    id: 'calendar',
+    name: 'Календарь',
+    svg: '<path d="M6 11.5H18M9 6V7.5M15 6V7.5M8 15H9.5M12.5 15H14M15.5 15H17M8 18H9.5M12.5 18H14M15.5 18H17M8 11.5H18C19.1046 11.5 20 12.3954 20 13.5V19.5C20 20.6046 19.1046 21.5 18 21.5H8C6.89543 21.5 6 20.6046 6 19.5V13.5C6 12.3954 6.89543 11.5 8 11.5Z"/>',
+  },
+  {
+    id: 'chart',
+    name: 'График',
+    svg: '<path d="M5.5 6V19.5H20.5M10 18L13 15L15.5 17.5L20.5 12.5M20.5 12.5H17.5M20.5 12.5V15.5"/>',
+  },
+  {
+    id: 'star',
+    name: 'Звезда',
+    svg: '<path d="M12 4.5L14.295 10.13L20.25 11.135L16.125 15.32L17.09 21.27L12 18.635L6.91 21.27L7.875 15.32L3.75 11.135L9.705 10.13L12 4.5Z"/>',
+  },
+  {
+    id: 'target',
+    name: 'Цель',
+    svg: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5.5"/><circle cx="12" cy="12" r="2"/>',
+  },
+];
+
+const projectColors = [
+  { id: 'c2c7f3', hex: '#c2c7f3', name: 'Голубой' },
+  { id: 'c2f3d5', hex: '#c2f3d5', name: 'Зеленый' },
+  { id: 'f3c2c3', hex: '#f3c2c3', name: 'Розовый' },
+  { id: 'efc2f3', hex: '#efc2f3', name: 'Фиолетовый' },
+  { id: 'f3dbc2', hex: '#f3dbc2', name: 'Персиковый' },
+  { id: 'f0f3c2', hex: '#f0f3c2', name: 'Лимонный' },
+];
 
 function getUserDisplayNameWithRole(user: CompanyUser): string {
   const firstName = user.firstName || user.displayName || user.login || '';
@@ -1306,6 +1600,37 @@ const filteredTasks = computed(() => {
     
     return false;
   });
+});
+
+// Вычисляемые свойства для модального окна проекта
+const projectModalIconColor = computed(() => {
+  return darkenColorForProject(projectModalSelectedColor.value);
+});
+
+const projectModalIconsWithSvg = computed(() => {
+  const color = projectModalIconColor.value;
+  return projectIcons.map(icon => ({
+    ...icon,
+    svgHtml: `<svg width="28" height="26" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="stroke: ${color}; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;">${icon.svg}</svg>`,
+  }));
+});
+
+const filteredProjectModalParticipants = computed(() => {
+  if (!projectModalParticipantSearch.value.trim()) {
+    return companyUsers.value;
+  }
+  const query = projectModalParticipantSearch.value.toLowerCase().trim();
+  return companyUsers.value.filter((user) => {
+    const firstName = (user.firstName || user.displayName || user.login || '').toLowerCase();
+    const lastName = (user.lastName || '').toLowerCase();
+    const role = (user.role || '').toLowerCase();
+    return firstName.includes(query) || lastName.includes(query) || role.includes(query);
+  });
+});
+
+const canEditProject = computed(() => {
+  if (!currentUser.value || !project.value) return false;
+  return project.value.creator.id === currentUser.value.id;
 });
 
 function getTasksForColumn(columnId: string): Task[] {
@@ -2374,6 +2699,133 @@ async function uploadEditFiles() {
   } catch (error: any) {
     console.error('Ошибка загрузки файлов к задаче:', error);
     alert(error.message || 'Ошибка загрузки файлов');
+  }
+}
+
+// Функции для модального окна проекта
+function openProjectInfoModal() {
+  if (!project.value) return;
+  
+  showProjectModal.value = true;
+  projectModalName.value = project.value.name;
+  projectModalDescription.value = project.value.description || '';
+  projectModalSelectedIcon.value = project.value.icon;
+  projectModalSelectedColor.value = project.value.color;
+  projectModalGeneratedDescription.value = '';
+  
+  // Загружаем участников проекта
+  projectModalSelectedParticipants.value = project.value.participants 
+    ? project.value.participants.map(p => p.id) 
+    : [];
+  
+  document.body.style.overflow = 'hidden';
+}
+
+function closeProjectModal() {
+  showProjectModal.value = false;
+  projectModalName.value = '';
+  projectModalDescription.value = '';
+  projectModalSelectedParticipants.value = [];
+  projectModalParticipantSearch.value = '';
+  projectModalGeneratedDescription.value = '';
+  document.body.style.overflow = '';
+}
+
+function selectProjectIcon(iconId: string) {
+  projectModalSelectedIcon.value = iconId;
+}
+
+function selectProjectColor(color: string) {
+  projectModalSelectedColor.value = color;
+}
+
+function toggleProjectParticipant(userId: string) {
+  const index = projectModalSelectedParticipants.value.indexOf(userId);
+  if (index > -1) {
+    projectModalSelectedParticipants.value.splice(index, 1);
+  } else {
+    projectModalSelectedParticipants.value.push(userId);
+  }
+}
+
+function removeProjectParticipant(userId: string) {
+  const index = projectModalSelectedParticipants.value.indexOf(userId);
+  if (index > -1) {
+    projectModalSelectedParticipants.value.splice(index, 1);
+  }
+}
+
+function clearProjectParticipants() {
+  projectModalSelectedParticipants.value = [];
+}
+
+function getProjectParticipantName(userId: string): string {
+  const user = companyUsers.value.find(u => u.id === userId);
+  if (!user) return '';
+  return user.firstName || user.displayName || user.login || '';
+}
+
+function getProjectParticipantInitial(user: CompanyUser | undefined): string {
+  if (!user) return '?';
+  const name = user.firstName || user.displayName || user.login || '?';
+  return name[0].toUpperCase();
+}
+
+function darkenColorForProject(hex: string, percent = 50): string {
+  hex = hex.replace('#', '');
+  const r = parseInt(hex.substr(0, 2), 16);
+  const g = parseInt(hex.substr(2, 2), 16);
+  const b = parseInt(hex.substr(4, 2), 16);
+  const newR = Math.floor(r * (1 - percent / 100));
+  const newG = Math.floor(g * (1 - percent / 100));
+  const newB = Math.floor(b * (1 - percent / 100));
+  return `#${newR.toString(16).padStart(2, '0')}${newG.toString(16).padStart(2, '0')}${newB.toString(16).padStart(2, '0')}`;
+}
+
+async function generateProjectDescription() {
+  // Заглушка для генерации описания
+  projectModalGeneratedDescription.value = 'Это сгенерированное описание проекта.';
+}
+
+function acceptProjectGeneratedDescription() {
+  projectModalDescription.value = projectModalGeneratedDescription.value;
+  projectModalGeneratedDescription.value = '';
+}
+
+function refineProjectGeneratedDescription() {
+  // Заглушка для доработки описания
+  projectModalGeneratedDescription.value = 'Доработанное описание проекта.';
+}
+
+function deleteProjectGeneratedDescription() {
+  projectModalGeneratedDescription.value = '';
+}
+
+async function submitProjectUpdate() {
+  if (!project.value || !canEditProject.value) {
+    alert('У вас нет прав для редактирования этого проекта');
+    return;
+  }
+  
+  if (!projectModalName.value.trim()) {
+    alert('Введите название проекта');
+    return;
+  }
+  
+  try {
+    const updatedProject = await updateProject(project.value.id, {
+      name: projectModalName.value,
+      description: projectModalDescription.value || undefined,
+      icon: projectModalSelectedIcon.value,
+      color: projectModalSelectedColor.value,
+      participants: projectModalSelectedParticipants.value,
+    });
+    
+    project.value = updatedProject;
+    closeProjectModal();
+  } catch (error: any) {
+    console.error('Ошибка обновления проекта:', error);
+    alert(error.message || 'Ошибка обновления проекта');
   }
 }
 </script>
@@ -4791,5 +5243,761 @@ async function uploadEditFiles() {
     scroll-snap-align: start;
     flex-shrink: 0;
   }
+}
+
+/* Стили для модального окна проекта */
+.create-project-modal {
+  background: rgba(4, 9, 16, 0.95);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0;
+  width: 100%;
+  max-width: 720px;
+  max-height: 100vh;
+  height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: clamp(1.5rem, 3vw, 2rem) clamp(1.5rem, 3vw, 2.5rem);
+  display: flex;
+  flex-direction: column;
+  gap: clamp(1.5rem, 3vw, 2rem);
+  box-shadow: -10px 0 40px rgba(0, 0, 0, 0.5);
+  box-sizing: border-box;
+  animation: slideInRight 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.modal-header {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.5rem, 1vw, 0.75rem);
+  padding-bottom: clamp(1rem, 2vw, 1.5rem);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  position: relative;
+}
+
+.modal-close-btn {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: clamp(2rem, 4vw, 2.5rem);
+  height: clamp(2rem, 4vw, 2.5rem);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: clamp(0.5rem, 1vw, 0.75rem);
+  color: #e1eaf8;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
+}
+
+.modal-close-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: scale(1.05);
+}
+
+.modal-close-btn svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.modal-title {
+  color: #ffffff;
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-weight: 600;
+  font-family: 'Involve', Arial, sans-serif;
+  margin: 0;
+  line-height: 1.3;
+  letter-spacing: -0.02em;
+}
+
+.modal-subtitle {
+  color: rgba(225, 234, 248, 0.7);
+  font-size: clamp(0.875rem, 1.5vw, 1rem);
+  font-weight: 400;
+  font-family: 'Involve', Arial, sans-serif;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.modal-field {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.5rem, 1vw, 0.75rem);
+}
+
+.modal-field-group {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(1rem, 2vw, 1.5rem);
+}
+
+.modal-field-label {
+  font-size: clamp(0.875rem, 1.5vw, 1rem);
+  font-weight: 500;
+  font-family: 'Involve', Arial, sans-serif;
+  color: #e1eaf8;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  line-height: 1.5;
+}
+
+.modal-field-required {
+  color: #912138;
+  font-weight: 600;
+}
+
+.modal-input-wrapper {
+  position: relative;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: clamp(0.75rem, 1.5vw, 1rem);
+  padding: clamp(0.75rem, 1.5vw, 1rem) clamp(1rem, 2vw, 1.25rem);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.modal-input-wrapper:focus-within {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(145, 33, 56, 0.5);
+  box-shadow: 0 0 0 3px rgba(145, 33, 56, 0.1);
+}
+
+.modal-field-input {
+  width: 100%;
+  font-size: clamp(0.9375rem, 1.5vw, 1.125rem);
+  font-weight: 400;
+  font-family: 'Involve', Arial, sans-serif;
+  color: #ffffff;
+  background: transparent;
+  border: none;
+  outline: none;
+  padding: 0;
+  line-height: 1.5;
+}
+
+.modal-field-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.modal-field-input::placeholder {
+  color: rgba(225, 234, 248, 0.5);
+}
+
+.modal-icons-list-container,
+.modal-colors-list-container {
+  flex: 1;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(225, 234, 248, 0.3) transparent;
+}
+
+.modal-icons-list-container::-webkit-scrollbar,
+.modal-colors-list-container::-webkit-scrollbar {
+  height: 6px;
+}
+
+.modal-icons-list-container::-webkit-scrollbar-track,
+.modal-colors-list-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.modal-icons-list-container::-webkit-scrollbar-thumb,
+.modal-colors-list-container::-webkit-scrollbar-thumb {
+  background: rgba(225, 234, 248, 0.3);
+  border-radius: 3px;
+}
+
+.modal-icons-list-container::-webkit-scrollbar-thumb:hover,
+.modal-colors-list-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(225, 234, 248, 0.5);
+}
+
+.modal-icons-list,
+.modal-colors-list {
+  display: flex;
+  gap: clamp(0.75rem, 1.5vw, 1rem);
+  align-items: center;
+  padding: clamp(0.5rem, 1vw, 0.75rem) 0;
+  flex-wrap: wrap;
+}
+
+.modal-icon-option {
+  width: clamp(3rem, 6vw, 3.5rem);
+  height: clamp(3rem, 6vw, 3.5rem);
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: clamp(0.75rem, 1.5vw, 1rem);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
+  padding: 0;
+  margin: 0;
+}
+
+.modal-icon-option:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.modal-icon-option:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.modal-icon-option.selected {
+  border-color: #912138;
+  background: rgba(145, 33, 56, 0.2);
+  box-shadow: 0 0 0 3px rgba(145, 33, 56, 0.2);
+}
+
+.modal-icon-option svg {
+  width: 28px;
+  height: 26px;
+}
+
+.modal-color-option {
+  width: clamp(3rem, 6vw, 3.5rem);
+  height: clamp(3rem, 6vw, 3.5rem);
+  border-radius: clamp(0.75rem, 1.5vw, 1rem);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 3px solid transparent;
+  position: relative;
+  flex-shrink: 0;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.modal-color-option:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.modal-color-option:hover:not(:disabled) {
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.modal-color-option.selected {
+  border-color: #ffffff;
+  box-shadow: 0 0 0 3px rgba(145, 33, 56, 0.5), 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.modal-textarea-wrapper {
+  position: relative;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: clamp(0.75rem, 1.5vw, 1rem);
+  padding: clamp(0.75rem, 1.5vw, 1rem) clamp(1rem, 2vw, 1.25rem);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  min-height: clamp(8rem, 16vw, 10rem);
+}
+
+.modal-textarea-wrapper:focus-within {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(145, 33, 56, 0.5);
+  box-shadow: 0 0 0 3px rgba(145, 33, 56, 0.1);
+}
+
+.modal-description-textarea {
+  width: 100%;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #ffffff;
+  font-size: clamp(0.9375rem, 1.5vw, 1.125rem);
+  font-weight: 400;
+  font-family: 'Involve', Arial, sans-serif;
+  resize: vertical;
+  min-height: clamp(6rem, 12vw, 8rem);
+  max-height: clamp(12rem, 24vw, 16rem);
+  overflow-y: auto;
+  line-height: 1.6;
+  padding: 0;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(225, 234, 248, 0.3) transparent;
+}
+
+.modal-description-textarea:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.modal-description-textarea::-webkit-scrollbar {
+  width: 6px;
+}
+
+.modal-description-textarea::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.modal-description-textarea::-webkit-scrollbar-thumb {
+  background: rgba(225, 234, 248, 0.3);
+  border-radius: 3px;
+}
+
+.modal-description-textarea::-webkit-scrollbar-thumb:hover {
+  background: rgba(225, 234, 248, 0.5);
+}
+
+.modal-description-textarea::placeholder {
+  color: rgba(225, 234, 248, 0.5);
+}
+
+.modal-textarea-footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: clamp(0.5rem, 1vw, 0.75rem);
+  padding-top: clamp(0.5rem, 1vw, 0.75rem);
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.modal-char-count {
+  font-size: clamp(0.75rem, 1.25vw, 0.875rem);
+  color: rgba(225, 234, 248, 0.6);
+  font-family: 'Involve', Arial, sans-serif;
+}
+
+.modal-generate-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.modal-generate-btn {
+  background: rgba(145, 33, 56, 0.8);
+  border: 1px solid rgba(145, 33, 56, 0.5);
+  border-radius: clamp(0.75rem, 1.5vw, 1rem);
+  padding: clamp(0.625rem, 1.25vw, 0.875rem) clamp(1rem, 2vw, 1.5rem);
+  height: auto;
+  min-height: clamp(2.5rem, 5vw, 3rem);
+  display: flex;
+  align-items: center;
+  gap: clamp(0.5rem, 1vw, 0.75rem);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  width: 100%;
+  justify-content: center;
+}
+
+.modal-generate-btn:hover {
+  background: rgba(145, 33, 56, 1);
+  border-color: rgba(145, 33, 56, 0.7);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(145, 33, 56, 0.3);
+}
+
+.modal-generate-btn-icon {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  color: #ffffff;
+}
+
+.modal-generate-btn-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.modal-generate-btn-text {
+  color: #e1eaf8;
+  font-size: 0.9375rem;
+  font-weight: 400;
+  font-family: 'Involve', Arial, sans-serif;
+  flex: 1;
+}
+
+.modal-generated-description {
+  background: rgba(145, 33, 56, 0.1);
+  border: 2px solid rgba(145, 33, 56, 0.3);
+  border-radius: clamp(0.75rem, 1.5vw, 1rem);
+  padding: clamp(1rem, 2vw, 1.5rem);
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.75rem, 1.5vw, 1rem);
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.modal-generated-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.modal-generated-text {
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 400;
+  font-family: 'Involve', Arial, sans-serif;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.modal-generated-actions {
+  display: flex;
+  gap: clamp(0.75rem, 1.5vw, 1rem);
+  flex-wrap: wrap;
+}
+
+.modal-action-btn {
+  border-radius: clamp(0.5rem, 1vw, 0.75rem);
+  padding: clamp(0.5rem, 1vw, 0.75rem) clamp(0.75rem, 1.5vw, 1rem);
+  height: auto;
+  min-height: clamp(2.25rem, 4.5vw, 2.75rem);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(0.5rem, 1vw, 0.75rem);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  font-size: clamp(0.875rem, 1.5vw, 1rem);
+  font-weight: 500;
+  font-family: 'Involve', Arial, sans-serif;
+  flex: 1;
+  border: 1px solid transparent;
+}
+
+.modal-action-accept {
+  background: rgba(145, 33, 56, 0.8);
+  color: #ffffff;
+  border-color: rgba(145, 33, 56, 0.5);
+}
+
+.modal-action-accept:hover {
+  background: rgba(145, 33, 56, 1);
+  border-color: rgba(145, 33, 56, 0.7);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(145, 33, 56, 0.3);
+}
+
+.modal-action-refine {
+  background: rgba(255, 255, 255, 0.1);
+  color: #e1eaf8;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.modal-action-refine:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+.modal-action-delete {
+  background: rgba(255, 107, 107, 0.15);
+  color: #ff6b6b;
+  border-color: rgba(255, 107, 107, 0.3);
+}
+
+.modal-action-delete:hover {
+  background: rgba(255, 107, 107, 0.2);
+  border-color: rgba(255, 107, 107, 0.4);
+  transform: translateY(-1px);
+}
+
+.modal-action-btn-icon {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: inherit;
+}
+
+.modal-action-btn-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.modal-actions {
+  display: flex;
+  gap: clamp(0.75rem, 1.5vw, 1rem);
+  padding-top: clamp(1rem, 2vw, 1.5rem);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  margin-top: auto;
+}
+
+.modal-btn {
+  border-radius: clamp(0.75rem, 1.5vw, 1rem);
+  padding: clamp(0.75rem, 1.5vw, 1rem) clamp(1.5rem, 3vw, 2rem);
+  height: auto;
+  min-height: clamp(2.75rem, 5.5vw, 3.5rem);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(0.5rem, 1vw, 0.75rem);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  font-size: clamp(0.9375rem, 1.5vw, 1.125rem);
+  font-weight: 500;
+  font-family: 'Involve', Arial, sans-serif;
+  border: 1px solid transparent;
+  flex: 1;
+}
+
+.modal-btn-create {
+  background: #912138;
+  color: #ffffff;
+  border-color: rgba(145, 33, 56, 0.5);
+}
+
+.modal-btn-create:hover {
+  background: #a02a43;
+  border-color: rgba(145, 33, 56, 0.7);
+  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(145, 33, 56, 0.3);
+}
+
+.modal-btn-cancel {
+  background: rgba(255, 255, 255, 0.05);
+  color: #e1eaf8;
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.modal-btn-cancel:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+.modal-btn-icon {
+  width: clamp(1.25rem, 2.5vw, 1.5rem);
+  height: clamp(1.25rem, 2.5vw, 1.5rem);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: inherit;
+}
+
+.modal-btn-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* Стили для участников проекта */
+.participants-selector {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.75rem, 1.5vw, 1rem);
+}
+
+.participants-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: clamp(0.5rem, 1vw, 0.75rem);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: clamp(0.5rem, 1vw, 0.75rem);
+  padding: clamp(0.5rem, 1vw, 0.75rem);
+}
+
+.participants-search-icon {
+  width: 20px;
+  height: 20px;
+  color: rgba(225, 234, 248, 0.6);
+  flex-shrink: 0;
+}
+
+.participants-search-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #e1eaf8;
+  font-size: clamp(0.875rem, 1.5vw, 1rem);
+  font-family: 'Involve', Arial, sans-serif;
+}
+
+.participants-search-input::placeholder {
+  color: rgba(225, 234, 248, 0.4);
+}
+
+.participants-list {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.375rem, 0.75vw, 0.5rem);
+  max-height: 200px;
+  overflow-y: auto;
+  padding: clamp(0.5rem, 1vw, 0.75rem);
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: clamp(0.5rem, 1vw, 0.75rem);
+}
+
+.participant-item {
+  display: flex;
+  align-items: center;
+  gap: clamp(0.75rem, 1.5vw, 1rem);
+  padding: clamp(0.5rem, 1vw, 0.75rem);
+  border-radius: clamp(0.5rem, 1vw, 0.625rem);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.participant-item:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.participant-name {
+  font-size: clamp(0.875rem, 1.5vw, 1rem);
+  font-weight: 500;
+  color: #e1eaf8;
+  font-family: 'Involve', Arial, sans-serif;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+}
+
+.participant-checkbox {
+  width: clamp(1.25rem, 2.5vw, 1.5rem);
+  height: clamp(1.25rem, 2.5vw, 1.5rem);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.participant-item.selected .participant-checkbox {
+  background: #912138;
+  border-color: #912138;
+}
+
+.selected-participants {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.5rem, 1vw, 0.75rem);
+}
+
+.selected-participants-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.selected-participants-label {
+  font-size: clamp(0.75rem, 1.25vw, 0.875rem);
+  font-weight: 500;
+  color: rgba(225, 234, 248, 0.7);
+  font-family: 'Involve', Arial, sans-serif;
+}
+
+.selected-participants-clear {
+  background: transparent;
+  border: none;
+  color: #912138;
+  font-size: clamp(0.75rem, 1.25vw, 0.875rem);
+  font-family: 'Involve', Arial, sans-serif;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.selected-participants-clear:hover {
+  background: rgba(145, 33, 56, 0.2);
+}
+
+.selected-participants-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: clamp(0.5rem, 1vw, 0.75rem);
+}
+
+.selected-participant-tag {
+  display: flex;
+  align-items: center;
+  gap: clamp(0.5rem, 1vw, 0.75rem);
+  padding: clamp(0.375rem, 0.75vw, 0.5rem) clamp(0.75rem, 1.5vw, 1rem);
+  background: rgba(145, 33, 56, 0.3);
+  border: 1px solid rgba(145, 33, 56, 0.5);
+  border-radius: clamp(1.5rem, 3vw, 2rem);
+  font-size: clamp(0.75rem, 1.25vw, 0.875rem);
+  font-weight: 400;
+  color: #e1eaf8;
+  font-family: 'Involve', Arial, sans-serif;
+}
+
+.selected-participant-remove {
+  background: transparent;
+  border: none;
+  color: rgba(225, 234, 248, 0.7);
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.selected-participant-remove:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #e1eaf8;
+}
+
+.participant-avatar-small {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: rgba(145, 33, 56, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.participant-avatar-small img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.participant-avatar-placeholder-small {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #e1eaf8;
+  font-size: 10px;
+  font-weight: 600;
+  font-family: 'Involve', Arial, sans-serif;
 }
 </style>
