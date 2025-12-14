@@ -556,9 +556,16 @@
               <input
                 id="task-deadline"
                 v-model="newTask.deadline"
-                type="datetime-local"
+                type="date"
                 class="modal-field-input"
               />
+            </div>
+            <div class="modal-deadline-suggestions">
+              <button type="button" @click="newTask.deadline = getToday()" class="modal-deadline-btn">Сегодня</button>
+              <button type="button" @click="newTask.deadline = getTomorrow()" class="modal-deadline-btn">Завтра</button>
+              <button type="button" @click="newTask.deadline = getEndOfWeek()" class="modal-deadline-btn">Конец недели</button>
+              <button type="button" @click="newTask.deadline = getStartOfNextWeek()" class="modal-deadline-btn">Начало след. нед.</button>
+              <button type="button" @click="newTask.deadline = getEndOfNextWeek()" class="modal-deadline-btn">Конец след. нед.</button>
             </div>
           </div>
 
@@ -873,10 +880,17 @@
               <input
                 id="edit-task-deadline"
                 v-model="editTask.deadline"
-                type="datetime-local"
+                type="date"
                 class="modal-field-input"
                 :disabled="!canEditTask(selectedTask)"
               />
+            </div>
+            <div class="modal-deadline-suggestions" v-if="canEditTask(selectedTask)">
+              <button type="button" @click="editTask.deadline = getToday()" class="modal-deadline-btn">Сегодня</button>
+              <button type="button" @click="editTask.deadline = getTomorrow()" class="modal-deadline-btn">Завтра</button>
+              <button type="button" @click="editTask.deadline = getEndOfWeek()" class="modal-deadline-btn">Конец недели</button>
+              <button type="button" @click="editTask.deadline = getStartOfNextWeek()" class="modal-deadline-btn">Начало след. нед.</button>
+              <button type="button" @click="editTask.deadline = getEndOfNextWeek()" class="modal-deadline-btn">Конец след. нед.</button>
             </div>
           </div>
 
@@ -1284,9 +1298,9 @@ function formatDate(dateString: string | null | undefined): string {
   if (isNaN(date.getTime())) return '';
   const day = date.getDate().toString().padStart(2, '0');
   const month = (date.getMonth() + 1).toString().padStart(2, '0');
-  const hours = date.getHours().toString().padStart(2, '0');
-  const minutes = date.getMinutes().toString().padStart(2, '0');
-  return `${day}.${month} ${hours}:${minutes}`;
+  const weekDays = ['вс', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб'];
+  const weekDay = weekDays[date.getDay()];
+  return `${weekDay} ${day}.${month}`;
 }
 
 function formatTime(minutes: number): string {
@@ -1729,7 +1743,7 @@ function openEditTaskModal(task: Task) {
     assigneeId: task.assignee?.id || '',
     watcherIds: task.watchers.map((w) => w.id),
     subtasks: task.subtasks.map((st) => ({ ...st })),
-    deadline: task.deadline ? new Date(task.deadline).toISOString().slice(0, 16) : '',
+    deadline: task.deadline ? new Date(task.deadline).toISOString().split('T')[0] : '',
     timeSpent: task.timeSpent || 0,
     isImportant: task.isImportant || false,
   };
@@ -1846,7 +1860,7 @@ async function createTask() {
       assigneeId: newTask.value.assigneeId || undefined,
       watcherIds: newTask.value.watcherIds,
       subtasks: newTask.value.subtasks,
-      deadline: newTask.value.deadline ? new Date(newTask.value.deadline).toISOString() : undefined,
+      deadline: newTask.value.deadline ? `${newTask.value.deadline}T00:00:00Z` : undefined,
       isImportant: isImportantTask.value,
     };
 
@@ -1931,7 +1945,7 @@ async function updateTask() {
   try {
     const taskData = {
       ...editTask.value,
-      deadline: editTask.value.deadline ? new Date(editTask.value.deadline).toISOString() : undefined,
+      deadline: editTask.value.deadline ? `${editTask.value.deadline}T00:00:00Z` : undefined,
     };
 
     const updatedTask = await updateTaskApi(projectId.value, selectedTask.value.id, taskData);
@@ -2295,6 +2309,54 @@ watch(showCreateTaskModal, (isOpen) => {
     document.removeEventListener('click', handleClickOutside);
   }
 });
+
+// Функции для установки сроков
+function getToday(): string {
+  const date = new Date();
+  return date.toISOString().split('T')[0];
+}
+
+function getTomorrow(): string {
+  const date = new Date();
+  date.setDate(date.getDate() + 1);
+  return date.toISOString().split('T')[0];
+}
+
+function getEndOfWeek(): string {
+  const date = new Date();
+  // Текущая неделя заканчивается в пятницу (день недели 5)
+  const currentDay = date.getDay();
+  // Если сегодня воскресенье (0), считаем его днем 7
+  const dayOfWeek = currentDay === 0 ? 7 : currentDay;
+  // Дней до пятницы (5)
+  const daysUntilFriday = 5 - dayOfWeek;
+  date.setDate(date.getDate() + daysUntilFriday);
+  return date.toISOString().split('T')[0];
+}
+
+function getStartOfNextWeek(): string {
+  const date = new Date();
+  // Начало следующей недели - понедельник
+  const currentDay = date.getDay();
+  // Если сегодня воскресенье (0), считаем его днем 7
+  const dayOfWeek = currentDay === 0 ? 7 : currentDay;
+  // Дней до следующего понедельника
+  const daysUntilMonday = 8 - dayOfWeek;
+  date.setDate(date.getDate() + daysUntilMonday);
+  return date.toISOString().split('T')[0];
+}
+
+function getEndOfNextWeek(): string {
+  const date = new Date();
+  // Конец следующей недели - пятница
+  const currentDay = date.getDay();
+  // Если сегодня воскресенье (0), считаем его днем 7
+  const dayOfWeek = currentDay === 0 ? 7 : currentDay;
+  // Дней до пятницы следующей недели
+  const daysUntilNextFriday = 12 - dayOfWeek;
+  date.setDate(date.getDate() + daysUntilNextFriday);
+  return date.toISOString().split('T')[0];
+}
 </script>
 
 <style scoped>
@@ -3516,6 +3578,38 @@ watch(showCreateTaskModal, (isOpen) => {
 
 .modal-field-input::placeholder {
   color: rgba(225, 234, 248, 0.5);
+}
+
+.modal-deadline-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.modal-deadline-btn {
+  padding: 6px 12px;
+  background: linear-gradient(135deg, rgba(145, 33, 56, 0.15) 0%, rgba(145, 33, 56, 0.1) 100%);
+  border: 1px solid rgba(145, 33, 56, 0.3);
+  border-radius: 6px;
+  color: #e1eaf8;
+  font-size: 12px;
+  font-weight: 500;
+  font-family: 'Involve', Arial, sans-serif;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+  
+  &:hover {
+    background: linear-gradient(135deg, rgba(145, 33, 56, 0.25) 0%, rgba(145, 33, 56, 0.15) 100%);
+    border-color: rgba(145, 33, 56, 0.5);
+    box-shadow: 0 2px 8px rgba(145, 33, 56, 0.2);
+    transform: translateY(-1px);
+  }
+  
+  &:active {
+    transform: translateY(0);
+  }
 }
 
 .modal-textarea-wrapper {
