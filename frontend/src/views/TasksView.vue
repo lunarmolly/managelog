@@ -91,14 +91,59 @@
           @drop="handleDrop(column.id, $event)"
         >
           <div class="column-header">
-            <h3 class="column-title">{{ column.name }}</h3>
+            <h3 
+              v-if="!isRenamingColumn || renamingColumnId !== column.id" 
+              class="column-title"
+            >
+              {{ column.name }}
+            </h3>
+            <input
+              v-if="isRenamingColumn && renamingColumnId === column.id"
+              v-model="renameColumnValue"
+              type="text"
+              class="column-title-input"
+              :data-column-id="column.id"
+              @keyup.enter="saveColumnRename(column.id)"
+              @keyup.escape="cancelColumnRename"
+              @blur="saveColumnRename(column.id)"
+            />
             <div class="column-actions">
-              <button class="column-action-btn" @click.stop="openCreateTaskModal(column.id)" title="Добавить задачу">
+              <button 
+                v-if="isMovingColumns && movingColumnId !== column.id"
+                class="column-action-btn column-swap-btn"
+                @click.stop="swapColumns(movingColumnId!, column.id)"
+                title="Поменять местами"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                  <path d="M7 16V4M7 4L3 8M7 4L11 8M17 8V20M17 20L21 16M17 20L13 16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+              <button 
+                v-if="isMovingColumns && movingColumnId === column.id"
+                class="column-action-btn column-cancel-btn"
+                @click.stop="cancelMoveColumn"
+                title="Отменить перемещение"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                  <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+              <button 
+                v-if="!isMovingColumns"
+                class="column-action-btn" 
+                @click.stop="openCreateTaskModal(column.id)" 
+                title="Добавить задачу"
+              >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
                   <path d="M12 5V19M5 12H19" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                 </svg>
               </button>
-              <button class="column-action-btn" @click.stop="toggleColumnMenu(column.id)" title="Меню">
+              <button 
+                v-if="!isMovingColumns"
+                class="column-action-btn" 
+                @click.stop="toggleColumnMenu(column.id, $event)" 
+                title="Меню"
+              >
                 <svg width="3" height="15" viewBox="0 0 3 15" fill="none">
                   <circle cx="1.5" cy="2.5" r="1.5" fill="currentColor"/>
                   <circle cx="1.5" cy="7.5" r="1.5" fill="currentColor"/>
@@ -106,6 +151,36 @@
                 </svg>
               </button>
             </div>
+            
+            <!-- Контекстное меню столбца -->
+            <Teleport to="body">
+              <div 
+                v-if="activeColumnMenu === column.id" 
+                class="column-context-menu"
+                :style="{ left: columnMenuPosition.x + 'px', top: columnMenuPosition.y + 'px' }"
+                @click.stop
+              >
+                <div class="column-context-item" @click="startRenameColumn(column.id)">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                  переименовать
+                </div>
+                <div class="column-context-item" @click="startMoveColumn(column.id)">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                    <path d="M7 16V4M7 4L3 8M7 4L11 8M17 8V20M17 20L21 16M17 20L13 16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                  переместить
+                </div>
+                <div class="column-context-item delete" @click="openDeleteColumnModal(column.id)">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                    <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h14zM10 11v6M14 11v6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                  удалить
+                </div>
+              </div>
+            </Teleport>
           </div>
           
           <div class="column-tasks">
@@ -1268,6 +1343,84 @@
         </div>
       </div>
     </Teleport>
+
+    <!-- Модальное окно удаления столбца -->
+    <Teleport to="body">
+      <div v-if="showDeleteColumnModal" class="modal-overlay" @click="closeDeleteColumnModal">
+        <div class="delete-column-modal" @click.stop>
+          <div class="delete-column-header">
+            <h2 class="delete-column-title">Удалить столбец?</h2>
+          </div>
+          
+          <div class="delete-column-content">
+            <p class="delete-column-text">
+              Что сделать с задачами в этом столбце?
+            </p>
+            
+            <div class="delete-column-options">
+              <label class="delete-column-option">
+                <input
+                  type="radio"
+                  v-model="deleteColumnAction"
+                  value="delete"
+                  class="delete-column-radio"
+                />
+                <div class="delete-column-option-content">
+                  <span class="delete-column-option-title">Удалить все задачи</span>
+                  <span class="delete-column-option-desc">Все задачи в столбце будут безвозвратно удалены</span>
+                </div>
+              </label>
+              
+              <label class="delete-column-option">
+                <input
+                  type="radio"
+                  v-model="deleteColumnAction"
+                  value="move"
+                  class="delete-column-radio"
+                />
+                <div class="delete-column-option-content">
+                  <span class="delete-column-option-title">Переместить задачи в другой столбец</span>
+                  <span class="delete-column-option-desc">Выберите столбец для перемещения задач</span>
+                </div>
+              </label>
+              
+              <div v-if="deleteColumnAction === 'move'" class="delete-column-select-wrapper">
+                <label class="delete-column-select-label">Переместить в:</label>
+                <select v-model="moveTasksToColumnId" class="delete-column-select">
+                  <option value="" disabled>Выберите столбец</option>
+                  <option
+                    v-for="col in columns.filter(c => c.id !== deletingColumnId)"
+                    :key="col.id"
+                    :value="col.id"
+                  >
+                    {{ col.name }}
+                  </option>
+                </select>
+              </div>
+            </div>
+          </div>
+          
+          <div class="delete-column-actions">
+            <button class="modal-btn modal-btn-delete" @click="confirmDeleteColumn">
+              <div class="modal-btn-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h14zM10 11v6M14 11v6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+              <span>удалить столбец</span>
+            </button>
+            <button class="modal-btn modal-btn-cancel" @click="closeDeleteColumnModal">
+              <div class="modal-btn-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+              <span>отмена</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -1277,6 +1430,8 @@ import { useRoute, useRouter } from 'vue-router';
 import {
   getColumns,
   createColumn as createColumnApi,
+  updateColumn,
+  deleteColumn,
   getTasks,
   getTask as getTaskApi,
   createTask as createTaskApi,
@@ -1378,6 +1533,21 @@ const isDragging = ref(false);
 
 // Модальное окно информации о проекте
 const showProjectModal = ref(false);
+
+// Контекстное меню столбцов
+const activeColumnMenu = ref<string | null>(null);
+const columnMenuPosition = ref({ x: 0, y: 0 });
+const isRenamingColumn = ref(false);
+const renamingColumnId = ref<string | null>(null);
+const renameColumnValue = ref('');
+const isMovingColumns = ref(false);
+const movingColumnId = ref<string | null>(null);
+
+// Модальное окно удаления столбца
+const showDeleteColumnModal = ref(false);
+const deletingColumnId = ref<string | null>(null);
+const deleteColumnAction = ref<'delete' | 'move'>('delete');
+const moveTasksToColumnId = ref<string>('');
 const projectModalName = ref('');
 const projectModalDescription = ref('');
 const projectModalSelectedIcon = ref('building');
@@ -1767,11 +1937,6 @@ const canCreateColumn = computed(() => {
 
 function navigateToProject(id: string) {
   router.push(`/projects/${id}/tasks`);
-}
-
-function toggleColumnMenu(columnId: string) {
-  // TODO: Реализовать меню колонки
-  console.log('Toggle menu for column:', columnId);
 }
 
 function openCreateTaskModal(columnId: string) {
@@ -2828,6 +2993,197 @@ async function submitProjectUpdate() {
     alert(error.message || 'Ошибка обновления проекта');
   }
 }
+
+// Функции для контекстного меню столбцов
+function toggleColumnMenu(columnId: string, event?: MouseEvent) {
+  if (activeColumnMenu.value === columnId) {
+    activeColumnMenu.value = null;
+  } else {
+    activeColumnMenu.value = columnId;
+    
+    // Если передан event, вычисляем позицию меню
+    if (event) {
+      const button = event.target as HTMLElement;
+      const buttonElement = button.closest('.column-action-btn') as HTMLElement;
+      
+      if (buttonElement) {
+        const rect = buttonElement.getBoundingClientRect();
+        columnMenuPosition.value = {
+          x: rect.left,
+          y: rect.bottom + 4
+        };
+      }
+    }
+  }
+}
+
+function closeColumnMenu() {
+  activeColumnMenu.value = null;
+  columnMenuPosition.value = { x: 0, y: 0 };
+}
+
+function startRenameColumn(columnId: string) {
+  const column = columns.value.find(c => c.id === columnId);
+  if (!column) return;
+  
+  renamingColumnId.value = columnId;
+  renameColumnValue.value = column.name;
+  isRenamingColumn.value = true;
+  closeColumnMenu();
+  
+  // Фокусируемся на поле ввода после рендера
+  nextTick(() => {
+    const input = document.querySelector(`input[data-column-id="${columnId}"]`) as HTMLInputElement;
+    if (input) {
+      input.focus();
+      input.select();
+    }
+  });
+}
+
+async function saveColumnRename(columnId: string) {
+  if (!renameColumnValue.value.trim()) {
+    cancelColumnRename();
+    return;
+  }
+  
+  try {
+    await updateColumn(projectId.value, columnId, { name: renameColumnValue.value });
+    
+    const column = columns.value.find(c => c.id === columnId);
+    if (column) {
+      column.name = renameColumnValue.value;
+    }
+    
+    cancelColumnRename();
+  } catch (error: any) {
+    console.error('Ошибка переименования столбца:', error);
+    alert(error.message || 'Ошибка переименования столбца');
+  }
+}
+
+function cancelColumnRename() {
+  isRenamingColumn.value = false;
+  renamingColumnId.value = null;
+  renameColumnValue.value = '';
+}
+
+function startMoveColumn(columnId: string) {
+  movingColumnId.value = columnId;
+  isMovingColumns.value = true;
+  closeColumnMenu();
+}
+
+function cancelMoveColumn() {
+  movingColumnId.value = null;
+  isMovingColumns.value = false;
+}
+
+async function swapColumns(column1Id: string, column2Id: string) {
+  const column1 = columns.value.find(c => c.id === column1Id);
+  const column2 = columns.value.find(c => c.id === column2Id);
+  
+  if (!column1 || !column2) return;
+  
+  try {
+    // Меняем местами order
+    const tempOrder = column1.order;
+    await updateColumn(projectId.value, column1.id, { order: column2.order });
+    await updateColumn(projectId.value, column2.id, { order: tempOrder });
+    
+    column1.order = column2.order;
+    column2.order = tempOrder;
+    
+    cancelMoveColumn();
+  } catch (error: any) {
+    console.error('Ошибка перемещения столбцов:', error);
+    alert(error.message || 'Ошибка перемещения столбцов');
+  }
+}
+
+function openDeleteColumnModal(columnId: string) {
+  deletingColumnId.value = columnId;
+  deleteColumnAction.value = 'delete';
+  moveTasksToColumnId.value = '';
+  showDeleteColumnModal.value = true;
+  closeColumnMenu();
+}
+
+function closeDeleteColumnModal() {
+  showDeleteColumnModal.value = false;
+  deletingColumnId.value = null;
+  deleteColumnAction.value = 'delete';
+  moveTasksToColumnId.value = '';
+}
+
+async function confirmDeleteColumn() {
+  if (!deletingColumnId.value) return;
+  
+  if (deleteColumnAction.value === 'move' && !moveTasksToColumnId.value) {
+    alert('Выберите столбец для перемещения задач');
+    return;
+  }
+  
+  try {
+    if (deleteColumnAction.value === 'move') {
+      // Перемещаем все задачи из удаляемого столбца в другой
+      const tasksToMove = tasks.value.filter(t => t.column.id === deletingColumnId.value);
+      
+      for (const task of tasksToMove) {
+        await updateTaskApi(projectId.value, task.id, {
+          columnId: moveTasksToColumnId.value
+        });
+      }
+      
+      // Обновляем локальные данные
+      tasks.value = tasks.value.map(t => {
+        if (t.column.id === deletingColumnId.value) {
+          const newColumn = columns.value.find(c => c.id === moveTasksToColumnId.value);
+          if (newColumn) {
+            return { ...t, column: newColumn };
+          }
+        }
+        return t;
+      });
+    } else {
+      // Удаляем все задачи в столбце
+      const tasksToDelete = tasks.value.filter(t => t.column.id === deletingColumnId.value);
+      
+      for (const task of tasksToDelete) {
+        await deleteTask(projectId.value, task.id);
+      }
+      
+      // Удаляем задачи из локального массива
+      tasks.value = tasks.value.filter(t => t.column.id !== deletingColumnId.value);
+    }
+    
+    // Удаляем столбец
+    await deleteColumn(projectId.value, deletingColumnId.value);
+    columns.value = columns.value.filter(c => c.id !== deletingColumnId.value);
+    
+    closeDeleteColumnModal();
+  } catch (error: any) {
+    console.error('Ошибка удаления столбца:', error);
+    alert(error.message || 'Ошибка удаления столбца');
+  }
+}
+
+// Закрытие меню при клике вне его
+function handleColumnMenuOutsideClick(event: MouseEvent) {
+  const target = event.target as HTMLElement;
+  
+  if (!target.closest('.column-context-menu') && !target.closest('.column-action-btn')) {
+    closeColumnMenu();
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('click', handleColumnMenuOutsideClick);
+});
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleColumnMenuOutsideClick);
+});
 </script>
 
 <style scoped>
@@ -3155,6 +3511,274 @@ async function submitProjectUpdate() {
 
 .column-action-btn:active {
   transform: scale(0.95);
+}
+
+.column-swap-btn {
+  background: rgba(34, 197, 94, 0.2);
+  border-color: rgba(34, 197, 94, 0.3);
+}
+
+.column-swap-btn:hover {
+  background: rgba(34, 197, 94, 0.4);
+  border-color: rgba(34, 197, 94, 0.6);
+}
+
+.column-cancel-btn {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.column-cancel-btn:hover {
+  background: rgba(239, 68, 68, 0.4);
+  border-color: rgba(239, 68, 68, 0.6);
+}
+
+.column-title-input {
+  flex: 1;
+  font-size: 18px;
+  font-weight: 600;
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(145, 33, 56, 0.5);
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-family: 'Involve', Arial, sans-serif;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.column-title-input:focus {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(145, 33, 56, 0.8);
+}
+
+/* Контекстное меню столбца */
+.column-context-menu {
+  position: fixed;
+  background: rgba(145, 33, 56, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 8px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 200px;
+  z-index: 10001;
+  animation: fadeInDown 0.2s ease-out;
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.column-context-item {
+  padding: 10px 14px;
+  color: #e1eaf8;
+  font-size: 14px;
+  font-weight: 400;
+  font-family: 'Involve', Arial, sans-serif;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.column-context-item svg {
+  flex-shrink: 0;
+}
+
+.column-context-item:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+}
+
+.column-context-item.delete {
+  color: rgba(255, 107, 107, 0.9);
+}
+
+.column-context-item.delete:hover {
+  background: rgba(255, 107, 107, 0.15);
+  color: #ff6b6b;
+}
+
+/* Модальное окно удаления столбца */
+.delete-column-modal {
+  background: rgba(4, 9, 16, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 24px;
+  padding: 32px;
+  max-width: 520px;
+  width: 90%;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  margin: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.delete-column-header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.delete-column-title {
+  color: #ffffff;
+  font-size: 24px;
+  font-weight: 600;
+  font-family: 'Involve', Arial, sans-serif;
+  margin: 0;
+  line-height: 1.3;
+}
+
+.delete-column-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.delete-column-text {
+  color: rgba(225, 234, 248, 0.9);
+  font-size: 16px;
+  font-weight: 400;
+  font-family: 'Involve', Arial, sans-serif;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.delete-column-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.delete-column-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.delete-column-option:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.delete-column-option:has(.delete-column-radio:checked) {
+  background: rgba(145, 33, 56, 0.2);
+  border-color: rgba(145, 33, 56, 0.5);
+}
+
+.delete-column-radio {
+  width: 20px;
+  height: 20px;
+  margin-top: 2px;
+  flex-shrink: 0;
+  cursor: pointer;
+  accent-color: #912138;
+}
+
+.delete-column-option-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.delete-column-option-title {
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 500;
+  font-family: 'Involve', Arial, sans-serif;
+  line-height: 1.4;
+}
+
+.delete-column-option-desc {
+  color: rgba(225, 234, 248, 0.7);
+  font-size: 13px;
+  font-weight: 400;
+  font-family: 'Involve', Arial, sans-serif;
+  line-height: 1.5;
+}
+
+.delete-column-select-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-left: 32px;
+}
+
+.delete-column-select-label {
+  color: rgba(225, 234, 248, 0.9);
+  font-size: 14px;
+  font-weight: 500;
+  font-family: 'Involve', Arial, sans-serif;
+}
+
+.delete-column-select {
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: #e1eaf8;
+  font-size: 14px;
+  font-family: 'Involve', Arial, sans-serif;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.delete-column-select:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.delete-column-select:focus {
+  outline: none;
+  border-color: rgba(145, 33, 56, 0.5);
+  box-shadow: 0 0 0 3px rgba(145, 33, 56, 0.2);
+}
+
+.delete-column-select option {
+  background: #1a1e24;
+  color: #e1eaf8;
+}
+
+.delete-column-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  padding-top: 8px;
+}
+
+.modal-btn-delete {
+  background: #d32f2f;
+  color: #ffffff;
+  border-color: rgba(211, 47, 47, 0.5);
+}
+
+.modal-btn-delete:hover {
+  background: #b71c1c;
+  border-color: rgba(211, 47, 47, 0.7);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(211, 47, 47, 0.3);
 }
 
 .column-tasks {
