@@ -177,8 +177,7 @@
                   :key="participant.id"
                   class="participant-avatar"
                   :style="{ 
-                    zIndex: getTaskActiveParticipants(task).length - index,
-                    marginLeft: index > 0 ? '-12px' : '0'
+                    zIndex: getTaskActiveParticipants(task).length - index
                   }"
                   @click.stop
                 >
@@ -3079,7 +3078,8 @@ function getEndOfNextWeek(): string {
 .task-participants {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
+  gap: 6px;
   height: 32px;
   width: 100%;
   position: relative;
