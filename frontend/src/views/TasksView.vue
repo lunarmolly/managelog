@@ -85,6 +85,10 @@
           v-for="column in sortedColumns"
           :key="column.id"
           class="kanban-column"
+          :class="{ 'drag-over': draggedOverColumn === column.id }"
+          @dragover="handleDragOver(column.id, $event)"
+          @dragleave="handleDragLeave(column.id)"
+          @drop="handleDrop(column.id, $event)"
         >
           <div class="column-header">
             <h3 class="column-title">{{ column.name }}</h3>
@@ -109,6 +113,10 @@
               v-for="task in getTasksForColumn(column.id)"
               :key="task.id"
               class="task-card"
+              :class="{ 'dragging': draggedTask?.id === task.id }"
+              draggable="true"
+              @dragstart="handleDragStart(task, $event)"
+              @dragend="handleDragEnd"
               @click="openTaskModal(task)"
             >
               <!-- 1. Чекбокс -->
@@ -947,6 +955,11 @@ const taskFilesInput = ref<HTMLInputElement | null>(null);
 const newColumn = ref({
   name: '',
 });
+
+// Drag and Drop state
+const draggedTask = ref<Task | null>(null);
+const draggedOverColumn = ref<string | null>(null);
+const isDragging = ref(false);
 
 function getUserDisplayNameWithRole(user: CompanyUser): string {
   const firstName = user.firstName || user.displayName || user.login || '';
@@ -1919,6 +1932,68 @@ async function createColumn() {
   }
 }
 
+// Drag and Drop handlers
+function handleDragStart(task: Task, event: DragEvent) {
+  draggedTask.value = task;
+  isDragging.value = true;
+  if (event.dataTransfer) {
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/html', event.currentTarget as any);
+  }
+}
+
+function handleDragEnd() {
+  draggedTask.value = null;
+  draggedOverColumn.value = null;
+  isDragging.value = false;
+}
+
+function handleDragOver(columnId: string, event: DragEvent) {
+  if (!draggedTask.value) return;
+  event.preventDefault();
+  if (event.dataTransfer) {
+    event.dataTransfer.dropEffect = 'move';
+  }
+  draggedOverColumn.value = columnId;
+}
+
+function handleDragLeave(columnId: string) {
+  if (draggedOverColumn.value === columnId) {
+    draggedOverColumn.value = null;
+  }
+}
+
+async function handleDrop(columnId: string, event: DragEvent) {
+  event.preventDefault();
+  draggedOverColumn.value = null;
+  
+  if (!draggedTask.value || draggedTask.value.column.id === columnId) {
+    draggedTask.value = null;
+    isDragging.value = false;
+    return;
+  }
+  
+  const taskToMove = draggedTask.value;
+  draggedTask.value = null;
+  isDragging.value = false;
+  
+  try {
+    // Обновляем колонку задачи
+    const updatedTask = await updateTaskApi(projectId.value, taskToMove.id, {
+      columnId: columnId,
+    });
+    
+    // Обновляем задачу в локальном массиве
+    const index = tasks.value.findIndex((t) => t.id === updatedTask.id);
+    if (index !== -1) {
+      tasks.value[index] = updatedTask;
+    }
+  } catch (error: any) {
+    console.error('Ошибка перемещения задачи:', error);
+    alert(error.message || 'Ошибка перемещения задачи');
+  }
+}
+
 function handleClickOutside(event: MouseEvent) {
   const target = event.target as HTMLElement;
   
@@ -1976,9 +2051,10 @@ watch(showCreateTaskModal, (isOpen) => {
   display: flex;
   flex-direction: row;
   min-height: 100vh;
-  background: transparent;
+  background: linear-gradient(135deg, #0a0e12 0%, #1a1e24 50%, #0f1318 100%);
   color: #e1eaf8;
   font-family: 'Involve', Arial, sans-serif;
+  overflow: hidden;
 }
 
 .tasks-mobile-header {
@@ -1990,30 +2066,45 @@ watch(showCreateTaskModal, (isOpen) => {
   min-width: 186px;
   padding: 24px 12px;
   padding-bottom: 24px;
-  background: rgba(145, 33, 56, 0.5);
+  background: linear-gradient(180deg, rgba(145, 33, 56, 0.6) 0%, rgba(145, 33, 56, 0.3) 100%);
   border-top-right-radius: 40px;
   display: flex;
   flex-direction: column;
   gap: 24px;
   box-sizing: border-box;
   flex-shrink: 0;
+  backdrop-filter: blur(10px);
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .back-btn {
   display: flex;
   align-items: center;
   gap: 8px;
-  background: none;
-  border: none;
+  background: rgba(145, 33, 56, 0.15);
+  border: 1px solid rgba(145, 33, 56, 0.3);
   color: #e1eaf8;
   cursor: pointer;
-  font-size: 20px;
-  font-weight: 400;
+  font-size: 15px;
+  font-weight: 500;
   font-family: 'Involve', Arial, sans-serif;
-  padding: 0;
-  height: 24px;
+  padding: 8px 12px;
+  height: auto;
   line-height: normal;
   white-space: nowrap;
+  border-radius: 8px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.back-btn:hover {
+  background: rgba(145, 33, 56, 0.25);
+  border-color: rgba(145, 33, 56, 0.5);
+  transform: translateX(-2px);
+}
+
+.back-btn svg {
+  width: 18px;
+  height: 18px;
 }
 
 .project-info {
@@ -2032,22 +2123,39 @@ watch(showCreateTaskModal, (isOpen) => {
   font-family: 'Involve', Arial, sans-serif;
   word-wrap: break-word;
   overflow-wrap: break-word;
+  background: linear-gradient(135deg, #ffffff 0%, #e1eaf8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .info-btn {
-  background: #912138;
-  border: none;
+  background: linear-gradient(135deg, #912138 0%, #7a1a2d 100%);
+  border: 1px solid rgba(145, 33, 56, 0.5);
   color: #e1eaf8;
-  padding: 4px 0;
-  border-radius: 16px;
+  padding: 8px 12px;
+  border-radius: 8px;
   cursor: pointer;
   font-size: 15px;
-  font-weight: 400;
+  font-weight: 500;
   font-family: 'Involve', Arial, sans-serif;
   text-align: center;
   line-height: normal;
   width: 100%;
-  min-height: 24px;
+  min-height: 32px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(145, 33, 56, 0.2);
+}
+
+.info-btn:hover {
+  background: linear-gradient(135deg, #a02a43 0%, #8a1f34 100%);
+  border-color: rgba(145, 33, 56, 0.7);
+  box-shadow: 0 6px 16px rgba(145, 33, 56, 0.3);
+  transform: translateY(-1px);
+}
+
+.info-btn:active {
+  transform: translateY(0);
 }
 
 .projects-list {
@@ -2078,26 +2186,30 @@ watch(showCreateTaskModal, (isOpen) => {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  padding: 0;
+  padding: 10px 12px;
   min-height: 40px;
   height: 40px;
   cursor: pointer;
   color: #e1eaf8;
   font-size: 15px;
-  font-weight: 400;
+  font-weight: 500;
   font-family: 'Involve', Arial, sans-serif;
   position: relative;
   line-height: normal;
+  border-radius: 8px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  background: transparent;
+  border: 1px solid transparent;
+}
+
+.project-item:hover {
+  background: rgba(145, 33, 56, 0.2);
+  border-color: rgba(145, 33, 56, 0.3);
+  transform: translateX(4px);
 }
 
 .project-item:not(:last-child)::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: rgba(255, 255, 255, 0.2);
+  display: none;
 }
 
 .project-item-name {
@@ -2110,13 +2222,21 @@ watch(showCreateTaskModal, (isOpen) => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: #912138;
-  border-radius: 16px;
-  padding: 4px 8px;
-  height: 24px;
+  background: linear-gradient(135deg, rgba(145, 33, 56, 0.3) 0%, rgba(145, 33, 56, 0.15) 100%);
+  border: 1px solid rgba(145, 33, 56, 0.4);
+  border-radius: 8px;
+  padding: 8px 12px;
+  height: 36px;
   box-sizing: border-box;
   gap: 8px;
   flex-shrink: 0;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.search-box:focus-within {
+  background: linear-gradient(135deg, rgba(145, 33, 56, 0.4) 0%, rgba(145, 33, 56, 0.25) 100%);
+  border-color: rgba(145, 33, 56, 0.6);
+  box-shadow: 0 4px 12px rgba(145, 33, 56, 0.15);
 }
 
 .search-input {
@@ -2124,7 +2244,7 @@ watch(showCreateTaskModal, (isOpen) => {
   background: transparent;
   border: none;
   color: #e1eaf8;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 400;
   font-family: 'Involve', Arial, sans-serif;
   padding: 0;
@@ -2134,104 +2254,237 @@ watch(showCreateTaskModal, (isOpen) => {
 }
 
 .search-input::placeholder {
-  color: #e1eaf8;
+  color: rgba(225, 234, 248, 0.6);
 }
 
 .search-icon {
   width: 18px;
   height: 18px;
-  color: #e1eaf8;
+  color: rgba(225, 234, 248, 0.6);
   flex-shrink: 0;
   pointer-events: none;
+  transition: color 0.2s ease;
+}
+
+.search-box:focus-within .search-icon {
+  color: #e1eaf8;
 }
 
 .tasks-main {
   flex: 1;
   padding: 30px 36px 0;
   overflow-x: auto;
+  overflow-y: hidden;
+  background: linear-gradient(180deg, rgba(10, 14, 18, 0.4) 0%, transparent 100%);
 }
 
 .kanban-board {
   display: flex;
-  gap: 12px;
+  gap: 20px;
   min-width: fit-content;
   overflow-x: auto;
+  overflow-y: hidden;
   padding-bottom: 20px;
+  padding-right: 36px;
+  scroll-behavior: smooth;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(145, 33, 56, 0.5) transparent;
+}
+
+.kanban-board::-webkit-scrollbar {
+  height: 6px;
+}
+
+.kanban-board::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.kanban-board::-webkit-scrollbar-thumb {
+  background: rgba(145, 33, 56, 0.5);
+  border-radius: 3px;
+}
+
+.kanban-board::-webkit-scrollbar-thumb:hover {
+  background: rgba(145, 33, 56, 0.7);
 }
 
 .kanban-column {
-  min-width: 224px;
-  width: 224px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(145, 33, 56, 0.5);
-  border-radius: 40px;
-  padding: 12px 2px;
+  min-width: 280px;
+  width: 280px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
+  border: 1px solid rgba(145, 33, 56, 0.3);
+  border-radius: 20px;
+  padding: 16px;
   display: flex;
   flex-direction: column;
   position: relative;
-  box-shadow: 0px 41px 4px 0px inset rgba(255, 255, 255, 0.25);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.1);
   flex-shrink: 0;
+  backdrop-filter: blur(10px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  max-height: calc(100vh - 120px);
+}
+
+.kanban-column:hover {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.04) 100%);
+  border-color: rgba(145, 33, 56, 0.5);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.15);
 }
 
 .column-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 24px;
-  gap: 4px;
+  padding: 12px 0 16px;
+  gap: 8px;
+  border-bottom: 2px solid rgba(145, 33, 56, 0.4);
+  margin-bottom: 12px;
 }
 
 .column-title {
   font-size: 18px;
-  font-weight: 500;
-  color: #d0cbca;
+  font-weight: 600;
+  color: #ffffff;
   text-transform: capitalize;
   margin: 0;
   flex: 1;
+  letter-spacing: 0.3px;
 }
 
 .column-actions {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
 }
 
 .column-action-btn {
-  width: 24px;
-  height: 24px;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: none;
-  border: none;
+  background: rgba(145, 33, 56, 0.2);
+  border: 1px solid rgba(145, 33, 56, 0.3);
   color: #e1eaf8;
   cursor: pointer;
   padding: 0;
+  border-radius: 8px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.column-action-btn:hover {
+  background: rgba(145, 33, 56, 0.4);
+  border-color: rgba(145, 33, 56, 0.6);
+  transform: scale(1.05);
+}
+
+.column-action-btn:active {
+  transform: scale(0.95);
 }
 
 .column-tasks {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: 0 2px;
+  gap: 12px;
+  padding: 0;
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(145, 33, 56, 0.4) transparent;
+}
+
+.column-tasks::-webkit-scrollbar {
+  width: 6px;
+}
+
+.column-tasks::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.column-tasks::-webkit-scrollbar-thumb {
+  background: rgba(145, 33, 56, 0.4);
+  border-radius: 3px;
+}
+
+.column-tasks::-webkit-scrollbar-thumb:hover {
+  background: rgba(145, 33, 56, 0.6);
 }
 
 .task-card {
-  background: rgba(255, 255, 255, 0.5);
-  border-radius: 40px;
-  padding: 12px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0.6) 100%);
+  border-radius: 16px;
+  padding: 14px;
   cursor: pointer;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  user-select: none;
+  position: relative;
+  overflow: hidden;
+}
+
+.task-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(145, 33, 56, 0) 0%, rgba(145, 33, 56, 0.1) 100%);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.task-card:hover {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.85) 100%);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(145, 33, 56, 0.2);
+  border-color: rgba(145, 33, 56, 0.4);
+}
+
+.task-card:hover::before {
+  opacity: 1;
+}
+
+.task-card:active {
+  transform: translateY(-2px);
+}
+
+.task-card[draggable="true"] {
+  cursor: move;
+  cursor: grab;
+}
+
+.task-card[draggable="true"]:active {
+  cursor: grabbing;
+}
+
+.task-card.dragging {
+  opacity: 0.4;
+  transform: scale(0.95);
+  cursor: grabbing;
+}
+
+.kanban-column.drag-over {
+  background: linear-gradient(135deg, rgba(145, 33, 56, 0.15) 0%, rgba(145, 33, 56, 0.05) 100%);
+  border-color: rgba(145, 33, 56, 0.6);
+  box-shadow: 0 0 0 2px rgba(145, 33, 56, 0.3), inset 0 0 40px rgba(145, 33, 56, 0.1);
+}
+
+.kanban-column.drag-over .column-title {
+  color: #ffffff;
+  text-shadow: 0 0 10px rgba(145, 33, 56, 0.5);
 }
 
 .task-card-top {
   display: flex;
   align-items: flex-start;
-  gap: 8px;
+  gap: 10px;
   width: 100%;
 }
 
@@ -2253,30 +2506,44 @@ watch(showCreateTaskModal, (isOpen) => {
 
 .task-checkbox-custom {
   display: inline-block;
-  width: 18px;
-  height: 18px;
-  border: 2px solid #292d32;
-  border-radius: 4px;
-  background: transparent;
+  width: 20px;
+  height: 20px;
+  border: 2px solid #912138;
+  border-radius: 6px;
+  background: rgba(145, 33, 56, 0.1);
   position: relative;
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
 }
 
 .task-checkbox:checked + .task-checkbox-custom {
-  background: #912138;
+  background: linear-gradient(135deg, #912138 0%, #7a1a2d 100%);
   border-color: #912138;
+  box-shadow: 0 4px 12px rgba(145, 33, 56, 0.3);
 }
 
 .task-checkbox:checked + .task-checkbox-custom::after {
   content: '';
   position: absolute;
-  left: 5px;
-  top: 1px;
+  left: 6px;
+  top: 2px;
   width: 5px;
   height: 10px;
   border: solid white;
   border-width: 0 2px 2px 0;
   transform: rotate(45deg);
+  animation: checkmark 0.3s ease;
+}
+
+@keyframes checkmark {
+  from {
+    opacity: 0;
+    transform: rotate(0deg) scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: rotate(45deg) scale(1);
+  }
 }
 
 .task-checkbox:disabled + .task-checkbox-custom {
@@ -2286,14 +2553,15 @@ watch(showCreateTaskModal, (isOpen) => {
 
 .task-name {
   font-size: 15px;
-  font-weight: 500;
+  font-weight: 600;
   color: #292d32;
   margin: 0;
   flex: 1;
-  line-height: 1.2;
+  line-height: 1.3;
   cursor: pointer;
   word-wrap: break-word;
   overflow-wrap: break-word;
+  transition: color 0.2s ease;
 }
 
 .task-progress {
@@ -2378,28 +2646,40 @@ watch(showCreateTaskModal, (isOpen) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: auto;
-  height: auto;
-  background: transparent;
-  border: none;
+  width: 28px;
+  height: 28px;
+  background: rgba(145, 33, 56, 0.1);
+  border: 1px solid rgba(145, 33, 56, 0.2);
+  border-radius: 6px;
   padding: 0;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   flex-shrink: 0;
   
   img {
-    width: 18px;
-    height: 18px;
+    width: 16px;
+    height: 16px;
   }
   
   &:hover {
-    opacity: 0.8;
+    background: rgba(145, 33, 56, 0.2);
+    border-color: rgba(145, 33, 56, 0.4);
+    transform: scale(1.1);
+  }
+  
+  &:active {
+    transform: scale(0.95);
   }
   
   &.active {
+    background: linear-gradient(135deg, #912138 0%, #7a1a2d 100%);
+    border-color: #912138;
+    box-shadow: 0 4px 12px rgba(145, 33, 56, 0.3);
+    
     img {
-      width: 18px;
-      height: 18px;
+      width: 16px;
+      height: 16px;
+      filter: brightness(1.2);
     }
   }
 }
@@ -2495,27 +2775,30 @@ watch(showCreateTaskModal, (isOpen) => {
 .task-timer-btn {
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px 8px;
-  height: 24px;
-  background: rgba(41, 45, 50, 0.3);
-  border: none;
-  border-radius: 50px;
+  gap: 6px;
+  padding: 6px 10px;
+  height: 28px;
+  background: rgba(133, 175, 228, 0.15);
+  border: 1px solid rgba(133, 175, 228, 0.3);
+  border-radius: 8px;
   font-size: 12px;
-  color: #e1eaf8;
+  color: #5b8bc1;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   font-family: 'Involve', Arial, sans-serif;
-  width: fit-content;
+  width: 100%;
+  font-weight: 500;
   
   svg {
-    width: 10.667px;
-    height: 10.667px;
+    width: 14px;
+    height: 14px;
     flex-shrink: 0;
+    color: #5b8bc1;
   }
   
   &:hover:not(:disabled) {
-    background: rgba(41, 45, 50, 0.5);
+    background: rgba(133, 175, 228, 0.25);
+    border-color: rgba(133, 175, 228, 0.5);
   }
   
   &:disabled {
@@ -2524,97 +2807,105 @@ watch(showCreateTaskModal, (isOpen) => {
   }
   
   &.running {
-    background: #85afe4;
-    color: #213491;
-    animation: pulse 2s infinite;
+    background: linear-gradient(135deg, #85afe4 0%, #6b9dd4 100%);
+    color: #ffffff;
+    animation: pulse 1.5s ease-in-out infinite;
+    border-color: #6b9dd4;
+    box-shadow: 0 4px 12px rgba(133, 175, 228, 0.3);
     
     svg {
-      color: #213491;
+      color: #ffffff;
     }
   }
   
   &.has-time:not(.running) {
-    background: #85afe4;
-    color: #213491;
+    background: linear-gradient(135deg, rgba(133, 175, 228, 0.3) 0%, rgba(133, 175, 228, 0.15) 100%);
+    color: #5b8bc1;
+    border-color: rgba(133, 175, 228, 0.4);
     
     svg {
-      color: #213491;
+      color: #5b8bc1;
     }
     
     &:hover {
-      background: #6b9dd4;
+      background: linear-gradient(135deg, rgba(133, 175, 228, 0.4) 0%, rgba(133, 175, 228, 0.2) 100%);
     }
   }
 }
 
 @keyframes pulse {
   0%, 100% {
-    opacity: 1;
+    box-shadow: 0 4px 12px rgba(133, 175, 228, 0.3);
   }
   50% {
-    opacity: 0.8;
+    box-shadow: 0 4px 20px rgba(133, 175, 228, 0.5);
   }
 }
 
 .task-deadline-btn {
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px 8px;
-  height: 24px;
-  background: rgba(41, 45, 50, 0.3);
-  border: none;
-  border-radius: 50px;
+  gap: 6px;
+  padding: 6px 10px;
+  height: 28px;
+  background: rgba(206, 158, 255, 0.15);
+  border: 1px solid rgba(206, 158, 255, 0.3);
+  border-radius: 8px;
   font-size: 12px;
-  color: #ce9eff;
+  color: #9e6fbf;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   font-family: 'Involve', Arial, sans-serif;
-  width: fit-content;
+  width: 100%;
   font-weight: 500;
   
   svg {
-    width: 10.667px;
-    height: 10.667px;
+    width: 14px;
+    height: 14px;
     flex-shrink: 0;
-    color: #ce9eff;
+    color: #9e6fbf;
   }
   
   &:hover {
-    background: rgba(41, 45, 50, 0.5);
+    background: rgba(206, 158, 255, 0.25);
+    border-color: rgba(206, 158, 255, 0.5);
   }
   
   &.empty {
-    opacity: 0.7;
+    opacity: 0.6;
     font-style: italic;
-    color: #b794f6;
+    color: #9e6fbf;
     
     svg {
-      color: #b794f6;
+      color: #9e6fbf;
     }
   }
   
   &.filled {
-    background: rgba(206, 158, 255, 0.2);
-    color: #ce9eff;
+    background: linear-gradient(135deg, rgba(206, 158, 255, 0.2) 0%, rgba(206, 158, 255, 0.1) 100%);
+    color: #9e6fbf;
     font-weight: 600;
+    border-color: rgba(206, 158, 255, 0.4);
     
     svg {
-      color: #ce9eff;
+      color: #9e6fbf;
     }
   }
   
   &.overdue {
-    background: #912138;
+    background: linear-gradient(135deg, #912138 0%, #7a1a2d 100%);
     color: #ffffff;
     font-weight: 600;
+    border-color: #912138;
+    box-shadow: 0 4px 12px rgba(145, 33, 56, 0.3);
     
     svg {
       color: #ffffff;
     }
     
     &:hover {
-      background: #7a1a2d;
+      background: linear-gradient(135deg, #7a1a2d 0%, #661728 100%);
+      box-shadow: 0 6px 16px rgba(145, 33, 56, 0.4);
     }
   }
 }
@@ -2622,39 +2913,43 @@ watch(showCreateTaskModal, (isOpen) => {
 .task-files-section {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
   width: 100%;
 }
 
 .task-file-item {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 8px;
-  background: rgba(41, 45, 50, 0.2);
+  gap: 8px;
+  padding: 8px 10px;
+  background: rgba(145, 33, 56, 0.08);
+  border: 1px solid rgba(145, 33, 56, 0.15);
   border-radius: 8px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   
   &:hover {
-    background: rgba(41, 45, 50, 0.3);
+    background: rgba(145, 33, 56, 0.15);
+    border-color: rgba(145, 33, 56, 0.3);
+    transform: translateX(2px);
   }
   
   svg {
     width: 14px;
     height: 14px;
-    color: #e1eaf8;
+    color: #912138;
     flex-shrink: 0;
   }
 }
 
 .task-file-name {
   font-size: 12px;
-  color: #e1eaf8;
+  color: #292d32;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   flex: 1;
+  font-weight: 500;
 }
 
 .task-participants {
@@ -2668,18 +2963,27 @@ watch(showCreateTaskModal, (isOpen) => {
 }
 
 .participant-avatar {
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-  border: 2px solid rgba(42, 39, 22, 0);
+  border: 2px solid rgba(255, 255, 255, 0.3);
   overflow: hidden;
   position: relative;
   flex-shrink: 0;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  background: linear-gradient(135deg, rgba(145, 33, 56, 0.1) 0%, rgba(145, 33, 56, 0.05) 100%);
 
   img {
     width: 100%;
     height: 100%;
     object-fit: cover;
+  }
+  
+  &:hover {
+    transform: scale(1.1);
+    border-color: rgba(145, 33, 56, 0.5);
+    box-shadow: 0 4px 12px rgba(145, 33, 56, 0.2);
   }
 }
 
@@ -2689,10 +2993,10 @@ watch(showCreateTaskModal, (isOpen) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(225, 234, 248, 0.3);
-  color: #e1eaf8;
+  background: linear-gradient(135deg, rgba(145, 33, 56, 0.2) 0%, rgba(145, 33, 56, 0.1) 100%);
+  color: #912138;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .participant-more {
@@ -2710,31 +3014,52 @@ watch(showCreateTaskModal, (isOpen) => {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 12px;
-  background: rgba(255, 255, 255, 0.5);
-  border-radius: 40px;
-  color: #e1eaf8;
+  padding: 24px 12px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0.6) 100%);
+  border: 2px dashed rgba(145, 33, 56, 0.3);
+  border-radius: 16px;
+  color: #912138;
   font-size: 15px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   text-align: center;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.create-first-task:hover {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.85) 100%);
+  border-color: rgba(145, 33, 56, 0.6);
+  box-shadow: 0 8px 24px rgba(145, 33, 56, 0.15);
 }
 
 .add-column-btn {
-  min-width: 242px;
-  height: 44px;
-  background: rgba(255, 255, 255, 0.3);
-  border: 1px solid rgba(145, 33, 56, 0.5);
-  border-radius: 40px;
+  min-width: 280px;
+  height: 48px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
+  border: 1px solid rgba(145, 33, 56, 0.3);
+  border-radius: 20px;
   color: #d0cbca;
-  font-size: 18px;
-  font-weight: 500;
+  font-size: 16px;
+  font-weight: 600;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 15px;
-  padding: 5px;
+  gap: 12px;
+  padding: 0 20px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(10px);
+}
+
+.add-column-btn:hover {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.04) 100%);
+  border-color: rgba(145, 33, 56, 0.5);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+  transform: translateY(-2px);
+}
+
+.add-column-btn:active {
+  transform: translateY(0);
 }
 
 .modal-overlay {
@@ -2743,21 +3068,48 @@ watch(showCreateTaskModal, (isOpen) => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.8);
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 10000;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .task-modal {
-  background: rgba(41, 45, 50, 0.95);
-  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(41, 45, 50, 0.98) 0%, rgba(30, 33, 38, 0.98) 100%);
+  border-radius: 20px;
   padding: 24px;
   max-width: 600px;
   width: 90%;
   max-height: 90vh;
   overflow-y: auto;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(10px);
+  animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .modal-header {
