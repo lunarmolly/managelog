@@ -68,25 +68,27 @@ export async function getTasks(req: AuthRequest, res: Response): Promise<void> {
       .sort({ order: 1 });
 
     res.json(
-      tasks.map((task) => ({
-        id: task._id.toString(),
-        name: task.name,
-        description: task.description || null,
-        project: task.project.toString(),
-        column: {
-          id: (task.column as any)._id.toString(),
-          name: (task.column as any).name,
-          order: (task.column as any).order,
-        },
-        creator: {
-          id: (task.creator as any)._id.toString(),
-          email: (task.creator as any).email,
-          login: (task.creator as any).login || '',
-          firstName: (task.creator as any).firstName || null,
-          lastName: (task.creator as any).lastName || null,
-          displayName: (task.creator as any).displayName || (task.creator as any).firstName || null,
-          avatar: (task.creator as any).avatar ? `/api/v1/avatars/${(task.creator as any).avatar}` : null,
-        },
+      tasks
+        .filter((task) => task.column) // Фильтруем только задачи с колонкой
+        .map((task) => ({
+          id: task._id.toString(),
+          name: task.name,
+          description: task.description || null,
+          project: task.project.toString(),
+          column: {
+            id: (task.column as any)._id.toString(),
+            name: (task.column as any).name,
+            order: (task.column as any).order,
+          },
+          creator: task.creator ? {
+            id: (task.creator as any)._id.toString(),
+            email: (task.creator as any).email,
+            login: (task.creator as any).login || '',
+            firstName: (task.creator as any).firstName || null,
+            lastName: (task.creator as any).lastName || null,
+            displayName: (task.creator as any).displayName || (task.creator as any).firstName || null,
+            avatar: (task.creator as any).avatar ? `/api/v1/avatars/${(task.creator as any).avatar}` : null,
+          } : null,
         assignee: task.assignee
           ? {
               id: (task.assignee as any)._id.toString(),
@@ -170,12 +172,12 @@ export async function getTask(req: AuthRequest, res: Response): Promise<void> {
       name: task.name,
       description: task.description || null,
       project: task.project.toString(),
-      column: {
+      column: task.column ? {
         id: (task.column as any)._id.toString(),
         name: (task.column as any).name,
         order: (task.column as any).order,
-      },
-      creator: {
+      } : null,
+      creator: task.creator ? {
         id: (task.creator as any)._id.toString(),
         email: (task.creator as any).email,
         login: (task.creator as any).login || '',
@@ -183,7 +185,7 @@ export async function getTask(req: AuthRequest, res: Response): Promise<void> {
         lastName: (task.creator as any).lastName || null,
         displayName: (task.creator as any).displayName || (task.creator as any).firstName || null,
         avatar: (task.creator as any).avatar ? `/api/v1/avatars/${(task.creator as any).avatar}` : null,
-      },
+      } : null,
       assignee: task.assignee
         ? {
             id: (task.assignee as any)._id.toString(),

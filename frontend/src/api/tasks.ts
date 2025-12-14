@@ -41,8 +41,8 @@ export interface Task {
     id: string;
     name: string;
     order: number;
-  };
-  creator: UserInfo;
+  } | null;
+  creator: UserInfo | null;
   assignee?: UserInfo | null;
   watchers: UserInfo[];
   isCompleted: boolean;
