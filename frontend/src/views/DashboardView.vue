@@ -52,7 +52,10 @@
             </div>
           </div>
 
-          <div class="nav-card nav-card-tertiary">
+          <router-link 
+            to="/teams"
+            class="nav-card nav-card-tertiary"
+          >
             <div class="nav-card-icon">
               <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
                 <circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.5"/>
@@ -71,7 +74,7 @@
                 <path d="M10.5 19c0-3 2.5-5 4.5-5s4.5 2 4.5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
               </svg>
             </div>
-          </div>
+          </router-link>
         </div>
 
         <!-- Все проекты -->
@@ -241,12 +244,14 @@
         <div class="section team-section">
           <div class="section-header">
             <h2 class="section-title">Моя команда</h2>
+            <router-link to="/teams" class="section-link">Все →</router-link>
           </div>
           <div v-if="!isLoading && teamMembers.length > 0" class="team-grid">
-            <div 
+            <router-link
               v-for="member in teamMembers.slice(0, 8)"
               :key="member.id"
               class="team-member"
+              :to="{ name: 'user-profile', params: { id: member.id } }"
             >
               <div class="member-avatar">
                 <img 
@@ -260,7 +265,7 @@
                 <h4 class="member-name">{{ member.displayName || member.login }}</h4>
                 <p class="member-projects">{{ getMyProjectCountForMember(member.id) }} в проектах</p>
               </div>
-            </div>
+            </router-link>
           </div>
           <div v-if="!isLoading && teamMembers.length === 0" class="empty-state">
             <p>В ваших проектах нет участников</p>
